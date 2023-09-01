@@ -79,6 +79,7 @@ print(botPos)
 print(instructions)
 while playerPos == "":
     playerPos = input("Set your positions: ")
+    playerPos.upper()
     playerPos = playerPos.split(",")
     valid = positionCheck(playerPos)
     if valid == True:
