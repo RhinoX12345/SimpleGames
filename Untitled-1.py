@@ -6,3 +6,4 @@ for a in ltrList:
         coord = a + b
         coordList.append(coord)
 print(coordList)
+#test
