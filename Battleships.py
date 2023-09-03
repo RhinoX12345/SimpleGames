@@ -3,6 +3,29 @@
 import random, time
 
 #functions
+def horizontal(length):
+    rangeMax = 9-length
+    column = str(random.randint(1, rangeMax))
+    startCoord = random.choice(colList[column])
+    index = coordList.index(startCoord)
+    boat = []
+    for i in range(length):
+        pos = coordList[index+i]
+        boat.append(pos)
+    return boat, True
+
+def vertical(length):
+    ltrRange = "ABCDEFGH"
+    rangeMax = 9-length
+    row = ltrRange[:rangeMax]
+    startCoord = random.choice(rowList[str(random.choice(row))])
+    index = coordList.index(startCoord)
+    boat = []
+    for i in range(length):
+        pos = coordList[index+i*8]
+        boat.append(pos)
+    return boat, True
+
 def hint(correct):
     hints = {
         "1,2": "x=1,2",
@@ -45,20 +68,43 @@ def hint(correct):
     return hints[msg]
 
 def positionCheck(position):
-    if len(playerPos) != 9:
+    if len(playerPos) != 9:#check number of positions
         print("Incorrect number of positions")
         return False
-    for i in playerPos:
+    for i in playerPos:#check for valid coordinates
         if i not in coordList:
             print("Invalid input")
             return False
-    return True
+    tempList = []
+    for i in position:#check duplicates
+        if i in tempList:
+            print("Duplicate input")
+            return False
+        else:
+            tempList.append(i)
+    tempDict = {}
+    for pos in position:#get neighbouring positions
+        tempList = []
+        index = coordList.index(pos)
+        row = rowList[pos[0]]
+        tempDict[pos] = []
+        if (index - 8)>=0 and coordList[index - 8] in position:#check up
+            tempList.append(coordList[index - 8])
+            tempDict[pos] = tempList
+        if (index + 8)<=63 and coordList[index + 8] in position:#check down
+            tempList.append(coordList[index + 8])
+            tempDict[pos] = tempList
+        if (index - 1)>=0 and coordList[index - 1] in position and coordList[index - 1] in row:#check left
+            tempList.append(coordList[index - 1])
+            tempDict[pos] = tempList
+        if (index + 1)<=63 and coordList[index + 1] in position and coordList[index + 1] in row:#check right
+            tempList.append(coordList[index + 1])
+            tempDict[pos] = tempList
+    boat4 = []
+    boat3 = []
+    boat2 = []
 
 #default values
-defPos = [
-    ["E5","E6","E3","F3","G3","B2","B3","B4","B5"],
-    ["D4","D5","H2","H3","H4","B7","C7","D7","E7"],
-    ["B8","C8","H5","H6","H7","E1","E2","E3","E4"]]
 ltnConvert = str.maketrans("ABCDEFGH", "12345678")
 coordList = [
     'A1','A2','A3','A4','A5','A6','A7','A8',
@@ -69,12 +115,30 @@ coordList = [
     'F1','F2','F3','F4','F5','F6','F7','F8',
     'G1','G2','G3','G4','G5','G6','G7','G8',
     'H1','H2','H3','H4','H5','H6','H7','H8']
+rowList = {
+    "A":['A1','A2','A3','A4','A5','A6','A7','A8'],
+    "B":['B1','B2','B3','B4','B5','B6','B7','B8'],
+    "C":['C1','C2','C3','C4','C5','C6','C7','C8'],
+    "D":['D1','D2','D3','D4','D5','D6','D7','D8'],
+    "E":['E1','E2','E3','E4','E5','E6','E7','E8'],
+    "F":['F1','F2','F3','F4','F5','F6','F7','F8'],
+    "G":['G1','G2','G3','G4','G5','G6','G7','G8'],
+    "H":['H1','H2','H3','H4','H5','H6','H7','H8']}
 instructions= "Instructions:\nplaceholder"
 playerTargeted = []
 botTargeted = []
 playerPos = ""
 
-botPos = defPos[random.randint(0,2)]
+botPos = []
+boatLength = [4, 3, 2]#change numbers to change boats (1-8)
+while len(boatLength) > 0:
+    direction = random.choice("12")
+    if direction == "1":
+        boat, loop = horizontal(boatLength[0])
+    if direction == "2":
+        boat, loop = vertical(boatLength[0])
+    botPos.append(boat)
+    boatLength.pop(0)
 print(botPos)
 print(instructions)
 while playerPos == "":
@@ -113,6 +177,8 @@ while botPos != [] or playerPos != []:
                 if check in botPos:
                     botPos.remove(check)
                     print("-Hit")
+                    if botPos == []:
+                        break
                 else:
                     print("-Miss")
                 playerTargeted.append(check)
@@ -131,6 +197,8 @@ while botPos != [] or playerPos != []:
     if botTarget in playerPos:
         playerPos.remove(botTarget)
         print("-Hit")
+        if playerPos == []:
+            break
     else:
         print("-Miss")
     botTargeted.append(botTarget)
