@@ -100,9 +100,7 @@ def positionCheck(position):
         if (index + 1)<=63 and coordList[index + 1] in position and coordList[index + 1] in row:#check right
             tempList.append(coordList[index + 1])
             tempDict[pos] = tempList
-    boat4 = []
-    boat3 = []
-    boat2 = []
+    return True
 
 #default values
 ltnConvert = str.maketrans("ABCDEFGH", "12345678")
@@ -133,39 +131,23 @@ colList = {
     "6":['A6', 'B6', 'C6', 'D6', 'E6', 'F6', 'G6', 'H6'],
     "7":['A7', 'B7', 'C7', 'D7', 'E7', 'F7', 'G7', 'H7'],
     "8":['A8', 'B8', 'C8', 'D8', 'E8', 'F8', 'G8', 'H8']}
-rowList = {
-    "A":['A1','A2','A3','A4','A5','A6','A7','A8'],
-    "B":['B1','B2','B3','B4','B5','B6','B7','B8'],
-    "C":['C1','C2','C3','C4','C5','C6','C7','C8'],
-    "D":['D1','D2','D3','D4','D5','D6','D7','D8'],
-    "E":['E1','E2','E3','E4','E5','E6','E7','E8'],
-    "F":['F1','F2','F3','F4','F5','F6','F7','F8'],
-    "G":['G1','G2','G3','G4','G5','G6','G7','G8'],
-    "H":['H1','H2','H3','H4','H5','H6','H7','H8']}
 instructions= "Instructions:\nplaceholder"
 playerTargeted = []
 botTargeted = []
 playerPos = ""
 
-botPos = []
-boatLength = [4, 3, 2]#change numbers to change boats (1-8)
+botPos = {}
+botPosList = []
+boatLength = [4, 3, 2]
 while len(boatLength) > 0:
     direction = random.choice("12")
     if direction == "1":
         boat, loop = horizontal(boatLength[0])
     if direction == "2":
         boat, loop = vertical(boatLength[0])
-    botPos.append(boat)
-    boatLength.pop(0)
-botPos = []
-boatLength = [4, 3, 2]#change numbers to change boats (1-8)
-while len(boatLength) > 0:
-    direction = random.choice("12")
-    if direction == "1":
-        boat, loop = horizontal(boatLength[0])
-    if direction == "2":
-        boat, loop = vertical(boatLength[0])
-    botPos.append(boat)
+    botPos[str(boatLength[0])] = boat
+    for i in boat:
+        botPosList.append(i)
     boatLength.pop(0)
 print(botPos)
 print(instructions)
@@ -182,40 +164,52 @@ while playerPos == "":
 while botPos != [] or playerPos != []:
     hintType = ""
     check = ""
-    while hintType == "":
+    while hintType == "":#Hint
         hintType = input("Hint (Row/Column): ")
         hintType = hintType.lower()
         if hintType == "row":
-            posTarget = random.choice(botPos)
+            posTarget = random.choice(botPosList)
             temp = posTarget[0]
             temp = temp.translate(ltnConvert)
         elif hintType == "column":
-            posTarget = random.choice(botPos)
+            posTarget = random.choice(botPosList)
             temp = posTarget[1]
         else:
             print("Invalid input")
             hintType = ""
     print(posTarget)
     print(hint(temp))
-    while check == "":
+    while check == "":#Player Check
         check = input("Pick a target coordinate: ")
         check = check.upper()
         if check in coordList:
             if check not in playerTargeted:
-                if check in botPos:
-                    botPos.remove(check)
-                    print("-Hit")
-                    if botPos == []:
-                        break
-                else:
-                    print("-Miss")
+                key = "miss"
                 playerTargeted.append(check)
+                for boat, i in botPos.items():
+                    if check in i:
+                        botPosList.remove(check)
+                        i.remove(check)
+                        botPos[boat] = i
+                        if i == []:
+                            print("-Sink!")
+                            key = "skip"
+                            break
+                        else:
+                            print("-Hit!")
+                            key = "skip"
+                            break
+                if key == "miss":
+                    print("-Miss!")
             else:
                 print("Already chosen previously")
                 check = ""
         else:
             print("Invalid input")
             check = ""
+    if botPosList == []:
+        print("You Win!")
+        break
     print("Bot thinking...")
     botTarget = random.choice(coordList)
     while botTarget in botTargeted:
@@ -224,14 +218,20 @@ while botPos != [] or playerPos != []:
     print(f"Bot Target: {botTarget}")
     if botTarget in playerPos:
         playerPos.remove(botTarget)
-        print("-Hit")
-        if playerPos == []:
-            break
+        print("-Hit!")
     else:
-        print("-Miss")
+        print("-Miss!")
     botTargeted.append(botTarget)
+    if playerPos == []:
+        print("Bot Wins!")
+        break
     time.sleep(1)
-if botPos == []:
-    print("You Win!")
-elif playerPos == []:
-    print("Bot Wins!")
+
+"""
+Bugs:
+-Pre-typing the correct position de-syncs the botPosList and playerTargetted lists
+
+To-do:
+-Fix bugs
+-Finish position checker
+"""
