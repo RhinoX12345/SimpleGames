@@ -3,27 +3,43 @@
 import random, time
 
 #functions
-def horizontal(length):
+def horizontal(length, current):
     rangeMax = 9-length
-    column = str(random.randint(1, rangeMax))
-    startCoord = random.choice(colList[column])
-    index = coordList.index(startCoord)
-    boat = []
-    for i in range(length):
-        pos = coordList[index+i]
-        boat.append(pos)
+    loop = True
+    while loop:
+        column = str(random.randint(1, rangeMax))
+        startCoord = random.choice(colList[column])
+        index = coordList.index(startCoord)
+        boat = []
+        for i in range(length):
+            pos = coordList[index+i]
+            if pos not in current:
+                boat.append(pos)
+                loop = False
+            else:
+                boat.clear()
+                loop = True
+                break
     return boat, True
 
-def vertical(length):
+def vertical(length, current):
     ltrRange = "ABCDEFGH"
     rangeMax = 9-length
     row = ltrRange[:rangeMax]
-    startCoord = random.choice(rowList[str(random.choice(row))])
-    index = coordList.index(startCoord)
-    boat = []
-    for i in range(length):
-        pos = coordList[index+i*8]
-        boat.append(pos)
+    loop = True
+    while loop:
+        startCoord = random.choice(rowList[str(random.choice(row))])
+        index = coordList.index(startCoord)
+        boat = []
+        for i in range(length):
+            pos = coordList[index+i*8]
+            if pos not in current:
+                boat.append(pos)
+                loop = False
+            else:
+                boat.clear()
+                loop = True
+                break
     return boat, True
 
 def hint(correct):
@@ -101,7 +117,26 @@ def positionCheck(position):
             tempList.append(coordList[index + 1])
             tempDict[pos] = tempList
     return True
+    boat4Check(position)
 
+def paramMaker(length):
+    col = []
+    for i in range(1,9-length):
+        col.append(i)
+    ltr = "ABCDEFGH"
+    rowRange = ltr[:()]
+    row = []
+    for i in rowRange:
+        row.append(i)
+    return col, row
+
+def boat4Check(position):
+    startColRange, startRowRange = paramMaker(4)
+    for pos in position:
+        if pos in startColRange and pos in startRowRange:
+           pass 
+    pass
+    
 #default values
 ltnConvert = str.maketrans("ABCDEFGH", "12345678")
 coordList = [
@@ -138,18 +173,21 @@ playerPos = ""
 
 botPos = {}
 botPosList = []
-boatLength = [4, 3, 2]
+boatLength = [3, 3, 3]
+z = 0
 while len(boatLength) > 0:
     direction = random.choice("12")
     if direction == "1":
-        boat, loop = horizontal(boatLength[0])
+        boat, loop = horizontal(boatLength[0], botPosList)
     if direction == "2":
-        boat, loop = vertical(boatLength[0])
-    botPos[str(boatLength[0])] = boat
+        boat, loop = vertical(boatLength[0], botPosList)
+    botPos[str(z)] = boat
     for i in boat:
         botPosList.append(i)
     boatLength.pop(0)
+    z+=1
 print(botPos)
+print(botPosList)
 print(instructions)
 while playerPos == "":
     playerPos = input("Set your positions: ")
@@ -229,7 +267,7 @@ while botPos != [] or playerPos != []:
 
 """
 Bugs:
--Pre-typing the correct position de-syncs the botPosList and playerTargetted lists
+-
 
 To-do:
 -Fix bugs
