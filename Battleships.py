@@ -83,7 +83,7 @@ def hint(correct):
         msg = str(correct) + "," + str(n)
     return hints[msg]
 
-def positionCheck(position, length):
+def positionCheck(position, length, current):
     if len(position) != length:#check number of positions
         print("Incorrect number of positions")
         return False
@@ -91,49 +91,36 @@ def positionCheck(position, length):
         if i not in coordList:
             print("Invalid input")
             return False
-    tempList = []
+    dump = position.copy()
     for i in position:#check duplicates
-        if i in tempList:
+        if i in current:
             print("Duplicate input")
             return False
-        else:
-            tempList.append(i)
-    return boatCheck(position, length)
-
-def paramMaker(length):
-    ltr = "ABCDEFGH"
-    row = ltr[:(length)]
-    col = ""
-    for i in range(1,9-length):
-        col += str(i)
-    return row, col
-
-def boatCheck(position, length):
-    startRowRange, startColRange = paramMaker(length)
-    pos1 = position[0]
-    pos2 = position[1]
-    if pos1[0] not in startRowRange:
-        return False
-    if pos1[1] not in startColRange:
-        return False
-    if coordList.index(pos2) == (coordList.index(pos1)+1):
-        for i in position:
-            check = (coordList.index(i) - coordList.index(pos1)) == (position.index(pos1) + position.index(i))
-            if check:
-                continue
-            else:
-                return False
-    elif coordList.index(pos2) == (coordList.index(pos1)+8):
-        for i in position:
-            check = (coordList.index(i) - coordList.index(pos1)) == (position.index(pos1) + position.index(i)*8)
-            if check:
-                continue
-            else:
-                return False
-    else: 
-        return False
+        dump.remove(i)
+        if i in dump:
+            print("Duplicate input")
+            return False
+    if length > 1:#check valid position
+        pos1 = position[0]
+        pos2 = position[1]
+        if pos2 in rowList[pos1[0]]:
+            print("horizontal")
+            for i in position:
+                check = (coordList.index(i) - coordList.index(pos1)) == (position.index(pos1) + position.index(i))
+                if check:
+                    continue
+                else:
+                    return False
+        elif pos2 in colList[pos1[1]]:
+            print("vertical")
+            for i in position:
+                check = (coordList.index(i) - coordList.index(pos1)) == (position.index(pos1) + position.index(i)*8)
+                if check:
+                    continue
+                else:
+                    return False
     return True
-    
+
 #default values
 ltnConvert = str.maketrans("ABCDEFGH", "12345678")
 coordList = [
@@ -170,7 +157,7 @@ playerPos = []
 
 botPos = {}
 botPosList = []
-boatLength = [3, 3, 3]
+boatLength = [2, 2]
 pBoatLength = boatLength.copy()
 z = 0
 while len(boatLength) > 0:
@@ -184,8 +171,8 @@ while len(boatLength) > 0:
         botPosList.append(i)
     boatLength.pop(0)
     z+=1
-print(botPos)
-print(botPosList)
+#print(botPos)
+#print(botPosList)
 print(instructions)
 
 for i in pBoatLength:
@@ -194,12 +181,21 @@ for i in pBoatLength:
     while loop:
         temp = input(f"Set 1 boat (length:{i}): ")
         temp.upper()
-        temp = temp.split(",")
-        temp.sort()
-        valid = positionCheck(temp, i)
+        if ", " in temp:
+            temp = temp.split(", ")
+        elif "," in temp:
+            temp = temp.split(",")
+        try:
+            temp.sort()
+        except:
+            temp = [temp]
+        for a in temp:
+            temp[temp.index(a)] = a[0].upper() + a[1]
+        valid = positionCheck(temp, i, playerPos)
         if valid == True:
             for a in temp:
                 playerPos.append(a)
+            print("Valid Position")
             loop = False
         else:
             loop = True
@@ -276,5 +272,5 @@ Bugs:
 
 To-do:
 -Fix bugs
--Finish position checker
+-Do graphics
 """
