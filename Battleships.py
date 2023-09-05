@@ -83,11 +83,11 @@ def hint(correct):
         msg = str(correct) + "," + str(n)
     return hints[msg]
 
-def positionCheck(position):
-    if len(playerPos) != 9:#check number of positions
+def positionCheck(position, length):
+    if len(position) != length:#check number of positions
         print("Incorrect number of positions")
         return False
-    for i in playerPos:#check for valid coordinates
+    for i in position:#check for valid coordinates
         if i not in coordList:
             print("Invalid input")
             return False
@@ -98,60 +98,41 @@ def positionCheck(position):
             return False
         else:
             tempList.append(i)
-    tempDict = {}
-    for pos in position:#get neighbouring positions
-        tempList = []
-        index = coordList.index(pos)
-        row = rowList[pos[0]]
-        tempDict[pos] = []
-        if (index - 8)>=0 and coordList[index - 8] in position:#check up
-            tempList.append(coordList[index - 8])
-            tempDict[pos] = tempList
-        if (index + 8)<=63 and coordList[index + 8] in position:#check down
-            tempList.append(coordList[index + 8])
-            tempDict[pos] = tempList
-        if (index - 1)>=0 and coordList[index - 1] in position and coordList[index - 1] in row:#check left
-            tempList.append(coordList[index - 1])
-            tempDict[pos] = tempList
-        if (index + 1)<=63 and coordList[index + 1] in position and coordList[index + 1] in row:#check right
-            tempList.append(coordList[index + 1])
-            tempDict[pos] = tempList
-    return True
-    boat4Check(position)
+    return boatCheck(position, length)
 
 def paramMaker(length):
-    col = []
-    for i in range(1,9-length):
-        col.append(i)
     ltr = "ABCDEFGH"
-    rowRange = ltr[:()]
-    row = []
-    for i in rowRange:
-        row.append(i)
+    row = ltr[:(length)]
+    col = ""
+    for i in range(1,9-length):
+        col += str(i)
     return row, col
 
-def boat4Check(position):
-    startRowRange, startColRange = paramMaker(4)
-    posTemp = []
-    for pos in position:
-        if pos[0] in startRowRange and pos[1] in startColRange:
-            valid = []
-            index = coordList.index(pos)
-            temp = []
-            for i in range(length):
-                coord = coordList[index+i]
-                temp.append(coord)
-            valid.append(temp)
-            temp.clear()
-            for i in range(length):
-                coord = coordList[index+i*8]
-                temp.append(coord)
-            valid.append(temp)
-            for i in valid:
-                for x in i:
-                    if x in position:
-                        posTemp.append(x)
-    pass
+def boatCheck(position, length):
+    startRowRange, startColRange = paramMaker(length)
+    pos1 = position[0]
+    pos2 = position[1]
+    if pos1[0] not in startRowRange:
+        return False
+    if pos1[1] not in startColRange:
+        return False
+    if coordList.index(pos2) == (coordList.index(pos1)+1):
+        for i in position:
+            check = (coordList.index(i) - coordList.index(pos1)) == (position.index(pos1) + position.index(i))
+            if check:
+                continue
+            else:
+                return False
+    elif coordList.index(pos2) == (coordList.index(pos1)+8):
+        for i in position:
+            check = (coordList.index(i) - coordList.index(pos1)) == (position.index(pos1) + position.index(i)*8)
+            if check:
+                continue
+            else:
+                return False
+    else: 
+        return False
+    return True
     
 #default values
 ltnConvert = str.maketrans("ABCDEFGH", "12345678")
@@ -185,11 +166,12 @@ colList = {
 instructions= "Instructions:\nplaceholder"
 playerTargeted = []
 botTargeted = []
-playerPos = ""
+playerPos = []
 
 botPos = {}
 botPosList = []
 boatLength = [3, 3, 3]
+pBoatLength = boatLength.copy()
 z = 0
 while len(boatLength) > 0:
     direction = random.choice("12")
@@ -205,16 +187,23 @@ while len(boatLength) > 0:
 print(botPos)
 print(botPosList)
 print(instructions)
-while playerPos == "":
-    playerPos = input("Set your positions: ")
-    playerPos.upper()
-    playerPos = playerPos.split(",")
-    valid = positionCheck(playerPos)
-    if valid == True:
-        break
-    else:
-        playerPos = ""
 
+for i in pBoatLength:
+    print()
+    loop = True
+    while loop:
+        temp = input(f"Set 1 boat (length:{i}): ")
+        temp.upper()
+        temp = temp.split(",")
+        temp.sort()
+        valid = positionCheck(temp, i)
+        if valid == True:
+            for a in temp:
+                playerPos.append(a)
+            loop = False
+        else:
+            loop = True
+    
 while botPos != [] or playerPos != []:
     hintType = ""
     check = ""
