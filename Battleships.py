@@ -128,13 +128,29 @@ def paramMaker(length):
     row = []
     for i in rowRange:
         row.append(i)
-    return col, row
+    return row, col
 
 def boat4Check(position):
-    startColRange, startRowRange = paramMaker(4)
+    startRowRange, startColRange = paramMaker(4)
+    posTemp = []
     for pos in position:
-        if pos in startColRange and pos in startRowRange:
-           pass 
+        if pos[0] in startRowRange and pos[1] in startColRange:
+            valid = []
+            index = coordList.index(pos)
+            temp = []
+            for i in range(length):
+                coord = coordList[index+i]
+                temp.append(coord)
+            valid.append(temp)
+            temp.clear()
+            for i in range(length):
+                coord = coordList[index+i*8]
+                temp.append(coord)
+            valid.append(temp)
+            for i in valid:
+                for x in i:
+                    if x in position:
+                        posTemp.append(x)
     pass
     
 #default values
