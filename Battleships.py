@@ -1,5 +1,3 @@
-#virtual environment: venv/Script/activate
-#import pygame
 import random, time
 
 #functions
@@ -181,10 +179,10 @@ for i in pBoatLength:
     while loop:
         temp = input(f"Set 1 boat (length:{i}): ")
         temp.upper()
-        if ", " in temp:
-            temp = temp.split(", ")
-        elif "," in temp:
-            temp = temp.split(",")
+        if "," in temp:
+            temp = temp.strip().split(", ")
+        elif " " in temp:
+            temp = temp.split()
         try:
             temp.sort()
         except:
