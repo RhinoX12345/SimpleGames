@@ -119,6 +119,52 @@ def positionCheck(position, length, current):
                     return False
     return True
 
+def botPosMaker(bBoatLength):
+    botPos = {}
+    botPosList = []
+    z = 0
+    while len(bBoatLength) > 0:
+        direction = random.choice("12")
+        if direction == "1":
+            boat, loop = horizontal(bBoatLength[0], botPosList)
+        if direction == "2":
+            boat, loop = vertical(bBoatLength[0], botPosList)
+        botPos[str(z)] = boat
+        for i in boat:
+            botPosList.append(i)
+        bBoatLength.pop(0)
+        z+=1
+    return botPos, botPosList
+
+def playerPosMaker(pBoatLength):
+    playerPos = []
+    for i in pBoatLength:
+        loop = True
+        while loop:
+            temp = input(f"Set 1 boat (length:{i}): ")
+            if "," in temp:
+                temp = temp.strip().split(",")
+            elif " " in temp:
+                temp = temp.split()
+            for a in temp:
+                ind = temp.index(a)
+                a = a.strip()
+                temp[ind] = a[0].upper() + a[1]
+            try:
+                temp.sort()
+            except:
+                temp = [temp]
+            print(temp)
+            valid = positionCheck(temp, i, playerPos)
+            if valid == True:
+                for a in temp:
+                    playerPos.append(a)
+                print("Valid Position")
+                loop = False
+            else:
+                loop = True
+    return playerPos
+
 #default values
 ltnConvert = str.maketrans("ABCDEFGH", "12345678")
 coordList = [
@@ -151,54 +197,15 @@ colList = {
 instructions= "Instructions:\nplaceholder"
 playerTargeted = []
 botTargeted = []
-playerPos = []
-
-botPos = {}
-botPosList = []
 boatLength = [2, 2]
-pBoatLength = boatLength.copy()
-z = 0
-while len(boatLength) > 0:
-    direction = random.choice("12")
-    if direction == "1":
-        boat, loop = horizontal(boatLength[0], botPosList)
-    if direction == "2":
-        boat, loop = vertical(boatLength[0], botPosList)
-    botPos[str(z)] = boat
-    for i in boat:
-        botPosList.append(i)
-    boatLength.pop(0)
-    z+=1
-#print(botPos)
-#print(botPosList)
+
+botPos, botPosList = botPosMaker(boatLength.copy())
+
 print(instructions)
 
-for i in pBoatLength:
-    print()
-    loop = True
-    while loop:
-        temp = input(f"Set 1 boat (length:{i}): ")
-        temp.upper()
-        if "," in temp:
-            temp = temp.strip().split(", ")
-        elif " " in temp:
-            temp = temp.split()
-        try:
-            temp.sort()
-        except:
-            temp = [temp]
-        for a in temp:
-            temp[temp.index(a)] = a[0].upper() + a[1]
-        valid = positionCheck(temp, i, playerPos)
-        if valid == True:
-            for a in temp:
-                playerPos.append(a)
-            print("Valid Position")
-            loop = False
-        else:
-            loop = True
+playerPos = playerPosMaker(boatLength.copy())
     
-while botPos != [] or playerPos != []:
+while botPos != [] or playerPos != []:#Game Loop
     hintType = ""
     check = ""
     while hintType == "":#Hint
