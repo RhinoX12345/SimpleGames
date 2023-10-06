@@ -165,61 +165,42 @@
 
             //Player Position Input
             function positionCheck(position, length, current){
-                if (position.length != length){
-                    document.getElementById("feedback").innerHTML = "Incorrect number of positions";
-                    console.log("Incorrect number of positions")
-                    return false
-                }
-                for (i in position){
-                    if (pcells.includes(position[i]) == false){
-                        document.getElementById("feedback").innerHTML = "Invalid input";
-                        console.log("Invalid input")
-                        return false
-                    }
-                }
-                let dump = [...position];
-                for (i in position){
-                    if (current.includes(position[i])==true){
-                        document.getElementById("feedback").innerHTML = "Duplicate input";
-                        console.log("Duplicate input")
-                        return false
-                    }
-                    dump.splice(dump.indexOf(position[i]), 1)
-                    if (dump.includes(position[i])==true){
-                        document.getElementById("feedback").innerHTML = "Duplicate input";
-                        console.log("Duplicate input")
-                        return false
-                    }
-                }
                 if (length > 1){
+                    for (i in position){
+                        position[i] = position[i].replace("P", "")
+                    }
                     let pos1 = position[0]
                     let pos2 = position[1]
-                    if (rowList[pos1[1]].includes(pos2)==true){
+                    let row = rowList[pos1[0]]
+                    let col = colList[pos1[1]]
+                    if (row.includes(pos2)==true){
                         console.log("horizontal")
                         for (i in position){
-                            check = (pcells.indexOf(postion[i]) - pcells.indexOf(pos1)) == (position.indexOf(pos1) + i)
-                            if (check==true){
-                                continue
+                            if ((cells.indexOf(position[i]) - cells.indexOf(pos1)) == (position.indexOf(pos1) + i)){
+                                return true
                             }else{
                                 document.getElementById("feedback").innerHTML = "Invalid position";
                                 return false
                             }
                         }
-                    }else if (colList[pos1[2]].includes(pos2)==true){
+                    }else if (col.includes(pos2)==true){
                         console.log("vertical")
                         for (i in position){
-                            check = (pcells.indexOf(postion[i]) - pcells.indexOf(pos1)) == (position.indexOf(pos1) + i*8)
-                            if (check==true){
-                                continue
+                            if ((cells.indexOf(position[i]) - cells.indexOf(pos1)) == (position.indexOf(pos1) + i*8)){
+                                return true
                             }else{
                                 document.getElementById("feedback").innerHTML = "Invalid position";
                                 return false
                             }
                         }
+                    }else{
+                        document.getElementById("feedback").innerHTML = "Invalid position";
+                        return false
                     }
+                }else{
+                    document.getElementById("feedback").innerHTML = "Valid position"
+                    return true
                 }
-                document.getElementById("feedback").innerHTML = "Valid position"
-                return true
             }
             function pset(id) {
                 document.getElementById("feedback").innerHTML = "";
@@ -227,6 +208,7 @@
                     pset1(id);
                 }
                 if (status == "setup" && tempselect.length == boatlength[0]){
+                    tempselect.sort()
                     let temp = [...tempselect];
                     test = positionCheck(temp, boatlength[0], playerPos);
                     if (test == true){
@@ -237,7 +219,7 @@
                         tempselect = [];
                     } else {
                         while (tempselect.length > 0){
-                            document.getElementById(tempselect[i]).style.backgroundColor = "rgb(220, 220, 220)";
+                            document.getElementById(tempselect[0]).style.backgroundColor = "rgb(220, 220, 220)";
                             tempselect.splice(0, 1);
                         }
                     }
@@ -283,7 +265,6 @@
             }
             function hint(type){
                 correctPos = botPosList[Math.floor(Math.random()*botPosList.length)];
-                console.log(correctPos)
                 dump = hintList[Math.floor(Math.random()*hintList.length)]
                 dump = dump.split("/")
                 question = dump[0]
@@ -291,9 +272,9 @@
                 if (prompt(question)==ans){
                     document.getElementById("feedback").innerHTML = "Correct!"
                     if (type=="row"){
-                        document.getElementById("hint").innerHTML = correctPos[0]
+                        document.getElementById("hint").innerHTML = "Hint: " + correctPos[0]
                     } else if (type=="col"){
-                        document.getElementById("hint").innerHTML = correctPos[1]
+                        document.getElementById("hint").innerHTML = "Hint: " + correctPos[1]
                     }
                 } else {
                     document.getElementById("feedback").innerHTML = "Incorrect"
@@ -306,11 +287,11 @@
                 element = document.getElementById(id);
                 let id1 = id.slice(1,3);
                 if (status == "target") {
-                    if (playerPos.includes(id)==true){
-                        document.getElementById("feedback").innerHTML = "Already previously selected"
-                        return //fix: make it so it doesn't let you click a square again
-                    }
-                    if (botPosList.includes(id1)) {
+                    console.log(playerTargetted)
+                    if (playerTargetted.includes(id1)==true){
+                        document.getElementById("feedback").innerHTML = "Already previously selected. Please pick another target"
+                        return
+                    }else if (botPosList.includes(id1)) {
                         element.style.backgroundColor = "rgb(200, 0, 0)";
                         document.getElementById("feedback").innerHTML = "Hit";
                         botPosList.splice(botPosList.indexOf(id1), 1)

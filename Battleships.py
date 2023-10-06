@@ -197,7 +197,7 @@ colList = {
 instructions= "Instructions:\nplaceholder"
 playerTargeted = []
 botTargeted = []
-boatLength = [2, 2]
+boatLength = [4, 3]
 
 botPos, botPosList = botPosMaker(boatLength.copy())
 
