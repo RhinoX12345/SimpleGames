@@ -5,6 +5,12 @@
         <style>
             #visible {
                 position: absolute;
+                top: 10px;
+            }
+
+            #hintdiv {
+                position: absolute;
+                top: 55px;
             }
 
             #background {
@@ -56,14 +62,14 @@
             #table1 {
                 position: absolute;
                 left: 17%;
-                top: 10vh;
+                top: 15vh;
                 border-collapse: collapse;
             }
 
             #table2 {
                 position: absolute;
                 right: 17%;
-                top: 10vh;
+                top: 15vh;
                 border-collapse: collapse;
             }
 
@@ -113,9 +119,39 @@
                 "7":['A7', 'B7', 'C7', 'D7', 'E7', 'F7', 'G7', 'H7'],
                 "8":['A8', 'B8', 'C8', 'D8', 'E8', 'F8', 'G8', 'H8']};
             const hintList = [
-                "placeholder 1/1",
-                "placeholder 2/2",
-                "placeholder 3/3"];
+                "Find the solutions (roots) of the quadratic equation: x² - 4x + 4 = 0/X = 2",
+                "Determine the discriminant of f(x) = 3x² + 6x +2/D = 12",
+                "Solve x² + 7x + 12 = 0/X = -3, -4",
+                "Find the vertex of the parabola defined by the quadratic equation y = x² - 6x + 9/(3, 0)",
+                "Ben opened his history book, and noticed that the product of the two pages in front of him was equal to 1122. What were the numbers of those pages?/33, 34",
+                "Solve x² - 6x + 9 = x - 3/3, 4",
+                "Find the difference between the roots of 2x² + 5x - 3/3.5",
+                "Solve (2 + x)2(14 + x) = 1280/X = 6",
+                "Where will these two graphs meet: 2x² + y = 34 and (x - 3)(y + 5) = 7/-72,192, (4, 2)",
+                "Find the solutions (roots) of the quadratic equation: x² - 2x + 1 = 0/X = 1",
+                "Find the value of k for which x² + kx+ 16 = 0 has two equal roots/K = 8",
+                "Solve the quadratic equation 2x² - 7x + 3 = 0/X = 3, 0.5",
+                "Find the vertex of the parabola defined by the quadratic equation y = -x² - 4x + 9/(-2, 13)",
+                "Assuming b 0 , does the sign of b affect the value of the discriminant?/No",
+                "Find all the values of c such that -4x² + 8x + c has two real roots./C > -4",
+                "Solve 4x² - 9 = 0/X = 1.5, -1.5",
+                "Solve x² + x - 2 = 3x - 3/X = 1",
+                "Solve 2x² - 14x + 8 = -6x/X = 2",
+                "Solve x3 - 9x² + 27x - 27 = 0/X = 3",
+                "Solve 9(x - 5)2 = x + 5/X = 4, 6.1",
+                "Solve 9(x - 5)2 = 0/X = 5",
+                "Find the value of k for which x² + kx + 9 = 0 has two equal roots/"K = 6,
+                "Determine the discriminant of f(x) = 3x² + √31x +2/D = 7",
+                "Solve (2 + x)2(14 + x) = 2200/X = 8",
+                "Solve 8x² - 144x + 648 = 0/X = 9",
+                "Solve x3-10x² = 0/X = 10",
+                "Add the results of x² - 11x + 30 = 0/11",
+                "Solve x² - 5x + 12 = 0/X = 12",
+                "Solve x² - 26x + 169 = 0/X = 13",
+                "Solve x² - 12x + 28 = 56/X = 14, -2",
+                "Solve x² - 6x + 15 = 150/X = 15, -9",
+                "Add the results of x² - 16x - 80 = 0/16"];
+                
             let playerPos = [], tempselect = [], pcells = [], botPos = {}, botPosList = [], boatlength = [], lengthCopy = [], correctPos = "", botTargetted = [], playerTargetted = [];
             for (i in cells){
                 pcells.push("P"+cells[i]);
@@ -140,7 +176,10 @@
                     document.getElementById("instruct").innerHTML = "Please input " + lengthCopy.length + " boats of length(s): " + lengthCopy;
                 }
                 if(status == "hint"){
-                    document.getElementById("instruct").innerHTML = "Input Row or Column below to recieve a hint";
+                    document.getElementById("hintq").innerHTML = "Input Row or Column below to recieve a hint";
+                    document.getElementById("hintdiv").hidden = false
+                } else {
+                    document.getElementById("hintdiv").hidden = true
                 }
                 if(status == "target"){
                     document.getElementById("instruct").innerHTML = "Click on a position on the target board to shoot";
@@ -175,8 +214,10 @@
                     let col = colList[pos1[1]]
                     if (row.includes(pos2)==true){
                         console.log("horizontal")
-                        for (i in position){
+                        console.log(position.length)
+                        for (i=1; i<position.length; i++){
                             if ((cells.indexOf(position[i]) - cells.indexOf(pos1)) == (position.indexOf(pos1) + i)){
+                                document.getElementById("feedback").innerHTML = "Valid position";
                                 return true
                             }else{
                                 document.getElementById("feedback").innerHTML = "Invalid position";
@@ -185,8 +226,9 @@
                         }
                     }else if (col.includes(pos2)==true){
                         console.log("vertical")
-                        for (i in position){
+                        for (i=1; i<position.length; i++){
                             if ((cells.indexOf(position[i]) - cells.indexOf(pos1)) == (position.indexOf(pos1) + i*8)){
+                                document.getElementById("feedback").innerHTML = "Valid position";
                                 return true
                             }else{
                                 document.getElementById("feedback").innerHTML = "Invalid position";
@@ -225,6 +267,7 @@
                     }
                     if (boatlength.length == 0){
                         status = "hint"
+                        document.getElementById("feedback").innerHTML = ""
                     }
                 }
             }
@@ -242,39 +285,20 @@
             }
             
             //Hint
-            function enter(event){
+            function hint(type){
                 if (status != "hint"){
-                    console.log(botPosList)
                     return;
                 }
-                let x = event.key;
-                if (x == "Enter"){
-                    hintput = document.getElementById("in1").value;
-                    document.getElementById("in1").value = "";
-                    hintput = hintput.toLowerCase();
-                    if (hintput == "row"){
-                        hint("row")
-                    } else if (hintput == "column"){
-                        hint("col")
-                    } else {
-                        document.getElementById("in1").value = "";
-                        document.getElementById("feedback").innerHTML = "Invalid input";
-                    }
-                }
-                
-            }
-            function hint(type){
                 correctPos = botPosList[Math.floor(Math.random()*botPosList.length)];
                 dump = hintList[Math.floor(Math.random()*hintList.length)]
                 dump = dump.split("/")
                 question = dump[0]
                 ans = dump[1]
                 if (prompt(question)==ans){
-                    document.getElementById("feedback").innerHTML = "Correct!"
                     if (type=="row"){
-                        document.getElementById("hint").innerHTML = "Hint: " + correctPos[0]
+                        document.getElementById("feedback").innerHTML = "Correct! Hint: " + correctPos[0]
                     } else if (type=="col"){
-                        document.getElementById("hint").innerHTML = "Hint: " + correctPos[1]
+                        document.getElementById("feedback").innerHTML = "Correct! Hint: " + correctPos[1]
                     }
                 } else {
                     document.getElementById("feedback").innerHTML = "Incorrect"
@@ -344,14 +368,17 @@
             <p id="bot"></p>
             <p id="boatlength"></p>
         </div>
-        <div id="visible">
+        <div id="visible" style="top:10px;">
             <p id="instruct">Placeholder</p>
             <p id="feedback"></p>
-            <p id="hint"></p>
-            <br>
-            <input id="in1" onkeypress="enter(event)" placeholder="Hint (Row/Column)">
-            <br><br>
+        </div>
+        <div id="hintdiv" hidden>
+            <p id="hintq">Question</p>
+            <button id="row" onclick="hint(id)">Row</button>
+            <button id="col" onclick="hint(id)">Column</button>
             <button onclick="skip()">Skip</button>
+        </div>
+        <div id="visible" style="top:140px;">
             <button onclick="reset()">Reset</button>
         </div>
         <table id="table1" border="1px">

@@ -108,15 +108,21 @@ def positionCheck(position, length, current):
                 if check:
                     continue
                 else:
+                    print("Invalid Position")
                     return False
         elif pos2 in colList[pos1[1]]:
             print("vertical")
             for i in position:
+                #check = (index of coord in coordList - index of 1st pos in coordlist == index of 1st pos in position + index of item*8)
                 check = (coordList.index(i) - coordList.index(pos1)) == (position.index(pos1) + position.index(i)*8)
                 if check:
                     continue
                 else:
+                    print("Invalid Position")
                     return False
+        else:
+            print("Invalid Position")
+            return False
     return True
 
 def botPosMaker(bBoatLength):
