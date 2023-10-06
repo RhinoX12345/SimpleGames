@@ -5,6 +5,12 @@
         <style>
             #visible {
                 position: absolute;
+                top: 10px;
+            }
+
+            #hintdiv {
+                position: absolute;
+                top: 55px;
             }
 
             #background {
@@ -56,14 +62,14 @@
             #table1 {
                 position: absolute;
                 left: 17%;
-                top: 10vh;
+                top: 15vh;
                 border-collapse: collapse;
             }
 
             #table2 {
                 position: absolute;
                 right: 17%;
-                top: 10vh;
+                top: 15vh;
                 border-collapse: collapse;
             }
 
@@ -140,7 +146,10 @@
                     document.getElementById("instruct").innerHTML = "Please input " + lengthCopy.length + " boats of length(s): " + lengthCopy;
                 }
                 if(status == "hint"){
-                    document.getElementById("instruct").innerHTML = "Input Row or Column below to recieve a hint";
+                    document.getElementById("hintq").innerHTML = "Input Row or Column below to recieve a hint";
+                    document.getElementById("hintdiv").hidden = false
+                } else {
+                    document.getElementById("hintdiv").hidden = true
                 }
                 if(status == "target"){
                     document.getElementById("instruct").innerHTML = "Click on a position on the target board to shoot";
@@ -175,8 +184,10 @@
                     let col = colList[pos1[1]]
                     if (row.includes(pos2)==true){
                         console.log("horizontal")
-                        for (i in position){
+                        console.log(position.length)
+                        for (i=1; i<position.length; i++){
                             if ((cells.indexOf(position[i]) - cells.indexOf(pos1)) == (position.indexOf(pos1) + i)){
+                                document.getElementById("feedback").innerHTML = "Valid position";
                                 return true
                             }else{
                                 document.getElementById("feedback").innerHTML = "Invalid position";
@@ -185,8 +196,9 @@
                         }
                     }else if (col.includes(pos2)==true){
                         console.log("vertical")
-                        for (i in position){
+                        for (i=1; i<position.length; i++){
                             if ((cells.indexOf(position[i]) - cells.indexOf(pos1)) == (position.indexOf(pos1) + i*8)){
+                                document.getElementById("feedback").innerHTML = "Valid position";
                                 return true
                             }else{
                                 document.getElementById("feedback").innerHTML = "Invalid position";
@@ -225,6 +237,7 @@
                     }
                     if (boatlength.length == 0){
                         status = "hint"
+                        document.getElementById("feedback").innerHTML = ""
                     }
                 }
             }
@@ -242,39 +255,20 @@
             }
             
             //Hint
-            function enter(event){
+            function hint(type){
                 if (status != "hint"){
-                    console.log(botPosList)
                     return;
                 }
-                let x = event.key;
-                if (x == "Enter"){
-                    hintput = document.getElementById("in1").value;
-                    document.getElementById("in1").value = "";
-                    hintput = hintput.toLowerCase();
-                    if (hintput == "row"){
-                        hint("row")
-                    } else if (hintput == "column"){
-                        hint("col")
-                    } else {
-                        document.getElementById("in1").value = "";
-                        document.getElementById("feedback").innerHTML = "Invalid input";
-                    }
-                }
-                
-            }
-            function hint(type){
                 correctPos = botPosList[Math.floor(Math.random()*botPosList.length)];
                 dump = hintList[Math.floor(Math.random()*hintList.length)]
                 dump = dump.split("/")
                 question = dump[0]
                 ans = dump[1]
                 if (prompt(question)==ans){
-                    document.getElementById("feedback").innerHTML = "Correct!"
                     if (type=="row"){
-                        document.getElementById("hint").innerHTML = "Hint: " + correctPos[0]
+                        document.getElementById("feedback").innerHTML = "Correct! Hint: " + correctPos[0]
                     } else if (type=="col"){
-                        document.getElementById("hint").innerHTML = "Hint: " + correctPos[1]
+                        document.getElementById("feedback").innerHTML = "Correct! Hint: " + correctPos[1]
                     }
                 } else {
                     document.getElementById("feedback").innerHTML = "Incorrect"
@@ -344,14 +338,17 @@
             <p id="bot"></p>
             <p id="boatlength"></p>
         </div>
-        <div id="visible">
+        <div id="visible" style="top:10px;">
             <p id="instruct">Placeholder</p>
             <p id="feedback"></p>
-            <p id="hint"></p>
-            <br>
-            <input id="in1" onkeypress="enter(event)" placeholder="Hint (Row/Column)">
-            <br><br>
+        </div>
+        <div id="hintdiv" hidden>
+            <p id="hintq">Question</p>
+            <button id="row" onclick="hint(id)">Row</button>
+            <button id="col" onclick="hint(id)">Column</button>
             <button onclick="skip()">Skip</button>
+        </div>
+        <div id="visible" style="top:140px;">
             <button onclick="reset()">Reset</button>
         </div>
         <table id="table1" border="1px">
