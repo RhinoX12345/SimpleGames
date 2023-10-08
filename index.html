@@ -170,9 +170,10 @@
             }
             setInterval(loop, 100);
             function loop(){
-                check1 = document.getElementById("bot").innerHTML;
-                check2 = document.getElementById("boatlength").innerHTML;
                 if(status == "pregame"){
+                    let check1 = document.getElementById("bot").innerHTML;
+                    let check2 = document.getElementById("boatlength").innerHTML;
+                    console.log(check2)
                     document.getElementById("hintdiv").hidden = true
                     try{
                         let msg = check1.split("/");
@@ -185,6 +186,8 @@
                             status = "setup";
                         }
                         lengthCopy = [...boatlength];
+                        console.log(boatlength)
+                        console.log(lengthCopy)
                     } catch {
                         let a=1
                     }
@@ -274,7 +277,7 @@
             function pset(id) {
                 document.getElementById("feedback").hidden = true
                 document.getElementById("feedback").innerHTML = "";
-                if (status == "setup" && tempselect.length < boatlength[0]) {
+                if (status == "setup" && tempselect.length < boatlength[0] && playerPos.includes(id)==false) {
                     pset1(id);
                 }
                 if (status == "setup" && tempselect.length == boatlength[0]){

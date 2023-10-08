@@ -1,11 +1,5 @@
-import random, pyscript#, javascript
+import random, pyscript
 from pyscript import document
-
-#functions
-#def __init__(self):
-#    self.htmltopy = js.document.getElementById("htmltopy")
-#    self.pytohtml = js.document.getElementById("pytohtml")
-#    self.pyinput = js.document.getElementById("pyinput")
 
 def horizontal(length, current):
     rangeMax = 9-length
@@ -62,7 +56,6 @@ def botPosMaker(bBoatLength):
     return botPos, botPosList
 
 #default values
-ltnConvert = str.maketrans("ABCDEFGH", "12345678")
 coordList = [
     'A1','A2','A3','A4','A5','A6','A7','A8',
     'B1','B2','B3','B4','B5','B6','B7','B8',
@@ -90,8 +83,7 @@ colList = {
     "6":['A6', 'B6', 'C6', 'D6', 'E6', 'F6', 'G6', 'H6'],
     "7":['A7', 'B7', 'C7', 'D7', 'E7', 'F7', 'G7', 'H7'],
     "8":['A8', 'B8', 'C8', 'D8', 'E8', 'F8', 'G8', 'H8']}
-botTargeted = []
-boatLength = [2, 2]
+boatLength = [2, 2, 2, 2]
 
 botPos, botPosList = botPosMaker(boatLength.copy())
 
