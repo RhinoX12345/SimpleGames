@@ -200,7 +200,6 @@
                     document.getElementById("instruct").innerHTML = "Click on a position on the target board to shoot";
                 }
                 if(status == "hint" || status == "target"){
-                    document.getElementById("feedback").innerHTML = ""
                     if (botPosList.length == 0){
                         if(confirm("You Win!\nClick OK to start a New Game")){
                             reset("comp")
@@ -214,6 +213,7 @@
                     }
                 }
                 if(status == "end"){
+                    document.getElementById("feedback").innerHTML = ""
                     document.getElementById("instruct").innerHTML = "Game Over"
                 }
             }
