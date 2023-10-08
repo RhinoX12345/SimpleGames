@@ -49,6 +49,7 @@
                 background-color:white;
                 margin: 0px;
                 padding-top:2px;
+                padding-bottom:2px;
                 padding-right:5px;
                 padding-left:5px;
             }
@@ -134,32 +135,32 @@
                 //"Solve x² + 7x + 12 = 0/-3, -4",
                 //"Find the vertex of the parabola defined by the quadratic equation y = x² - 6x + 9/3, 0",
                 //"Ben opened his history book, and noticed that the product of the two pages in front of him was equal to 1122. What were the numbers of those pages?/33, 34",
-                //"Solve x² - 6x + 9 = x - 3/3, 4",
+                "Find the product of the roots of x² - 6x + 9 = x - 3/12",
                 "Find the difference between the roots of 2x² + 5x - 3/3.5",
                 "Solve (2 + x)²(14 + x) = 1280/6",
-                "Where will these two graphs meet: 2x² + y = 34 and (x - 3)(y + 5) (where x and y are whole numbers) = (4, 2)",
+                //"Where will these two graphs meet: 2x² + y = 34 and (x - 3)(y + 5) (where x and y are whole numbers)/(4, 2)",
                 "Find the solutions (roots) of the quadratic equation: x² - 2x + 1 = 0/1",
                 "Find the value of k for which x² + kx+ 16 = 0 has two equal roots/8",
                 //"Solve the quadratic equation 2x² - 7x + 3 = 0/3, 0.5",
                 //"Find the vertex of the parabola defined by the quadratic equation y = -x² - 4x + 9/-2, 13",
-                "Assuming b 0 , does the sign of b affect the value of the discriminant?/No",
+                "Assuming b≠0, does the sign of b affect the value of the discriminant?/no",
                 "Find all the values of c such that -4x² + 8x + c has two real roots./c>-4",
                 //"Solve 4x² - 9 = 0/1.5, -1.5",
                 "Solve x² + x - 2 = 3x - 3/1",
                 "Solve 2x² - 14x + 8 = -6x/2",
                 "Solve x³ - 9x² + 27x - 27 = 0/3",
                 //"Solve 9(x - 5)² = x + 5/4, 6.1",
-                "Solve 9(x - 5)² = 0/5",
+                "Solve 9x² - 90x + 225 = 0/5",
                 "Find the value of k for which x² + kx + 9 = 0 has two equal roots/6",
                 "Determine the discriminant of f(x) = 3x² + √31x +2/7",
                 "Solve (2 + x)²(14 + x) = 2200/8",
                 "Solve 8x² - 144x + 648 = 0/9",
                 "Solve x³-10x² = 0/10",
-                "Add the results of x² - 11x + 30 = 0/11",
-                "Solve x² - 5x + 12 = 0/12",
+                "Find the difference between the roots of x² - 11x + 30 = 0/1",
+                "Add the results of x² - 7x + 12 = 0/7",
                 "Solve x² - 26x + 169 = 0/13",
-                //"Solve x² - 12x + 28 = 56/14, -2",
-                //"Solve x² - 6x + 15 = 150/15, -9",
+                "Add the results of x² - 12x + 28 = 56/12",
+                "Find the difference between the roots of  x² - 6x + 15 = 150/24",
                 "Add the results of x² - 16x - 80 = 0/16"];
                 
             let playerPos = [], tempselect = [], pcells = [], botPos = {}, botPosList = [], boatlength = [], lengthCopy = [], correctPos = "", botTargetted = [], playerTargetted = [];
@@ -199,6 +200,7 @@
                     document.getElementById("instruct").innerHTML = "Click on a position on the target board to shoot";
                 }
                 if(status == "hint" || status == "target"){
+                    document.getElementById("feedback").innerHTML = ""
                     if (botPosList.length == 0){
                         if(confirm("You Win!\nClick OK to start a New Game")){
                             reset("comp")
@@ -222,6 +224,7 @@
                     for (i in position){
                         position[i] = position[i].replace("P", "")
                     }
+                    let pass = false
                     let pos1 = position[0]
                     let pos2 = position[1]
                     let row = rowList[pos1[0]]
@@ -230,24 +233,29 @@
                         for (i=1; i<position.length; i++){
                             if ((cells.indexOf(position[i]) - cells.indexOf(pos1)) == (position.indexOf(pos1) + i)){
                                 document.getElementById("feedback").innerHTML = "Valid position";
-                                return true
+                                pass = true
                             }else{
                                 document.getElementById("feedback").innerHTML = "Invalid position";
-                                return false
+                                pass = false
                             }
                         }
                     }else if (col.includes(pos2)==true){
                         for (i=1; i<position.length; i++){
                             if ((cells.indexOf(position[i]) - cells.indexOf(pos1)) == (position.indexOf(pos1) + i*8)){
                                 document.getElementById("feedback").innerHTML = "Valid position";
-                                return true
+                                pass = true
                             }else{
                                 document.getElementById("feedback").innerHTML = "Invalid position";
-                                return false
+                                pass = false
                             }
                         }
                     }else{
                         document.getElementById("feedback").innerHTML = "Invalid position";
+                        pass = false
+                    }
+                    if (pass == true){
+                        return true
+                    } else {
                         return false
                     }
                 }else{
@@ -306,7 +314,11 @@
                 question = dump[0]
                 ans = dump[1]
                 answer = prompt(question)
-                answer = answer.replaceAll(" ","").replaceAll("(","").replaceAll(")","")
+                try{
+                    answer = answer.replaceAll(" ","").replaceAll("(","").replaceAll(")","").toLowerCase()
+                } catch {
+                    return
+                }
                 if (answer==ans){
                     if (type=="row"){
                         document.getElementById("feedback").innerHTML = "Correct! Hint: " + correctPos[0]
@@ -343,9 +355,9 @@
             
             //Bot
             function bot(){
-                let x = Math.floor(Math.random()*10)
+                let x = Math.random()*10
                 let botTarget = ""
-                if (x < 7){
+                if (x < 8){
                     botTarget = "P" + cells[Math.floor(Math.random()*64)];
                     while (botTargetted.includes(botTarget)){
                         botTarget = "P" + cells[Math.floor(Math.random()*64)];
@@ -393,7 +405,7 @@
             <p id="feedback"></p>
         </div>
         <div id="hintdiv" hidden>
-            <p id="hintq">Question</p>
+            <p id="hintq" style="width:fit-content">Question</p>
             <div style="position:relative;top:10px;"><button id="row" onclick="hint(id)">Row</button> <button id="col" onclick="hint(id)">Column</button> <button onclick="skip()">Skip</button></div>
         </div>
         <div id="visible" style="top:150px;">
