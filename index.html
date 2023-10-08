@@ -46,7 +46,8 @@
             }
 
             p {
-                background-color:white;
+                background-color:rgb(255, 255, 255);
+                opacity: 90%;
                 margin: 0px;
                 padding-top:2px;
                 padding-bottom:2px;
@@ -172,6 +173,7 @@
                 check1 = document.getElementById("bot").innerHTML;
                 check2 = document.getElementById("boatlength").innerHTML;
                 if(status == "pregame"){
+                    document.getElementById("hintdiv").hidden = true
                     try{
                         let msg = check1.split("/");
                         botPos = msg[0];
@@ -213,7 +215,7 @@
                     }
                 }
                 if(status == "end"){
-                    document.getElementById("feedback").innerHTML = ""
+                    document.getElementById("feedback").hidden = true
                     document.getElementById("instruct").innerHTML = "Game Over"
                 }
             }
@@ -233,9 +235,11 @@
                         for (i=1; i<position.length; i++){
                             if ((cells.indexOf(position[i]) - cells.indexOf(pos1)) == (position.indexOf(pos1) + i)){
                                 document.getElementById("feedback").innerHTML = "Valid position";
+                                document.getElementById("feedback").hidden = false
                                 pass = true
                             }else{
                                 document.getElementById("feedback").innerHTML = "Invalid position";
+                                document.getElementById("feedback").hidden = false
                                 pass = false
                             }
                         }
@@ -243,14 +247,17 @@
                         for (i=1; i<position.length; i++){
                             if ((cells.indexOf(position[i]) - cells.indexOf(pos1)) == (position.indexOf(pos1) + i*8)){
                                 document.getElementById("feedback").innerHTML = "Valid position";
+                                document.getElementById("feedback").hidden = false
                                 pass = true
                             }else{
                                 document.getElementById("feedback").innerHTML = "Invalid position";
+                                document.getElementById("feedback").hidden = false
                                 pass = false
                             }
                         }
                     }else{
                         document.getElementById("feedback").innerHTML = "Invalid position";
+                        document.getElementById("feedback").hidden = false
                         pass = false
                     }
                     if (pass == true){
@@ -260,10 +267,12 @@
                     }
                 }else{
                     document.getElementById("feedback").innerHTML = "Valid position"
+                    document.getElementById("feedback").hidden = false
                     return true
                 }
             }
             function pset(id) {
+                document.getElementById("feedback").hidden = true
                 document.getElementById("feedback").innerHTML = "";
                 if (status == "setup" && tempselect.length < boatlength[0]) {
                     pset1(id);
@@ -287,6 +296,7 @@
                     if (boatlength.length == 0){
                         status = "hint"
                         document.getElementById("feedback").innerHTML = ""
+                        document.getElementById("feedback").hidden = true
                     }
                 }
             }
@@ -322,11 +332,14 @@
                 if (answer==ans){
                     if (type=="row"){
                         document.getElementById("feedback").innerHTML = "Correct! Hint: " + correctPos[0]
+                        document.getElementById("feedback").hidden = false
                     } else if (type=="col"){
                         document.getElementById("feedback").innerHTML = "Correct! Hint: " + correctPos[1]
+                        document.getElementById("feedback").hidden = false
                     }
                 } else {
                     document.getElementById("feedback").innerHTML = "Incorrect"
+                    document.getElementById("feedback").hidden = false
                 }
                 status = "target";
             }
@@ -401,8 +414,8 @@
             <p id="boatlength"></p>
         </div>
         <div id="visible" style="top:10px;">
-            <p id="instruct">Please Wait...</p>
-            <p id="feedback"></p>
+            <p id="instruct" style="width:fit-content">Please Wait...</p>
+            <p id="feedback" style="width:fit-content" hidden></p>
         </div>
         <div id="hintdiv" hidden>
             <p id="hintq" style="width:fit-content">Question</p>
