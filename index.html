@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Math Battleships</title>
+        <title>Mathship Mayhem</title>
         <style>
             #visible {
                 position: absolute;
@@ -13,12 +13,18 @@
                 top: 65px;
             }
 
+            img {
+                height:inherit;
+                width:inherit;
+                margin: 0px;
+                border: 0px;
+                padding: 0px;
+            }
+
             #background {
                 position: fixed;
                 top: 0px;
                 left: 0px;
-                margin: 0px;
-                border: 0px;
                 height: 100vh;
                 width: 100vw;
             }
@@ -43,6 +49,7 @@
                 padding-block: 0px;
                 padding-inline: 0px;
                 text-align: center;
+                display:inline-block;
             }
 
             p {
@@ -88,6 +95,37 @@
             #coord {
                 background-color: white;
                 text-align: center;
+            }
+
+            #feedback {
+                background-color: yellow;
+            }
+
+            .overlay {
+                position:absolute;
+                top:0px;
+                left:0px;
+                border:0px;
+                background-color: white;
+                opacity: 50%;
+                height:100vh;
+                width:100vw;
+                text-align: center;
+                font-family: -apple-system;
+                color:black;
+            }
+
+            #loading{
+                position:absolute;
+                top:0px;
+                left:0px;
+                border:0px;
+                height:100vh;
+                width:100vw;
+                background-color:gray;
+                opacity: 90%;
+                text-align:center;
+                font-size:50px;
             }
         </style>
         <meta charset="UTF-8">
@@ -163,12 +201,17 @@
                 "Add the results of x² - 12x + 28 = 56/12",
                 "Find the difference between the roots of  x² - 6x + 15 = 150/24",
                 "Add the results of x² - 16x - 80 = 0/16"];
-                
-            let playerPos = [], tempselect = [], pcells = [], botPos = {}, botPosList = [], boatlength = [], lengthCopy = [], correctPos = "", botTargetted = [], playerTargetted = [];
+            
+            let playerPos = [], tempselect = [], pcells = [], botPos = {}, botPosList = [], boatlength = [], lengthCopy = [], correctPos = "", botTargetted = [], playerTargetted = [], hintState = 1;
             for (i in cells){
                 pcells.push("P"+cells[i]);
             }
             setInterval(loop, 100);
+            setTimeout(hud, 2000)
+            function hud(){
+                document.getElementById("loading").hidden = true
+                document.getElementById("start").hidden = false
+            }
             function loop(){
                 if(status == "pregame"){
                     let check1 = document.getElementById("bot").innerHTML;
@@ -196,15 +239,13 @@
                     document.getElementById("instruct").innerHTML = "Please input " + lengthCopy.length + " boats of length(s): " + lengthCopy;
                 }
                 if(status == "hint"){
-                    document.getElementById("hintq").innerHTML = "Input Row or Column below to receive a hint";
+                    document.getElementById("hintq").innerHTML = "Input Row or Column below to receive a hint.";
+                    document.getElementById("instruct").innerHTML = "Click on a position on the target board to shoot";
                     document.getElementById("hintdiv").hidden = false
                 } else {
                     document.getElementById("hintdiv").hidden = true
                 }
-                if(status == "target"){
-                    document.getElementById("instruct").innerHTML = "Click on a position on the target board to shoot";
-                }
-                if(status == "hint" || status == "target"){
+                if(status == "hint"){
                     if (botPosList.length == 0){
                         if(confirm("You Win!\nClick OK to start a New Game")){
                             reset("comp")
@@ -226,6 +267,7 @@
             //Player Position Input
             function positionCheck(position, length, current){
                 if (length > 1){
+                    let defPos = [...position] 
                     for (i in position){
                         position[i] = position[i].replace("P", "")
                     }
@@ -234,7 +276,9 @@
                     let pos2 = position[1]
                     let row = rowList[pos1[0]]
                     let col = colList[pos1[1]]
+                    let boatDir = ""
                     if (row.includes(pos2)==true){
+                        boatDir = "horizontal"
                         for (i=1; i<position.length; i++){
                             if ((cells.indexOf(position[i]) - cells.indexOf(pos1)) == (position.indexOf(pos1) + i)){
                                 document.getElementById("feedback").innerHTML = "Valid position";
@@ -247,6 +291,7 @@
                             }
                         }
                     }else if (col.includes(pos2)==true){
+                        boatDir = "vertical"
                         for (i=1; i<position.length; i++){
                             if ((cells.indexOf(position[i]) - cells.indexOf(pos1)) == (position.indexOf(pos1) + i*8)){
                                 document.getElementById("feedback").innerHTML = "Valid position";
@@ -264,6 +309,13 @@
                         pass = false
                     }
                     if (pass == true){
+                        if (boatDir == "horizontal"){
+                            document.getElementById(defPos[0]).innerHTML = "<img src=\"boatLeft.png\">";
+                            document.getElementById(defPos[defPos.length-1]).innerHTML = "<img src=\"boatRight.png\">";
+                        } else if (boatDir == "vertical"){
+                            document.getElementById(defPos[0]).innerHTML = "<img src=\"boatUp.png\">";
+                            document.getElementById(defPos[defPos.length-1]).innerHTML = "<img src=\"boatDown.png\">";
+                        }
                         return true
                     } else {
                         return false
@@ -318,7 +370,7 @@
             
             //Hint
             function hint(type){
-                if (status != "hint"){
+                if (status != "hint" || hintState == 0){
                     return;
                 }
                 correctPos = botPosList[Math.floor(Math.random()*botPosList.length)];
@@ -344,14 +396,14 @@
                     document.getElementById("feedback").innerHTML = "Incorrect"
                     document.getElementById("feedback").hidden = false
                 }
-                status = "target";
+                hintState = 0
             }
 
             //Target
             function set(id) {
                 element = document.getElementById(id);
                 let id1 = id.slice(1,3);
-                if (status == "target") {
+                if (status == "hint") {
                     if (playerTargetted.includes(id1)==true){
                         document.getElementById("feedback").innerHTML = "Already previously selected. Please pick another target"
                         return
@@ -364,6 +416,7 @@
                         document.getElementById("feedback").innerHTML = "Miss";
                     }
                     playerTargetted.push(id1)
+                    hintState = 1
                     setTimeout(bot, 1000)
                     status = "hint"
                 }
@@ -373,7 +426,7 @@
             function bot(){
                 let x = Math.random()*10
                 let botTarget = ""
-                if (x < 8){
+                if (x < 8.5){
                     botTarget = "P" + cells[Math.floor(Math.random()*64)];
                     while (botTargetted.includes(botTarget)){
                         botTarget = "P" + cells[Math.floor(Math.random()*64)];
@@ -385,15 +438,18 @@
                 document.getElementById(botTarget).style.backgroundColor = "rgb(200, 0, 0)";
                 if (playerPos.includes(botTarget)){
                     playerPos.splice(playerPos.indexOf(botTarget), 1)
-                    document.getElementById(botTarget).innerHTML = "X";
                 }
                 
             }
             
-            //Reset
-            function skip(){
-                status = "target";
-
+            //System
+            function switch1(){
+                document.getElementById("start").hidden = true
+                document.getElementById("instruction").hidden = false
+            }
+            function switch2(){
+                document.getElementById("instruction").hidden = true
+                document.getElementById("game").hidden = false
             }
             function reset(key="t"){
                 if (key == "comp"){
@@ -416,228 +472,242 @@
             <p id="bot"></p>
             <p id="boatlength"></p>
         </div>
-        <div id="visible" style="top:10px;">
-            <p id="instruct" style="width:fit-content">Please Wait...</p>
-            <p id="feedback" style="width:fit-content" hidden></p>
+        <p style="position:absolute;top:0px;right:0px;text-align:right;">Coding and Game Function by Marcel<br>Graphics and Questions by Bryant</p>
+        <button id="loading">Loading...</button>
+        <button class="overlay" id="start" onclick="switch1()" hidden><p style="font-size:50px;">Mathship Mayhem</p><br><p style="font-size:25px">Click anywhere to start</p></button>
+        <button class="overlay" id="instruction" onclick="switch2()" hidden><p style="font-size:50px">Instructions:</p><br>
+            <ol style="font-size:25px;position:relative;left:25%;text-align:left;width:50%">
+                <li>Place your ships on your side of the field. FYI, the ships have a 1x2 size.</li>
+                <li>If you have done it properly, the game should immediately start, indicated by a new line that should appear saying “Input Row or Column below to receive a hint.” As the line states, you are allowed to either solve a math question to get a hint on the enemy ships' whereabouts or you can also skip and play the game normally.</li>
+                <li>After you select a tile to attack, the tile will either turn red or green, with red indicating a hit and green indicating a miss.</li>
+                <li>This will, in turn, make it the AI's turn to select a tile.</li>
+                <li>This goes on until either side completely destroys the enemy's fleet of ships</li>
+            </ol>
+        </button>
+        <div id="game" hidden>
+            <div id="visible" style="top:10px;">
+                <p id="instruct" style="width:fit-content"></p>
+                <p id="feedback" style="width:fit-content" hidden></p>
+            </div>
+            <div id="hintdiv" hidden>
+                <p id="hintq" style="width:fit-content">Question</p>
+                <div style="position:relative;top:10px;"><button id="row" onclick="hint(id)">Row</button> <button id="col" onclick="hint(id)">Column</button></div>
+            </div>
+            <div id="visible" style="top:150px;">
+                <button onclick="reset()">Reset</button>
+            </div>
+            <table id="table1" border="1px">
+                <tr height="40px">
+                    <th colspan="9">
+                        <p align="center">Player Position</p>
+                    </th>
+                </tr>
+                <tr>
+                    <td id="coord"></td>
+                    <td id="coord">1</td>
+                    <td id="coord">2</td>
+                    <td id="coord">3</td>
+                    <td id="coord">4</td>
+                    <td id="coord">5</td>
+                    <td id="coord">6</td>
+                    <td id="coord">7</td>
+                    <td id="coord">8</td>
+                </tr>
+                <tr>
+                    <td id="coord">A</td>
+                    <td class="button" id="PA1" onclick="pset(id)"> </td>
+                    <td class="button" id="PA2" onclick="pset(id)"> </td>
+                    <td class="button" id="PA3" onclick="pset(id)"> </td>
+                    <td class="button" id="PA4" onclick="pset(id)"> </td>
+                    <td class="button" id="PA5" onclick="pset(id)"> </td>
+                    <td class="button" id="PA6" onclick="pset(id)"> </td>
+                    <td class="button" id="PA7" onclick="pset(id)"> </td>
+                    <td class="button" id="PA8" onclick="pset(id)"> </td>
+                </tr>
+                <tr>
+                    <td id="coord">B</td>
+                    <td class="button" id="PB1" onclick="pset(id)"></td>
+                    <td class="button" id="PB2" onclick="pset(id)"></td>
+                    <td class="button" id="PB3" onclick="pset(id)"></td>
+                    <td class="button" id="PB4" onclick="pset(id)"></td>
+                    <td class="button" id="PB5" onclick="pset(id)"></td>
+                    <td class="button" id="PB6" onclick="pset(id)"></td>
+                    <td class="button" id="PB7" onclick="pset(id)"></td>
+                    <td class="button" id="PB8" onclick="pset(id)"></td>
+                </tr>
+                <tr>
+                    <td id="coord">C</td>
+                    <td class="button" id="PC1" onclick="pset(id)"></td>
+                    <td class="button" id="PC2" onclick="pset(id)"></td>
+                    <td class="button" id="PC3" onclick="pset(id)"></td>
+                    <td class="button" id="PC4" onclick="pset(id)"></td>
+                    <td class="button" id="PC5" onclick="pset(id)"></td>
+                    <td class="button" id="PC6" onclick="pset(id)"></td>
+                    <td class="button" id="PC7" onclick="pset(id)"></td>
+                    <td class="button" id="PC8" onclick="pset(id)"></td>
+                </tr>
+                <tr>
+                    <td id="coord">D</td>
+                    <td class="button" id="PD1" onclick="pset(id)"></td>
+                    <td class="button" id="PD2" onclick="pset(id)"></td>
+                    <td class="button" id="PD3" onclick="pset(id)"></td>
+                    <td class="button" id="PD4" onclick="pset(id)"></td>
+                    <td class="button" id="PD5" onclick="pset(id)"></td>
+                    <td class="button" id="PD6" onclick="pset(id)"></td>
+                    <td class="button" id="PD7" onclick="pset(id)"></td>
+                    <td class="button" id="PD8" onclick="pset(id)"></td>
+                </tr>
+                <tr>
+                    <td id="coord">E</td>
+                    <td class="button" id="PE1" onclick="pset(id)"></td>
+                    <td class="button" id="PE2" onclick="pset(id)"></td>
+                    <td class="button" id="PE3" onclick="pset(id)"></td>
+                    <td class="button" id="PE4" onclick="pset(id)"></td>
+                    <td class="button" id="PE5" onclick="pset(id)"></td>
+                    <td class="button" id="PE6" onclick="pset(id)"></td>
+                    <td class="button" id="PE7" onclick="pset(id)"></td>
+                    <td class="button" id="PE8" onclick="pset(id)"></td>
+                </tr>
+                <tr>
+                    <td id="coord">F</td>
+                    <td class="button" id="PF1" onclick="pset(id)"></td>
+                    <td class="button" id="PF2" onclick="pset(id)"></td>
+                    <td class="button" id="PF3" onclick="pset(id)"></td>
+                    <td class="button" id="PF4" onclick="pset(id)"></td>
+                    <td class="button" id="PF5" onclick="pset(id)"></td>
+                    <td class="button" id="PF6" onclick="pset(id)"></td>
+                    <td class="button" id="PF7" onclick="pset(id)"></td>
+                    <td class="button" id="PF8" onclick="pset(id)"></td>
+                </tr>
+                <tr>
+                    <td id="coord">G</td>
+                    <td class="button" id="PG1" onclick="pset(id)"></td>
+                    <td class="button" id="PG2" onclick="pset(id)"></td>
+                    <td class="button" id="PG3" onclick="pset(id)"></td>
+                    <td class="button" id="PG4" onclick="pset(id)"></td>
+                    <td class="button" id="PG5" onclick="pset(id)"></td>
+                    <td class="button" id="PG6" onclick="pset(id)"></td>
+                    <td class="button" id="PG7" onclick="pset(id)"></td>
+                    <td class="button" id="PG8" onclick="pset(id)"></td>
+                </tr>
+                <tr>
+                    <td id="coord">H</td>
+                    <td class="button" id="PH1" onclick="pset(id)"></td>
+                    <td class="button" id="PH2" onclick="pset(id)"></td>
+                    <td class="button" id="PH3" onclick="pset(id)"></td>
+                    <td class="button" id="PH4" onclick="pset(id)"></td>
+                    <td class="button" id="PH5" onclick="pset(id)"></td>
+                    <td class="button" id="PH6" onclick="pset(id)"></td>
+                    <td class="button" id="PH7" onclick="pset(id)"></td>
+                    <td class="button" id="PH8" onclick="pset(id)"></td>
+                </tr>
+            </table>
+            <table id="table2" border="1px">
+                <tr height="40px">
+                    <th colspan="9">
+                        <p align="center">Target Position</p>
+                    </th>
+                </tr>
+                <tr>
+                    <td id="coord"></td>
+                    <td id="coord">1</td>
+                    <td id="coord">2</td>
+                    <td id="coord">3</td>
+                    <td id="coord">4</td>
+                    <td id="coord">5</td>
+                    <td id="coord">6</td>
+                    <td id="coord">7</td>
+                    <td id="coord">8</td>
+                </tr>
+                <tr>
+                    <td id="coord">A</td>
+                    <td class="button" id="RA1" onclick="set(id)"></td>
+                    <td class="button" id="RA2" onclick="set(id)"></td>
+                    <td class="button" id="RA3" onclick="set(id)"></td>
+                    <td class="button" id="RA4" onclick="set(id)"></td>
+                    <td class="button" id="RA5" onclick="set(id)"></td>
+                    <td class="button" id="RA6" onclick="set(id)"></td>
+                    <td class="button" id="RA7" onclick="set(id)"></td>
+                    <td class="button" id="RA8" onclick="set(id)"></td>
+                </tr>
+                <tr>
+                    <td id="coord">B</td>
+                    <td class="button" id="RB1" onclick="set(id)"></td>
+                    <td class="button" id="RB2" onclick="set(id)"></td>
+                    <td class="button" id="RB3" onclick="set(id)"></td>
+                    <td class="button" id="RB4" onclick="set(id)"></td>
+                    <td class="button" id="RB5" onclick="set(id)"></td>
+                    <td class="button" id="RB6" onclick="set(id)"></td>
+                    <td class="button" id="RB7" onclick="set(id)"></td>
+                    <td class="button" id="RB8" onclick="set(id)"></td>
+                </tr>
+                <tr>
+                    <td id="coord">C</td>
+                    <td class="button" id="RC1" onclick="set(id)"></td>
+                    <td class="button" id="RC2" onclick="set(id)"></td>
+                    <td class="button" id="RC3" onclick="set(id)"></td>
+                    <td class="button" id="RC4" onclick="set(id)"></td>
+                    <td class="button" id="RC5" onclick="set(id)"></td>
+                    <td class="button" id="RC6" onclick="set(id)"></td>
+                    <td class="button" id="RC7" onclick="set(id)"></td>
+                    <td class="button" id="RC8" onclick="set(id)"></td>
+                </tr>
+                <tr>
+                    <td id="coord">D</td>
+                    <td class="button" id="RD1" onclick="set(id)"></td>
+                    <td class="button" id="RD2" onclick="set(id)"></td>
+                    <td class="button" id="RD3" onclick="set(id)"></td>
+                    <td class="button" id="RD4" onclick="set(id)"></td>
+                    <td class="button" id="RD5" onclick="set(id)"></td>
+                    <td class="button" id="RD6" onclick="set(id)"></td>
+                    <td class="button" id="RD7" onclick="set(id)"></td>
+                    <td class="button" id="RD8" onclick="set(id)"></td>
+                </tr>
+                <tr>
+                    <td id="coord">E</td>
+                    <td class="button" id="RE1" onclick="set(id)"></td>
+                    <td class="button" id="RE2" onclick="set(id)"></td>
+                    <td class="button" id="RE3" onclick="set(id)"></td>
+                    <td class="button" id="RE4" onclick="set(id)"></td>
+                    <td class="button" id="RE5" onclick="set(id)"></td>
+                    <td class="button" id="RE6" onclick="set(id)"></td>
+                    <td class="button" id="RE7" onclick="set(id)"></td>
+                    <td class="button" id="RE8" onclick="set(id)"></td>
+                </tr>
+                <tr>
+                    <td id="coord">F</td>
+                    <td class="button" id="RF1" onclick="set(id)"></td>
+                    <td class="button" id="RF2" onclick="set(id)"></td>
+                    <td class="button" id="RF3" onclick="set(id)"></td>
+                    <td class="button" id="RF4" onclick="set(id)"></td>
+                    <td class="button" id="RF5" onclick="set(id)"></td>
+                    <td class="button" id="RF6" onclick="set(id)"></td>
+                    <td class="button" id="RF7" onclick="set(id)"></td>
+                    <td class="button" id="RF8" onclick="set(id)"></td>
+                </tr>
+                <tr>
+                    <td id="coord">G</td>
+                    <td class="button" id="RG1" onclick="set(id)"></td>
+                    <td class="button" id="RG2" onclick="set(id)"></td>
+                    <td class="button" id="RG3" onclick="set(id)"></td>
+                    <td class="button" id="RG4" onclick="set(id)"></td>
+                    <td class="button" id="RG5" onclick="set(id)"></td>
+                    <td class="button" id="RG6" onclick="set(id)"></td>
+                    <td class="button" id="RG7" onclick="set(id)"></td>
+                    <td class="button" id="RG8" onclick="set(id)"></td>
+                </tr>
+                <tr>
+                    <td id="coord">H</td>
+                    <td class="button" id="RH1" onclick="set(id)"></td>
+                    <td class="button" id="RH2" onclick="set(id)"></td>
+                    <td class="button" id="RH3" onclick="set(id)"></td>
+                    <td class="button" id="RH4" onclick="set(id)"></td>
+                    <td class="button" id="RH5" onclick="set(id)"></td>
+                    <td class="button" id="RH6" onclick="set(id)"></td>
+                    <td class="button" id="RH7" onclick="set(id)"></td>
+                    <td class="button" id="RH8" onclick="set(id)"></td>
+                </tr>
+            </table>
         </div>
-        <div id="hintdiv" hidden>
-            <p id="hintq" style="width:fit-content">Question</p>
-            <div style="position:relative;top:10px;"><button id="row" onclick="hint(id)">Row</button> <button id="col" onclick="hint(id)">Column</button> <button onclick="skip()">Skip</button></div>
-        </div>
-        <div id="visible" style="top:150px;">
-            <button onclick="reset()">Reset</button>
-        </div>
-        <table id="table1" border="1px">
-            <tr height="40px">
-                <th colspan="9">
-                    <p align="center">Player Position</p>
-                </th>
-            </tr>
-            <tr>
-                <td id="coord"></td>
-                <td id="coord">1</td>
-                <td id="coord">2</td>
-                <td id="coord">3</td>
-                <td id="coord">4</td>
-                <td id="coord">5</td>
-                <td id="coord">6</td>
-                <td id="coord">7</td>
-                <td id="coord">8</td>
-            </tr>
-            <tr>
-                <td id="coord">A</td>
-                <td class="button" id="PA1" onclick="pset(id)"> </td>
-                <td class="button" id="PA2" onclick="pset(id)"> </td>
-                <td class="button" id="PA3" onclick="pset(id)"> </td>
-                <td class="button" id="PA4" onclick="pset(id)"> </td>
-                <td class="button" id="PA5" onclick="pset(id)"> </td>
-                <td class="button" id="PA6" onclick="pset(id)"> </td>
-                <td class="button" id="PA7" onclick="pset(id)"> </td>
-                <td class="button" id="PA8" onclick="pset(id)"> </td>
-            </tr>
-            <tr>
-                <td id="coord">B</td>
-                <td class="button" id="PB1" onclick="pset(id)"></td>
-                <td class="button" id="PB2" onclick="pset(id)"></td>
-                <td class="button" id="PB3" onclick="pset(id)"></td>
-                <td class="button" id="PB4" onclick="pset(id)"></td>
-                <td class="button" id="PB5" onclick="pset(id)"></td>
-                <td class="button" id="PB6" onclick="pset(id)"></td>
-                <td class="button" id="PB7" onclick="pset(id)"></td>
-                <td class="button" id="PB8" onclick="pset(id)"></td>
-            </tr>
-            <tr>
-                <td id="coord">C</td>
-                <td class="button" id="PC1" onclick="pset(id)"></td>
-                <td class="button" id="PC2" onclick="pset(id)"></td>
-                <td class="button" id="PC3" onclick="pset(id)"></td>
-                <td class="button" id="PC4" onclick="pset(id)"></td>
-                <td class="button" id="PC5" onclick="pset(id)"></td>
-                <td class="button" id="PC6" onclick="pset(id)"></td>
-                <td class="button" id="PC7" onclick="pset(id)"></td>
-                <td class="button" id="PC8" onclick="pset(id)"></td>
-            </tr>
-            <tr>
-                <td id="coord">D</td>
-                <td class="button" id="PD1" onclick="pset(id)"></td>
-                <td class="button" id="PD2" onclick="pset(id)"></td>
-                <td class="button" id="PD3" onclick="pset(id)"></td>
-                <td class="button" id="PD4" onclick="pset(id)"></td>
-                <td class="button" id="PD5" onclick="pset(id)"></td>
-                <td class="button" id="PD6" onclick="pset(id)"></td>
-                <td class="button" id="PD7" onclick="pset(id)"></td>
-                <td class="button" id="PD8" onclick="pset(id)"></td>
-            </tr>
-            <tr>
-                <td id="coord">E</td>
-                <td class="button" id="PE1" onclick="pset(id)"></td>
-                <td class="button" id="PE2" onclick="pset(id)"></td>
-                <td class="button" id="PE3" onclick="pset(id)"></td>
-                <td class="button" id="PE4" onclick="pset(id)"></td>
-                <td class="button" id="PE5" onclick="pset(id)"></td>
-                <td class="button" id="PE6" onclick="pset(id)"></td>
-                <td class="button" id="PE7" onclick="pset(id)"></td>
-                <td class="button" id="PE8" onclick="pset(id)"></td>
-            </tr>
-            <tr>
-                <td id="coord">F</td>
-                <td class="button" id="PF1" onclick="pset(id)"></td>
-                <td class="button" id="PF2" onclick="pset(id)"></td>
-                <td class="button" id="PF3" onclick="pset(id)"></td>
-                <td class="button" id="PF4" onclick="pset(id)"></td>
-                <td class="button" id="PF5" onclick="pset(id)"></td>
-                <td class="button" id="PF6" onclick="pset(id)"></td>
-                <td class="button" id="PF7" onclick="pset(id)"></td>
-                <td class="button" id="PF8" onclick="pset(id)"></td>
-            </tr>
-            <tr>
-                <td id="coord">G</td>
-                <td class="button" id="PG1" onclick="pset(id)"></td>
-                <td class="button" id="PG2" onclick="pset(id)"></td>
-                <td class="button" id="PG3" onclick="pset(id)"></td>
-                <td class="button" id="PG4" onclick="pset(id)"></td>
-                <td class="button" id="PG5" onclick="pset(id)"></td>
-                <td class="button" id="PG6" onclick="pset(id)"></td>
-                <td class="button" id="PG7" onclick="pset(id)"></td>
-                <td class="button" id="PG8" onclick="pset(id)"></td>
-            </tr>
-            <tr>
-                <td id="coord">H</td>
-                <td class="button" id="PH1" onclick="pset(id)"></td>
-                <td class="button" id="PH2" onclick="pset(id)"></td>
-                <td class="button" id="PH3" onclick="pset(id)"></td>
-                <td class="button" id="PH4" onclick="pset(id)"></td>
-                <td class="button" id="PH5" onclick="pset(id)"></td>
-                <td class="button" id="PH6" onclick="pset(id)"></td>
-                <td class="button" id="PH7" onclick="pset(id)"></td>
-                <td class="button" id="PH8" onclick="pset(id)"></td>
-            </tr>
-        </table>
-        <table id="table2" border="1px">
-            <tr height="40px">
-                <th colspan="9">
-                    <p align="center">Target Position</p>
-                </th>
-            </tr>
-            <tr>
-                <td id="coord"></td>
-                <td id="coord">1</td>
-                <td id="coord">2</td>
-                <td id="coord">3</td>
-                <td id="coord">4</td>
-                <td id="coord">5</td>
-                <td id="coord">6</td>
-                <td id="coord">7</td>
-                <td id="coord">8</td>
-            </tr>
-            <tr>
-                <td id="coord">A</td>
-                <td class="button" id="RA1" onclick="set(id)"></td>
-                <td class="button" id="RA2" onclick="set(id)"></td>
-                <td class="button" id="RA3" onclick="set(id)"></td>
-                <td class="button" id="RA4" onclick="set(id)"></td>
-                <td class="button" id="RA5" onclick="set(id)"></td>
-                <td class="button" id="RA6" onclick="set(id)"></td>
-                <td class="button" id="RA7" onclick="set(id)"></td>
-                <td class="button" id="RA8" onclick="set(id)"></td>
-            </tr>
-            <tr>
-                <td id="coord">B</td>
-                <td class="button" id="RB1" onclick="set(id)"></td>
-                <td class="button" id="RB2" onclick="set(id)"></td>
-                <td class="button" id="RB3" onclick="set(id)"></td>
-                <td class="button" id="RB4" onclick="set(id)"></td>
-                <td class="button" id="RB5" onclick="set(id)"></td>
-                <td class="button" id="RB6" onclick="set(id)"></td>
-                <td class="button" id="RB7" onclick="set(id)"></td>
-                <td class="button" id="RB8" onclick="set(id)"></td>
-            </tr>
-            <tr>
-                <td id="coord">C</td>
-                <td class="button" id="RC1" onclick="set(id)"></td>
-                <td class="button" id="RC2" onclick="set(id)"></td>
-                <td class="button" id="RC3" onclick="set(id)"></td>
-                <td class="button" id="RC4" onclick="set(id)"></td>
-                <td class="button" id="RC5" onclick="set(id)"></td>
-                <td class="button" id="RC6" onclick="set(id)"></td>
-                <td class="button" id="RC7" onclick="set(id)"></td>
-                <td class="button" id="RC8" onclick="set(id)"></td>
-            </tr>
-            <tr>
-                <td id="coord">D</td>
-                <td class="button" id="RD1" onclick="set(id)"></td>
-                <td class="button" id="RD2" onclick="set(id)"></td>
-                <td class="button" id="RD3" onclick="set(id)"></td>
-                <td class="button" id="RD4" onclick="set(id)"></td>
-                <td class="button" id="RD5" onclick="set(id)"></td>
-                <td class="button" id="RD6" onclick="set(id)"></td>
-                <td class="button" id="RD7" onclick="set(id)"></td>
-                <td class="button" id="RD8" onclick="set(id)"></td>
-            </tr>
-            <tr>
-                <td id="coord">E</td>
-                <td class="button" id="RE1" onclick="set(id)"></td>
-                <td class="button" id="RE2" onclick="set(id)"></td>
-                <td class="button" id="RE3" onclick="set(id)"></td>
-                <td class="button" id="RE4" onclick="set(id)"></td>
-                <td class="button" id="RE5" onclick="set(id)"></td>
-                <td class="button" id="RE6" onclick="set(id)"></td>
-                <td class="button" id="RE7" onclick="set(id)"></td>
-                <td class="button" id="RE8" onclick="set(id)"></td>
-            </tr>
-            <tr>
-                <td id="coord">F</td>
-                <td class="button" id="RF1" onclick="set(id)"></td>
-                <td class="button" id="RF2" onclick="set(id)"></td>
-                <td class="button" id="RF3" onclick="set(id)"></td>
-                <td class="button" id="RF4" onclick="set(id)"></td>
-                <td class="button" id="RF5" onclick="set(id)"></td>
-                <td class="button" id="RF6" onclick="set(id)"></td>
-                <td class="button" id="RF7" onclick="set(id)"></td>
-                <td class="button" id="RF8" onclick="set(id)"></td>
-            </tr>
-            <tr>
-                <td id="coord">G</td>
-                <td class="button" id="RG1" onclick="set(id)"></td>
-                <td class="button" id="RG2" onclick="set(id)"></td>
-                <td class="button" id="RG3" onclick="set(id)"></td>
-                <td class="button" id="RG4" onclick="set(id)"></td>
-                <td class="button" id="RG5" onclick="set(id)"></td>
-                <td class="button" id="RG6" onclick="set(id)"></td>
-                <td class="button" id="RG7" onclick="set(id)"></td>
-                <td class="button" id="RG8" onclick="set(id)"></td>
-            </tr>
-            <tr>
-                <td id="coord">H</td>
-                <td class="button" id="RH1" onclick="set(id)"></td>
-                <td class="button" id="RH2" onclick="set(id)"></td>
-                <td class="button" id="RH3" onclick="set(id)"></td>
-                <td class="button" id="RH4" onclick="set(id)"></td>
-                <td class="button" id="RH5" onclick="set(id)"></td>
-                <td class="button" id="RH6" onclick="set(id)"></td>
-                <td class="button" id="RH7" onclick="set(id)"></td>
-                <td class="button" id="RH8" onclick="set(id)"></td>
-            </tr>
-        </table>
     </body>
 </html>
