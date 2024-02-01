@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Minesweeper</title>
+        <style>
+            body{
+                width:max-content;
+            }
+            table{
+                border:1px solid black;
+                border-spacing:0;
+                text-align:center;
+                background-color:aliceblue;
+            }
+            td{
+                height:50px;
+                width:50px;
+                padding:0;
+                border:1px solid black;
+                cursor:pointer;
+            }
+        </style>
+        <script>
+            let status = "Setup";
+            let alerts = 1;
+            let rows = [];
+            let cols = [];
+            let cells = [];
+            let neighbors = {};
+            let mineCount = Math.floor(cells.length*0.20);
+            let safeCount = cells.length-mineCount;
+            let minesleft = mineCount;
+            let firstClick = true;
+            let mineCell = {};
+            for (let c in cells){
+                mineCell[cells[c]] = false;
+            }
+            
+            function mineLeftOver(){
+                for (let i in cells){
+                    flag(cells[i]);
+                }
+            }
+
+            setInterval(update,500);
+            function update(){//updates the cell tracker
+                document.getElementById("safe").innerHTML = "Safe Cells: " + safeCount;
+                document.getElementById("mineleft").innerHTML = "Mines Left: " + minesleft;
+                if (safeCount==0 /*&& minesleft==0*/){
+                    status="Win";
+                    if (alerts==1){
+                        console.log("Win");
+                        alert("You Won!");
+                        alerts--;
+                    }
+                }
+            }
+
+            function minmax(){//limits the values that are possible to input
+                let boardSize = document.getElementById("boardSize").value
+                let minePer = document.getElementById("minePer").value
+                if (boardSize < 5){
+                    document.getElementById("boardSize").value = 5;
+                }
+                if (boardSize > 126){
+                    document.getElementById("boardSize").value = 126;
+                }
+                if (minePer < 0){
+                    document.getElementById("minePer").value = 0;
+                }
+                if (minePer > 100){
+                    document.getElementById("minePer").value = 100;
+                }
+                /*if (minePer > 100 || (boardSize**2-boardSize**2*minePer/100)<8){//
+                    document.getElementById("minePer").value = Math.floor((1-8/boardSize**2)*100);
+                    console.log(boardSize**2-boardSize**2*minePer/100, Math.floor((1-8/boardSize**2)*100))
+                }*/
+            }
+
+            function setup(){//sets up board
+                table = document.getElementById("board");
+                let boardSize = Number(document.getElementById("boardSize").value);
+                alerts = 1;
+                rows = [];
+                cols = [];
+                cells = [];
+                for (let r=0;r<boardSize;r++){
+                    rows.push(String.fromCharCode(65+r));
+                }
+                for (let c=0;c<boardSize;c++){
+                    cols.push(String(1+c));
+                }
+                for (let r in rows){
+                    for (let c in cols){
+                        cells.push(rows[r]+cols[c]);
+                    }
+                }
+                neighbors = {};
+                for (let i in cells){
+                    i = Number(i)
+                    let cellNeighbors = [];
+                    let row = rows.indexOf(cells[i][0]);
+                    let rowLength = rows.length;
+                    let neighbor = i-rowLength-1;
+                    if (neighbor>=0 && rows.indexOf(cells[neighbor][0])==row-1){
+                        cellNeighbors.push(cells[neighbor]);
+                    }
+                    neighbor = i-rowLength;
+                    if (neighbor>=0 && rows.indexOf(cells[neighbor][0])==row-1){
+                        cellNeighbors.push(cells[neighbor]);
+                    }
+                    neighbor = i-rowLength+1;
+                    if (neighbor>=0 && rows.indexOf(cells[neighbor][0])==row-1){
+                        cellNeighbors.push(cells[neighbor]);
+                    }
+                    neighbor = i-1;
+                    if (neighbor>=0 && rows.indexOf(cells[neighbor][0])==row){
+                        cellNeighbors.push(cells[neighbor]);
+                    }
+                    neighbor = i+1;
+                    if (neighbor<=(cells.length-1) && rows.indexOf(cells[neighbor][0])==row){
+                        cellNeighbors.push(cells[neighbor]);
+                    }
+                    neighbor = i+rowLength-1;
+                    if (neighbor<=(cells.length-1) && rows.indexOf(cells[neighbor][0])==row+1){
+                        cellNeighbors.push(cells[neighbor]);
+                    }
+                    neighbor = i+rowLength;
+                    if (neighbor<=(cells.length-1) && rows.indexOf(cells[neighbor][0])==row+1){
+                        cellNeighbors.push(cells[neighbor]);
+                    }
+                    neighbor = i+rowLength+1;
+                    if (neighbor<=(cells.length-1) && rows.indexOf(cells[neighbor][0])==row+1){
+                        cellNeighbors.push(cells[neighbor]);
+                    }
+                    neighbors[cells[i]]=cellNeighbors;
+                }
+                table.innerHTML = "";
+                mineCount = Math.floor(cells.length*(document.getElementById("minePer").value/100));
+                safeCount = cells.length-mineCount;
+                minesleft = mineCount;
+                mineCell = {};
+                for (let c in cells){
+                    mineCell[cells[c]] = false;
+                }
+                firstClick = true;
+                for (let i in rows){
+                    i = rows[i];
+                    table.innerHTML+=`<tr id=${i}></tr>`;
+                    for (let x in cols){
+                        x = cols[x];
+                        document.getElementById(i).innerHTML+=`<td id=${i}${x} oncontextmenu="flag(id)"></td>`;
+                    }
+                }
+                for (let i in cells){
+                    cell = document.getElementById(cells[i]);
+                    cell.addEventListener("contextmenu", e => e.preventDefault());
+                    cell.addEventListener("click", e => click(cells[i]));
+                }
+                status = "InPlay";
+            }
+
+            function click(id){//reveals a cell
+                if (status=="InPlay"){
+                    if (document.getElementById(id).innerHTML==""){
+                        if (firstClick==true){
+                            firstClick=false;
+                            board_setup(id);
+                            click(id);
+                        } else {
+                            let cellNeighbors = neighbors[id];
+                            if (mineCell[id]==false){
+                                safeCount--;
+                                let tempMine = 0;
+                                for (let i in cellNeighbors){
+                                    if (mineCell[cellNeighbors[i]]==true){
+                                        tempMine++;
+                                    }
+                                }
+                                set(id,tempMine);
+                                if (tempMine==0){
+                                    zero_spread(cellNeighbors);
+                                }
+                            } else {
+                                set(id,9);
+                                mineCount--;
+                                console.log("Lose");
+                                for (let i in cells){
+                                    if (document.getElementById(cells[i]).innerHTML=="Flag"){
+                                        flag(cells[i]);
+                                        minesleft--;
+                                    }
+                                    click(cells[i]);
+                                }
+                                status="Lose";
+                                if (alerts==1){
+                                    alert("You Lost");
+                                    alerts--;
+                                }
+                            }
+                        }
+                    } else {
+                        console.log(id)
+                        let neighborMine = 0;
+                        for (let i in neighbors[id]){
+                            if (mineCell[neighbors[id][i]]==true){
+                                neighborMine++;
+                            }
+                        }
+                        let mineExposed = 0;
+                        for (let i in neighbors[id]){
+                            if (document.getElementById(neighbors[id][i]).innerHTML=="Flag"){
+                                mineExposed++;
+                            }
+                        }
+                        console.log(neighborMine==mineExposed)
+                        if (neighborMine==mineExposed/* && neighborMine!=0 && mineExposed!=0*/){
+                            for (i in neighbors[id]){
+                                if (document.getElementById(neighbors[id][i]).innerHTML == ""){
+                                    click(neighbors[id][i]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            function board_setup(id){//assigns mine positions
+                function compare(item1){
+                    return item1==tempNeighbor[i];
+                }
+                let tempCells = cells.slice();
+                let tempNeighbor = neighbors[id].slice();
+                tempNeighbor.push(id);
+                if (safeCount >=9){
+                    for (let i in tempNeighbor){
+                        tempCells.splice(tempCells.indexOf(tempNeighbor[i]),1);
+                    }
+                }
+                while (mineCount>0){
+                    let tempCell = tempCells[Math.floor((Math.random()*tempCells.length))];
+                    if (mineCell[tempCell]==false){
+                        mineCell[tempCell]=true;
+                        mineCount--;
+                    }
+                }
+                /*let conditionN = true;
+                for (let i in neighbors[id]){
+                    if (tempCell != neighbors[id][i]){
+                        console.log("neighbor")
+                        continue;
+                    } else {
+                        conditionN = false;
+                    }
+                }
+                if (mineCell[tempCell]==false && tempCell!=id && conditionN){
+                    mineCell[tempCell]=true;
+                    mineCount--;
+                }*/
+            }
+
+            function zero_spread(neighbors){//if a zero cell is revealed, all neighboring cells are revealed automatically
+                for (i in neighbors){
+                    if (document.getElementById(neighbors[i]).innerHTML == "Flag"){
+                        flag(neighbors[i]);
+                    }
+                    click(neighbors[i]);
+                }
+            }
+
+            function flag(id){//flags a cell
+                if (document.getElementById(id).innerHTML==""){
+                    minesleft--;
+                    set(id,10);
+                } else if (document.getElementById(id).innerHTML=="Flag"){
+                    minesleft++;
+                    set(id,-1);
+                }
+            }
+
+            function set(id,state){//assigns a value to a cell
+                cell = document.getElementById(id);
+                if (state==-1){
+                    cell.innerHTML = "";
+                } else if (state==0){
+                    cell.innerHTML = "0";
+                    cell.style.backgroundColor = "gainsboro";
+                } else if (state==1){
+                    cell.innerHTML = "1";
+                } else if (state==2){
+                    cell.innerHTML = "2";
+                } else if (state==3){
+                    cell.innerHTML = "3";
+                } else if (state==4){
+                    cell.innerHTML = "4";
+                } else if (state==5){
+                    cell.innerHTML = "5";
+                } else if (state==6){
+                    cell.innerHTML = "6";
+                } else if (state==7){
+                    cell.innerHTML = "7";
+                } else if (state==8){
+                    cell.innerHTML = "8";
+                } else if (state==9){
+                    cell.innerHTML = "Mine";
+                    cell.style.backgroundColor = "red";
+                } else if (state==10){
+                    cell.innerHTML = "Flag";
+                }
+            }
+        </script>
+    </head>
+    <body onload="setup()">
+        <p id="safe"></p>
+        <p id="mineleft"></p>
+        Board Size: <input id="boardSize" type="number" value="8" onblur="minmax()">
+        <br><br>
+        Mine %: <input id="minePer" type="number" value="15" onblur="minmax()">
+        <button onclick="setup()">Load</button>
+        <br><br>
+        <table id="board">
+        </table>
+    </body>
+</html>
