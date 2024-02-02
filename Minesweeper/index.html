@@ -7,6 +7,7 @@
                 width:max-content;
             }
             table{
+                color:gainsboro;
                 border:1px solid black;
                 border-spacing:0;
                 text-align:center;
@@ -18,6 +19,9 @@
                 padding:0;
                 border:1px solid black;
                 cursor:pointer;
+            }
+            img{
+                width: 30%;
             }
         </style>
         <script>
@@ -31,6 +35,8 @@
             let minesleft = mineCount;
             let firstClick = true;
             let mineCell = {};
+            let mine = '<img src="Mine.png">';
+            let Flag = '<img src="Flag.png">'
             for (let c in cells){
                 mineCell[cells[c]] = false;
             }
@@ -180,7 +186,7 @@
                                 mineCount--;
                                 console.log("Lose");
                                 for (let i in cells){
-                                    if (document.getElementById(cells[i]).innerHTML=="Flag"){
+                                    if (document.getElementById(cells[i]).innerHTML==Flag){
                                         flag(cells[i]);
                                         minesleft--;
                                     }
@@ -202,7 +208,7 @@
                         }
                         let mineExposed = 0;
                         for (let i in neighbors[id]){
-                            if (document.getElementById(neighbors[id][i]).innerHTML=="Flag"){
+                            if (document.getElementById(neighbors[id][i]).innerHTML==Flag){
                                 mineExposed++;
                             }
                         }
@@ -264,7 +270,7 @@
                 if (document.getElementById(id).innerHTML==""){
                     minesleft--;
                     set(id,10);
-                } else if (document.getElementById(id).innerHTML=="Flag"){
+                } else if (document.getElementById(id).innerHTML==Flag){
                     minesleft++;
                     set(id,-1);
                 }
@@ -278,26 +284,26 @@
                     cell.innerHTML = "0";
                     cell.style.backgroundColor = "gainsboro";
                 } else if (state==1){
-                    cell.innerHTML = "1";
+                    cell.innerHTML = '<img src="One.png">';
                 } else if (state==2){
-                    cell.innerHTML = "2";
+                    cell.innerHTML = '<img src="Two.png">';
                 } else if (state==3){
-                    cell.innerHTML = "3";
+                    cell.innerHTML = '<img src="Three.png">';
                 } else if (state==4){
-                    cell.innerHTML = "4";
+                    cell.innerHTML = '<img src="Four.png">';
                 } else if (state==5){
-                    cell.innerHTML = "5";
+                    cell.innerHTML = '<img src="Five.png">';
                 } else if (state==6){
-                    cell.innerHTML = "6";
+                    cell.innerHTML = '<img src="Six.png">';
                 } else if (state==7){
-                    cell.innerHTML = "7";
+                    cell.innerHTML = '<img src="Seven.png">';
                 } else if (state==8){
-                    cell.innerHTML = "8";
+                    cell.innerHTML = '<img src="Eight.png">';
                 } else if (state==9){
-                    cell.innerHTML = "Mine";
+                    cell.innerHTML = mine;
                     cell.style.backgroundColor = "red";
                 } else if (state==10){
-                    cell.innerHTML = "Flag";
+                    cell.innerHTML = Flag;
                 }
             }
         </script>
