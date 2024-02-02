@@ -24,7 +24,6 @@
             let status = "Setup";
             let alerts = 1;
             let rows = [];
-            let cols = [];
             let cells = [];
             let neighbors = {};
             let mineCount = Math.floor(cells.length*0.20);
@@ -62,8 +61,8 @@
                 if (boardSize < 5){
                     document.getElementById("boardSize").value = 5;
                 }
-                if (boardSize > 126){
-                    document.getElementById("boardSize").value = 126;
+                if (boardSize > 160){
+                    document.getElementById("boardSize").value = 160;
                 }
                 if (minePer < 0){
                     document.getElementById("minePer").value = 0;
@@ -82,17 +81,13 @@
                 let boardSize = Number(document.getElementById("boardSize").value);
                 alerts = 1;
                 rows = [];
-                cols = [];
                 cells = [];
                 for (let r=0;r<boardSize;r++){
                     rows.push(String.fromCharCode(65+r));
                 }
-                for (let c=0;c<boardSize;c++){
-                    cols.push(String(1+c));
-                }
                 for (let r in rows){
-                    for (let c in cols){
-                        cells.push(rows[r]+cols[c]);
+                    for (let c=1;c<=boardSize;c++){
+                        cells.push(rows[r]+c);
                     }
                 }
                 neighbors = {};
@@ -147,9 +142,8 @@
                 for (let i in rows){
                     i = rows[i];
                     table.innerHTML+=`<tr id=${i}></tr>`;
-                    for (let x in cols){
-                        x = cols[x];
-                        document.getElementById(i).innerHTML+=`<td id=${i}${x} oncontextmenu="flag(id)"></td>`;
+                    for (let c=1;c<=boardSize;c++){
+                        document.getElementById(i).innerHTML+=`<td id=${i}${c} oncontextmenu="flag(id)"></td>`;
                     }
                 }
                 for (let i in cells){
@@ -200,7 +194,6 @@
                             }
                         }
                     } else {
-                        console.log(id)
                         let neighborMine = 0;
                         for (let i in neighbors[id]){
                             if (mineCell[neighbors[id][i]]==true){
@@ -213,7 +206,6 @@
                                 mineExposed++;
                             }
                         }
-                        console.log(neighborMine==mineExposed)
                         if (neighborMine==mineExposed/* && neighborMine!=0 && mineExposed!=0*/){
                             for (i in neighbors[id]){
                                 if (document.getElementById(neighbors[id][i]).innerHTML == ""){
@@ -236,7 +228,7 @@
                     for (let i in tempNeighbor){
                         tempCells.splice(tempCells.indexOf(tempNeighbor[i]),1);
                     }
-                }
+                }//*/
                 while (mineCount>0){
                     let tempCell = tempCells[Math.floor((Math.random()*tempCells.length))];
                     if (mineCell[tempCell]==false){
