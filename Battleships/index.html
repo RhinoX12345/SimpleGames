@@ -130,16 +130,7 @@
         </style>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
-        <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
-        <script type="module" src="https://pyscript.net/snapshots/2023.09.1.RC1/core.js"></script>
         <script>
-            async function main() {
-                await pyodide.loadPackage("micropip");
-                const micropip = pyodide.pyimport("micropip");
-                await micropip.install("random");
-                await micropip.install("time");
-                await pip3.install("javascript");
-            }
             let status = "pregame";
             const cells = [
                 'A1','A2','A3','A4','A5','A6','A7','A8',
@@ -200,9 +191,11 @@
                 "Solve x² - 26x + 169 = 0/13",
                 "Add the results of x² - 12x + 28 = 56/12",
                 "Find the difference between the roots of  x² - 6x + 15 = 150/24",
-                "Add the results of x² - 16x - 80 = 0/16"];
-            
-            let playerPos = [], tempselect = [], pcells = [], botPos = {}, botPosList = [], boatlength = [], lengthCopy = [], correctPos = "", botTargetted = [], playerTargetted = [], hintState = 1;
+                "Add the results of x² - 16x - 80 = 0/16"
+            ];
+
+            let boatlength = [5, 4, 3, 3, 2];
+            let playerPos = [], tempselect = [], pcells = [], botPos = {}, botPosList = [], lengthCopy = [...boatlength], correctPos = "", botTargetted = [], playerTargetted = [], hintState = 1;
             for (i in cells){
                 pcells.push("P"+cells[i]);
             }
@@ -214,26 +207,8 @@
             }
             function loop(){
                 if(status == "pregame"){
-                    let check1 = document.getElementById("bot").innerHTML;
-                    let check2 = document.getElementById("boatlength").innerHTML;
-                    console.log(check2)
-                    document.getElementById("hintdiv").hidden = true
-                    try{
-                        let msg = check1.split("/");
-                        botPos = msg[0];
-                        botPosList = msg[1];
-                        botPosList = botPosList.replaceAll(" ","").replaceAll("[","").replaceAll("]","").replaceAll("\'","")
-                        botPosList = botPosList.split(",");
-                        boatlength = check2.split("/");
-                        if(botPos != "" && botPosList != undefined && boatlength != []){
-                            status = "setup";
-                        }
-                        lengthCopy = [...boatlength];
-                        console.log(boatlength)
-                        console.log(lengthCopy)
-                    } catch {
-                        let a=1
-                    }
+                    botPosMaker([...boatlength]);
+                    status = "setup";
                 }
                 if(status == "setup"){
                     document.getElementById("instruct").innerHTML = "Please input " + lengthCopy.length + " boats of length(s): " + lengthCopy;
@@ -246,6 +221,7 @@
                     document.getElementById("hintdiv").hidden = true
                 }
                 if(status == "hint"){
+                    document.getElementById("feedback").hidden = false;
                     if (botPosList.length == 0){
                         if(confirm("You Win!\nClick OK to start a New Game")){
                             reset("comp")
@@ -267,7 +243,7 @@
             //Player Position Input
             function positionCheck(position, length, current){
                 if (length > 1){
-                    let defPos = [...position] 
+                    let defPos = [...position]
                     for (i in position){
                         position[i] = position[i].replace("P", "")
                     }
@@ -423,6 +399,75 @@
             }
             
             //Bot
+            function horizontal(length, current){
+                let rangeMax = 9-length;
+                let boat = [];
+                while (loop=true){
+                    let column = String(Math.ceil(Math.random()*rangeMax));
+                    let startCoord = colList[column][Math.floor(Math.random()*colList[column].length)];
+                    let index = cells.indexOf(startCoord);
+                    boat = [];
+                    for (let i=0; i<length; i++){
+                        let pos = cells[index+i];
+                        if (current.indexOf(pos) == -1){
+                            boat.push(pos);
+                        } else {
+                            boat=[]
+                            break;
+                        }
+                    }
+                    if (boat.length == length){
+                        break;
+                    }
+                }
+                return boat
+            }
+            function vertical(length, current){
+                let rangeMax = 9-length;
+                let rows = "";
+                for (let r=0; r<rangeMax; r++){rows+=String.fromCharCode(65+r);}
+                let boat = [];
+                while (true){
+                    let row = String(rows[Math.floor(Math.random()*rangeMax)]);
+                    let startCoord = rowList[row][Math.floor(Math.random()*rowList[row].length)];
+                    let index = cells.indexOf(startCoord);
+                    boat = [];
+                    for (let i=0; i<length; i++){
+                        let pos = cells[index+i*8];
+                        console.log(pos);
+                        if (current.indexOf(pos) == -1){
+                            boat.push(pos);
+                        } else {
+                            boat=[]
+                            break;
+                        }
+                    }
+                    if (boat.length == length){
+                        break;
+                    }
+                }
+                return boat
+            }
+            function botPosMaker(boatLength){
+                let z = 0;
+                botPos = {};
+                botPosList = []
+                while (boatLength.length > 0){
+                    let boat;
+                    let direction = String(Math.ceil(Math.random()*2));
+                    if (direction == "1"){
+                        boat = horizontal(boatLength[0], botPosList);
+                    } else if (direction == "2"){
+                        boat = horizontal(boatLength[0], botPosList);
+                    }
+                    botPos[z] = boat;
+                    for (let i=0; i<boat.length; i++){
+                        botPosList.push(boat[i]);
+                    }
+                    boatLength.splice(0,1);
+                    z++;
+                }
+            }
             function bot(){
                 let x = Math.random()*10
                 let botTarget = ""
@@ -461,18 +506,9 @@
                 }
             }
         </script>
-        <py-config>
-            packages= ["micropip"]
-        </py-config>
-        <script type="py" src="Battleship_NoUser.py"></script>
     </head>
     <body>
         <img src="backgroundPixel.png" id="background">
-        <div hidden>
-            <p id="bot"></p>
-            <p id="boatlength"></p>
-            <!--<audio id="popup" src="popup.mp3"></audio>-->
-        </div>
         <p style="position:absolute;top:0px;right:0px;text-align:right;">Coding and Game Function by Marcel<br>Graphics and Questions by Bryant</p>
         <button id="loading">Loading...</button>
         <button class="overlay" id="start" onclick="switch1()" hidden><p style="font-size:50px;">Mathship Mayhem</p><br><p style="font-size:25px">Click anywhere to start</p></button>

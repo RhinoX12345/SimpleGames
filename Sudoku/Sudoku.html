@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Sudoku</title>
+        <style>
+            body{
+                width:max-content;
+            }
+            table{
+                color:gainsboro;
+                border:1px solid black;
+                border-spacing:0;
+                text-align:center;
+                background-color:aliceblue;
+            }
+            td{
+                height:50px;
+                width:50px;
+                padding:0;
+                border:1px solid black;
+                cursor:pointer;
+            }
+        </style>
+        <script>
+            function setup(){
+                for (let i=1; i<=9; i++){
+                    document.getElementById("board").innerHTML+=`<tr id=${i}></tr>`;
+                    for (let j=1; j<=9; j++){
+                        document.getElementById(i).innerHTML+=`<td id=${i}${j}></td>`;
+                    }
+                }
+            }
+        </script>
+    </head>
+    <body onload="setup()">
+        <table id="board"></table>
+    </body>
+</html>
