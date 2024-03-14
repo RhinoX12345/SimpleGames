@@ -34,6 +34,11 @@
             #number tr :hover{
                 background-color:rgb(220, 228, 235);
             }
+
+            .inputButton {
+                border: 1px solid black;
+                border-radius: 2px;
+            }
         </style>
         <script>
             const cells = [
@@ -46,17 +51,57 @@
                 '71', '72', '73', '74', '75', '76', '77', '78', '79',
                 '81', '82', '83', '84', '85', '86', '87', '88', '89',
                 '91', '92', '93', '94', '95', '96', '97', '98', '99'];
-            let selectedCell="", boardAns=[], boardCells={};
-            
+            const groups = {
+                1: ['11', '12', '13', '21', '22', '23', '31', '32', '33'], 
+                2: ['14', '15', '16', '24', '25', '26', '34', '35', '36'], 
+                3: ['17', '18', '19', '27', '28', '29', '37', '38', '39'], 
+                4: ['41', '42', '43', '51', '52', '53', '61', '62', '63'], 
+                5: ['44', '45', '46', '54', '55', '56', '64', '65', '66'], 
+                6: ['47', '48', '49', '57', '58', '59', '67', '68', '69'], 
+                7: ['71', '72', '73', '81', '82', '83', '91', '92', '93'], 
+                8: ['74', '75', '76', '84', '85', '86', '94', '95', '96'], 
+                9: ['77', '78', '79', '87', '88', '89', '97', '98', '99']};
+            let selectedCell="", boardAns=[], boardCells={}, diff = [];
+            let difficultySetting = {
+                "easy": [3,4,4,4,5,5,5,6,6],
+                "medium": [3,4,5,5,6,6,7,7,8],
+                "hard": [5,6,6,6,7,7,7,7,7]
+            }
+
+            function setDiff(id, value){
+                document.getElementById("diff1").style.backgroundColor = "rgb(240, 240, 240)";
+                document.getElementById("diff2").style.backgroundColor = "rgb(240, 240, 240)";
+                document.getElementById("diff3").style.backgroundColor = "rgb(240, 240, 240)";
+                document.getElementById(id).style.backgroundColor = "rgb(185, 190, 195)";
+                if (value == "Easy"){
+                    diff = [...difficultySetting["easy"]];
+                } else if (value == "Medium"){
+                    diff = [...difficultySetting["medium"]];
+                } else if (value == "Hard"){
+                    diff = [...difficultySetting["hard"]];
+                }
+                for (let i=diff.length-1; i>0; i--){
+                    let j = Math.floor(Math.random() * (i+1));
+                    let temp = diff[i];
+                    diff[i] = diff[j];
+                    diff[j] = temp;
+                }
+            }
+
             function minmax(id){
                 input = document.getElementById(id);
                 if (input.value < 1){
                     input.value = 1;
-                } else if (input.value >80){
-                    input.value = 80;
+                } else if (input.value > 79){
+                    input.value = 79;
                 }
             }
             
+            function pageLoad(){
+                setDiff("diff1", "Easy");
+                setup();
+            }
+
             function setup(){
                 boardAns = [
                     4,2,7,6,5,8,9,1,3,
@@ -85,15 +130,28 @@
                         }
                     }
                 }
-                let empty = document.getElementById("diff").value;
-                for (let i=0; i<empty; i++){
-                    let randomCell = cells[Math.floor(Math.random()*cells.length)];
-                    if (boardCells[randomCell]==true){
-                        boardCells[randomCell]=false;
-                    } else {
-                        i--;
+
+                //let empty = document.getElementById("diff").value;
+                //for (let i=0; i<empty; i++){
+                //    let randomCell = cells[Math.floor(Math.random()*cells.length)];
+                //    if (boardCells[randomCell]==true){
+                //        boardCells[randomCell]=false;
+                //    } else {
+                //        i--;
+                //    }
+                //}
+                
+                for (let i=0; i<diff.length; i++){
+                    for (let j=1; j<=diff[i]; j++){
+                        let randomCell = groups[i+1][Math.floor(Math.random()*groups[i+1].length)];
+                        if (boardCells[randomCell]==true){
+                            boardCells[randomCell]=false;
+                        } else {
+                            j--;
+                        }
                     }
                 }
+                
                 for (let i=0; i<cells.length; i++){
                     if (boardCells[cells[i]]==true){
                         document.getElementById(cells[i]).innerHTML = boardAns[i];
@@ -104,7 +162,7 @@
 
             function click(id){
                 let lightblue = "rgb(240, 248, 255)";
-                let lightgray = "rgb(220, 228, 235)";
+                let lightgray = "rgb(215, 223, 230)";
                 let darkgray = "rgb(185, 190, 195)";
                 selectedCell = id;
                 for (let i in cells){
@@ -147,10 +205,19 @@
                 }
                 return "Win!"
             }
+
+            function bot(){
+
+            }
         </script>
     </head>
-    <body onload="setup()">
-        Difficulty: <input id="diff" type="number" value="43" onblur="minmax(id)"> <button onclick="setup()">Load</button><br><br>
+    <body onload="pageLoad()">
+        <!--Difficulty: <input id="diff" type="number" value="43" onblur="minmax(id)"> -->
+        <input type="button" onclick="setDiff(id, value)" id="diff1" class="inputButton" value="Easy">
+        <input type="button" onclick="setDiff(id, value)" id="diff2" class="inputButton" value="Medium">
+        <input type="button" onclick="setDiff(id, value)" id="diff3" class="inputButton" value="Hard">
+        <button onclick="setup()">Load</button>
+        <br><br>
         <table id="board"></table>
         <table id="number">
             <tr>
