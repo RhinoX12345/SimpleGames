@@ -385,6 +385,8 @@
                                 }
                                 occurence = occurence.flat().sort();
                                 if (occurence[0]==occurence[1] && occurence[2]==occurence[3] && occurence[4]==occurence[5]){
+                                    console.log("Obvious Triple")
+                                    change++;
                                     for (let l in groups[group]){
                                         let otherCell = groups[group][l]
                                         if (emptyCells.includes(otherCell)==true && neighbors.includes(otherCell)==false){
@@ -424,6 +426,8 @@
                                 }
                                 occurence = occurence.flat().sort();
                                 if (occurence[0]==occurence[1] && occurence[2]==occurence[3] && occurence[4]==occurence[5]){
+                                    console.log("Obvious Triple")
+                                    change++;
                                     for (let l=1; l<=9; l++){
                                         let otherCell = `${cell[0]}${l}`
                                         if (emptyCells.includes(otherCell)==true && neighbors.includes(otherCell)==false){
@@ -463,6 +467,8 @@
                                 }
                                 occurence = occurence.flat().sort();
                                 if (occurence[0]==occurence[1] && occurence[2]==occurence[3] && occurence[4]==occurence[5]){
+                                    console.log("Obvious Triple")
+                                    change++;
                                     for (let l=1; l<=9; l++){
                                         let otherCell = `${l}${cell[1]}`
                                         if (emptyCells.includes(otherCell)==true && neighbors.includes(otherCell)==false){
