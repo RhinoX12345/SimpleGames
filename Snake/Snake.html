@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Snake</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="initial-scale=1.0">
+        <style>
+            body{
+                width:max-content;
+            }
+            table{
+                color:black;
+                border:1px solid black;
+                border-spacing:0;
+                text-align:center;
+                background-color:rgb(195, 255, 217);
+                font-family:"Segoe UI";
+                font-size:10px;
+                height: 80vh;
+            }
+            td{
+                padding:0;
+                border:0.3px solid black;
+                height:min-content;
+            }
+            #control{
+                position: absolute;
+                left: 550px;
+                top: 100px;
+            }
+            #control button{
+                width: 50px;
+                height: 50px;
+                margin: 2px;
+            }
+        </style>
+        <script>
+            const sleep = (sleep) => new Promise((resolve) => setTimeout(resolve, sleep))
+            let fruitMax = 5;
+            let boardSizeY = 9, boardSizeX = boardSizeY+1;
+            let direction = "right", newDirection = "";
+            let fruits = {}, fruitID = 0, fruitCount = 5, snakeList = [];
+            
+            class snake {
+                constructor(){
+                    this.state = "Alive";
+                    this.head = [Math.ceil(boardSizeX/3),Math.ceil(boardSizeY/2)];
+                    this.segments = [];
+                    this.length = 3;
+                    this.segments.push([[...this.head][0]-2, [...this.head][1]]);
+                    this.segments.push([[...this.head][0]-1, [...this.head][1]]);
+                    this.visUpdate();
+                    snakeList = [...this.segments,[...this.head]];
+                }
+                visUpdate(){
+                    document.getElementById(this.head).innerHTML = "Head";
+                    document.getElementById(this.head).style.backgroundColor = "rgb(63,125,237)";
+                    for (let i in this.segments){
+                        document.getElementById(this.segments[i]).innerHTML = this.segments.length+1 -i;
+                        document.getElementById(this.segments[i]).style.backgroundColor = "rgb(63,125,237)";
+                    }
+                    for (let i=1; i<=boardSizeX; i++){
+                        for (let j=1; j<=boardSizeY; j++){
+                            if (document.getElementById([i,j]).innerHTML==""){
+                                document.getElementById([i,j]).style.backgroundColor = "rgb(195, 255, 217)";
+                            }
+                        }
+                    }
+                }
+                move(direction){
+                    if (this.state == "Dead"){
+                        return "Dead";
+                    }
+                    switch (direction){
+                        case "right":
+                            //coordEdit(this.head, 1, 0)[0]
+                            if (coordEdit(this.head, 1, 0)[0]>boardSizeX){
+                                console.log("Die");
+                                this.state = "Dead";
+                                break;
+                            }
+                            if(document.getElementById(coordEdit(this.head, 1, 0)).innerHTML=="" || document.getElementById(coordEdit(this.head, 1, 0)).innerHTML=="fruit"){
+                                if (coordEdit(this.head, 1, 0)[0]<=boardSizeX){
+                                    if (document.getElementById(coordEdit(this.head, 1, 0)).innerHTML != "fruit"){
+                                        document.getElementById(this.segments[0]).innerHTML = "";
+                                        this.segments.splice(0,1);
+                                    }
+                                    this.segments.push(this.head);
+                                    this.head = coordEdit(this.head, 1, 0);
+                                }
+                                this.visUpdate();
+                            } else {
+                                console.log("Die");
+                                this.state = "Dead";
+                                break;
+                            }
+                            break;
+                        case "left":
+                            //coordEdit(this.head, -1, 0)[0]
+                            if (coordEdit(this.head, -1, 0)[0]<1){
+                                console.log("Die");
+                                this.state = "Dead";
+                                break;
+                            }
+                            if(document.getElementById(coordEdit(this.head, -1, 0)).innerHTML=="" || document.getElementById(coordEdit(this.head, -1, 0)).innerHTML=="fruit"){
+                                if (coordEdit(this.head, -1, 0)[0]>=1){
+                                    if (document.getElementById(coordEdit(this.head, -1, 0)).innerHTML != "fruit"){
+                                        document.getElementById(this.segments[0]).innerHTML = "";
+                                        this.segments.splice(0,1);
+                                    }
+                                    this.segments.push(this.head);
+                                    this.head = coordEdit(this.head, -1, 0);
+                                }
+                                this.visUpdate();
+                            } else {
+                                console.log("Die");
+                                this.state = "Dead";
+                                break;
+                            }
+                            break;
+                        case "up":
+                            //coordEdit(this.head, 0, -1)[1]
+                            if (coordEdit(this.head, 0, -1)[1]<1){
+                                console.log("Die");
+                                this.state = "Dead";
+                                break;
+                            }
+                            if(document.getElementById(coordEdit(this.head, 0, -1)).innerHTML=="" || document.getElementById(coordEdit(this.head, 0, -1)).innerHTML=="fruit"){
+                                if (coordEdit(this.head, 0, -1)[1]>=1){
+                                    if (document.getElementById(coordEdit(this.head, 0, -1)).innerHTML != "fruit"){
+                                        document.getElementById(this.segments[0]).innerHTML = "";
+                                        this.segments.splice(0,1);
+                                    }
+                                    this.segments.push(this.head);
+                                    this.head = coordEdit(this.head, 0, -1);
+                                }
+                                document.getElementById(this.head).innerHTML = "Head";
+                                this.visUpdate();
+                            } else {
+                                console.log("Die");
+                                this.state = "Dead";
+                                break;
+                            }
+                            break;
+                        case "down":
+                            //coordEdit(this.head, 0, 1)[1]
+                            if (coordEdit(this.head, 0, 1)[1]>boardSizeY){
+                                console.log("Die");
+                                this.state = "Dead";
+                                break;
+                            }
+                            if(document.getElementById(coordEdit(this.head, 0, 1)).innerHTML=="" || document.getElementById(coordEdit(this.head, 0, 1)).innerHTML=="fruit"){
+                                if (coordEdit(this.head, 0, 1)[1]<=boardSizeY){
+                                    if (document.getElementById(coordEdit(this.head, 0, 1)).innerHTML != "fruit"){
+                                        document.getElementById(this.segments[0]).innerHTML = "";
+                                        this.segments.splice(0,1);
+                                    }
+                                    this.segments.push(this.head);
+                                    this.head = coordEdit(this.head, 0, 1);
+                                }
+                                document.getElementById(this.head).innerHTML = "Head";
+                                this.visUpdate();
+                            } else {
+                                console.log("Die");
+                                this.state = "Dead";
+                                break;
+                            }
+                            break;
+                        default:
+                            console.log("No Direction");
+                            break;
+                    }
+                    snakeList = [...this.segments,[...this.head]];
+                }
+            }
+            class fruit {
+                constructor(){
+                    fruitID+=1;
+                    this.objName = "fruit"+fruitID;
+                    this.coord = [];
+                }
+                check(){
+                    if (document.getElementById(this.coord).innerHTML!="fruit"){
+                        this.spawnRand();
+                    }
+                }
+                spawnAt(coord){
+                    fruits[this.objName] = [...coord];
+                    this.coord = [...coord];
+                    document.getElementById(coord).innerHTML = "fruit";
+                    document.getElementById(coord).style.backgroundColor = "rgb(255,0,0)";
+                    return coord;
+                }
+                spawnRand(){
+                    let coord = [Math.ceil(Math.random()*boardSizeX),Math.ceil(Math.random()*boardSizeY)];
+                    if (document.getElementById(coord).innerHTML!=""){
+                        this.spawnRand();
+                        return;
+                    }
+                    fruits[this.objName] = [...coord];
+                    this.coord = [...coord];
+                    document.getElementById(coord).innerHTML = "fruit";
+                    document.getElementById(coord).style.backgroundColor = "rgb(255,0,0)";
+                    return coord;
+                }
+            }
+
+            function start(){
+                document.getElementById("board").innerHTML="";
+                for (let i=1; i<=boardSizeY; i++){
+                    document.getElementById("board").innerHTML+=`<tr id=${i} style="height:${80/boardSizeY}vh;"></tr>`;
+                    for (let j=1; j<=boardSizeX; j++){
+                        document.getElementById(i).innerHTML+=`<td id=${j},${i} style="width:${80/boardSizeY}vh;"></td>`;
+                    }
+                }
+                game();
+            }
+
+            function coordEdit(input, x, y){
+                return [input[0]+x,input[1]+y];
+            }
+
+            function changeDir(event, id){
+                console.log(event)
+                let key = event.key;
+                switch (key.toLowerCase()){
+                    case "w":
+                        newDirection = "up";
+                        break;
+                    case "a":
+                        newDirection = "left";
+                        break;
+                    case "s":
+                        newDirection = "down";
+                        break;
+                    case "d":
+                        newDirection = "right";
+                        break;
+                    default:
+                        break;
+                }
+                document.getElementById("input").value = "";
+            }
+
+            async function game(){
+                let fruit1 = new fruit;
+                if (fruitCount >=1){
+                    fruit1.spawnAt([Math.ceil(boardSizeY/3)*2+1,Math.ceil(boardSizeY/2)]);
+                }
+                let fruit2 = new fruit;
+                if (fruitCount >= 2){
+                    fruit2.spawnAt([Math.ceil(boardSizeY/3)*2-1,Math.ceil(boardSizeY/2)+2]);
+                }
+                let fruit3 = new fruit;
+                if (fruitCount >= 3){
+                    fruit3.spawnAt([Math.ceil(boardSizeY/3)*2-1,Math.ceil(boardSizeY/2)-2]);
+                }
+                let fruit4 = new fruit;
+                if (fruitCount >= 4){
+                    fruit4.spawnAt([Math.ceil(boardSizeY/3)*2+3,Math.ceil(boardSizeY/2)+2]);
+                }
+                let fruit5 = new fruit;
+                if (fruitCount >= 5){
+                    fruit5.spawnAt([Math.ceil(boardSizeY/3)*2+3,Math.ceil(boardSizeY/2)-2]);
+                }
+                let player = new snake;
+                while(player.state=="Alive"){
+                    if (newDirection==""){
+                        await sleep(200);
+                        continue;
+                    }
+                    switch (newDirection){
+                        case "right":
+                            if (coordEdit(player.head, 1, 0)[0]>boardSizeX){
+                                direction = newDirection;
+                                break;
+                            } 
+                            if (document.getElementById(coordEdit(player.head, 1, 0)).innerHTML!="2"){
+                                direction = newDirection;
+                            }
+                            break;
+                        case "left":
+                            if (coordEdit(player.head, -1, 0)[0]<1){
+                                direction = newDirection;
+                                break;
+                            } 
+                            if (document.getElementById(coordEdit(player.head, -1, 0)).innerHTML!="2"){
+                                direction = newDirection;
+                            }
+                            break;
+                        case "up":
+                            if (coordEdit(player.head, 0, -1)[1]<1){
+                                direction = newDirection;
+                                break;
+                            } 
+                            if (document.getElementById(coordEdit(player.head, 0, -1)).innerHTML!="2"){
+                                direction = newDirection;
+                            }
+                            break;
+                        case "down":
+                            if (coordEdit(player.head, 0, 1)[1]>boardSizeY){
+                                direction = newDirection;
+                                break;
+                            } 
+                            if (document.getElementById(coordEdit(player.head, 0, 1)).innerHTML!="2"){
+                                direction = newDirection;
+                            }
+                            break;
+                    }
+                    player.move(direction);
+                    if (fruitCount >=1){
+                        fruit1.check();
+                    }
+                    if (fruitCount >= 2){
+                        fruit2.check();
+                    }
+                    if (fruitCount >= 3){
+                        fruit3.check();
+                    }
+                    if (fruitCount >= 4){
+                        fruit4.check();
+                    }
+                    if (fruitCount >= 5){
+                        fruit5.check();
+                    }
+                    await sleep(500);
+                }
+            }
+        </script>
+    </head>
+    <body onload="start()">
+        <input id="input" onkeydown="changeDir(event, id)">
+        <table id="board"></table>
+        <div id="control">
+            <div style="width:auto; text-align:center;"><button onclick="newDirection='up';">W</button></div>
+            <button onclick="newDirection='left';">A</button>
+            <button onclick="newDirection='down';">S</button>
+            <button onclick="newDirection='right';">D</button>
+        </div>
+    </body>
+</html>
