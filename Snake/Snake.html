@@ -7,6 +7,8 @@
         <style>
             body{
                 width:max-content;
+                font-family:"Segoe UI";
+                font-size: 15px;
             }
             table{
                 color:black;
@@ -14,9 +16,8 @@
                 border-spacing:0;
                 text-align:center;
                 background-color:rgb(195, 255, 217);
-                font-family:"Segoe UI";
                 font-size:10px;
-                height: 80vh;
+                height: 35vw;
             }
             td{
                 padding:0;
@@ -25,13 +26,13 @@
             }
             #control{
                 position: absolute;
-                left: 550px;
-                top: 100px;
+                left: 45vw;
+                top: 10vw;
             }
             #control button{
-                width: 50px;
-                height: 50px;
-                margin: 2px;
+                width: 5vw;
+                height: 5vw;
+                margin: 0.1vw;
             }
         </style>
         <script>
@@ -40,7 +41,7 @@
             let boardSizeY = 9, boardSizeX = boardSizeY+1;
             let direction = "right", newDirection = "";
             let fruits = {}, fruitID = 0, fruitCount = 5, snakeList = [];
-            
+            let botState = false;
             class snake {
                 constructor(){
                     this.state = "Alive";
@@ -193,24 +194,34 @@
                 }
                 spawnRand(){
                     let coord = [Math.ceil(Math.random()*boardSizeX),Math.ceil(Math.random()*boardSizeY)];
-                    if (document.getElementById(coord).innerHTML!=""){
-                        this.spawnRand();
-                        return;
+                    let terminate = true;
+                    for (let i=1; i<=boardSizeX; i++){
+                        for (let j=1; j<boardSizeY; j++){
+                            if (document.getElementById(`${i},${j}`).innerHTML==""){
+                                terminate = false;
+                            }
+                        }
                     }
-                    fruits[this.objName] = [...coord];
-                    this.coord = [...coord];
-                    document.getElementById(coord).innerHTML = "fruit";
-                    document.getElementById(coord).style.backgroundColor = "rgb(255,0,0)";
-                    return coord;
+                    if (terminate==false){
+                        if (document.getElementById(coord).innerHTML!=""){
+                            this.spawnRand();
+                            return;
+                        }
+                        fruits[this.objName] = [...coord];
+                        this.coord = [...coord];
+                        document.getElementById(coord).innerHTML = "fruit";
+                        document.getElementById(coord).style.backgroundColor = "rgb(255,0,0)";
+                        return coord;
+                    }
                 }
             }
 
             function start(){
                 document.getElementById("board").innerHTML="";
                 for (let i=1; i<=boardSizeY; i++){
-                    document.getElementById("board").innerHTML+=`<tr id=${i} style="height:${80/boardSizeY}vh;"></tr>`;
+                    document.getElementById("board").innerHTML+=`<tr id=${i} style="height:${35/boardSizeY}vw;"></tr>`;
                     for (let j=1; j<=boardSizeX; j++){
-                        document.getElementById(i).innerHTML+=`<td id=${j},${i} style="width:${80/boardSizeY}vh;"></td>`;
+                        document.getElementById(i).innerHTML+=`<td id=${j},${i} style="width:${35/boardSizeY}vw;"></td>`;
                     }
                 }
                 game();
@@ -221,28 +232,67 @@
             }
 
             function changeDir(event, id){
-                console.log(event)
                 let key = event.key;
                 switch (key.toLowerCase()){
                     case "w":
+                        document.getElementById("input").value = "";
                         newDirection = "up";
                         break;
                     case "a":
+                        document.getElementById("input").value = "";
                         newDirection = "left";
                         break;
                     case "s":
+                        document.getElementById("input").value = "";
                         newDirection = "down";
                         break;
                     case "d":
+                        document.getElementById("input").value = "";
                         newDirection = "right";
+                        break;
+                    case "1":
+                        document.getElementById("input").value = "";
+                        fruitCount = 1;
+                        break;
+                    case "2":
+                        document.getElementById("input").value = "";
+                        fruitCount = 2;
+                        break;
+                    case "3":
+                        document.getElementById("input").value = "";
+                        fruitCount = 3;
+                        break;
+                    case "4":
+                        document.getElementById("input").value = "";
+                        fruitCount = 4;
+                        break;
+                    case "5":
+                        document.getElementById("input").value = "";
+                        fruitCount = 5;
+                        break;
+                    case "r":
+                        document.getElementById("input").value = "";
+                        start();
+                        break;
+                    case "b":
+                        document.getElementById("input").value = "";
+                        if (botState == false){
+                            document.getElementById("bot").innerHTML = "Bot: On";
+                            botState = true;
+                            bot();
+                        } else {
+                            document.getElementById("bot").innerHTML = "Bot: Off";
+                            botState = false;
+                        }
                         break;
                     default:
                         break;
                 }
-                document.getElementById("input").value = "";
             }
 
             async function game(){
+                fruits = {}, fruitID = 0, fruitCount = 5, snakeList = [];
+                direction = "right", newDirection = "", document.getElementById("input").value="";
                 let fruit1 = new fruit;
                 if (fruitCount >=1){
                     fruit1.spawnAt([Math.ceil(boardSizeY/3)*2+1,Math.ceil(boardSizeY/2)]);
@@ -268,6 +318,18 @@
                     if (newDirection==""){
                         await sleep(200);
                         continue;
+                    }
+                    let terminate = true;
+                    for (let i=1; i<=boardSizeX; i++){
+                        for (let j=1; j<=boardSizeY; j++){
+                            if (document.getElementById(`${i},${j}`).innerHTML == "fruit" || document.getElementById(`${i},${j}`).innerHTML == ""){
+                                terminate = false;
+                            }
+                        }
+                    }
+                    if (terminate==true){
+                        console.log("Win!");
+                        break;
                     }
                     switch (newDirection){
                         case "right":
@@ -323,13 +385,82 @@
                     if (fruitCount >= 5){
                         fruit5.check();
                     }
-                    await sleep(500);
+                    await sleep(300);
+                }
+            }
+            async function bot(){
+                newDirection = "right";
+                while (botState){
+                    await sleep(100);
+                    if (document.getElementById("10,5").innerHTML == "Head"){
+                        newDirection = "up";
+                    }
+                    if (document.getElementById("10,1").innerHTML == "Head"){
+                        newDirection = "left";
+                    }
+                    if (document.getElementById("9,1").innerHTML == "Head"){
+                        newDirection = "down";
+                    }
+                    if (document.getElementById("9,8").innerHTML == "Head"){
+                        newDirection = "left";
+                    }
+                    if (document.getElementById("8,8").innerHTML == "Head"){
+                        newDirection = "up";
+                    }
+                    if (document.getElementById("8,1").innerHTML == "Head"){
+                        newDirection = "left";
+                    }
+                    if (document.getElementById("7,1").innerHTML == "Head"){
+                        newDirection = "down";
+                    }
+                    if (document.getElementById("7,8").innerHTML == "Head"){
+                        newDirection = "left";
+                    }
+                    if (document.getElementById("6,8").innerHTML == "Head"){
+                        newDirection = "up";
+                    }
+                    if (document.getElementById("6,1").innerHTML == "Head"){
+                        newDirection = "left";
+                    }
+                    if (document.getElementById("5,1").innerHTML == "Head"){
+                        newDirection = "down";
+                    }
+                    if (document.getElementById("5,8").innerHTML == "Head"){
+                        newDirection = "left";
+                    }
+                    if (document.getElementById("4,8").innerHTML == "Head"){
+                        newDirection = "up";
+                    }
+                    if (document.getElementById("4,1").innerHTML == "Head"){
+                        newDirection = "left";
+                    }
+                    if (document.getElementById("3,1").innerHTML == "Head"){
+                        newDirection = "down";
+                    }
+                    if (document.getElementById("3,8").innerHTML == "Head"){
+                        newDirection = "left";
+                    }
+                    if (document.getElementById("2,8").innerHTML == "Head"){
+                        newDirection = "up";
+                    }
+                    if (document.getElementById("2,1").innerHTML == "Head"){
+                        newDirection = "left";
+                    }
+                    if (document.getElementById("1,1").innerHTML == "Head"){
+                        newDirection = "down";
+                    }
+                    if (document.getElementById("1,9").innerHTML == "Head"){
+                        newDirection = "right";
+                    }
+                    if (document.getElementById("10,9").innerHTML == "Head"){
+                        newDirection = "up";
+                    }
                 }
             }
         </script>
     </head>
     <body onload="start()">
-        <input id="input" onkeydown="changeDir(event, id)">
+        <input id="input" onkeydown="changeDir(event, id)"> <label id="bot">Bot: Off</label><br><br>
         <table id="board"></table>
         <div id="control">
             <div style="width:auto; text-align:center;"><button onclick="newDirection='up';">W</button></div>
