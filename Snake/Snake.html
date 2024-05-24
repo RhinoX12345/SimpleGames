@@ -17,7 +17,7 @@
                 text-align:center;
                 background-color:rgb(195, 255, 217);
                 font-size:10px;
-                height: 35vw;
+                height: 38vw;
             }
             td{
                 padding:0;
@@ -41,6 +41,7 @@
             let boardSizeY = 9, boardSizeX = boardSizeY+1;
             let direction = "right", newDirection = "";
             let fruits = {}, fruitID = 0, fruitCount = 5, snakeList = [];
+            let timescale = 100/100;
             let botState = false;
             class snake {
                 constructor(){
@@ -217,21 +218,37 @@
             }
 
             function start(){
+                boardSizeX = boardSizeY+1;
                 document.getElementById("board").innerHTML="";
                 for (let i=1; i<=boardSizeY; i++){
-                    document.getElementById("board").innerHTML+=`<tr id=${i} style="height:${35/boardSizeY}vw;"></tr>`;
+                    document.getElementById("board").innerHTML+=`<tr id=${i} style="height:${38/boardSizeY}vw;"></tr>`;
                     for (let j=1; j<=boardSizeX; j++){
-                        document.getElementById(i).innerHTML+=`<td id=${j},${i} style="width:${35/boardSizeY}vw;"></td>`;
+                        document.getElementById(i).innerHTML+=`<td id=${j},${i} style="width:${38/boardSizeY}vw;"></td>`;
                     }
                 }
                 game();
             }
 
+            function again(){
+                boardSizeX = boardSizeY+1;
+                document.getElementById("board").innerHTML="";
+                for (let i=1; i<=boardSizeY; i++){
+                    document.getElementById("board").innerHTML+=`<tr id=${i} style="height:${38/boardSizeY}vw;"></tr>`;
+                    for (let j=1; j<=boardSizeX; j++){
+                        document.getElementById(i).innerHTML+=`<td id=${j},${i} style="width:${38/boardSizeY}vw;"></td>`;
+                    }
+                }
+                game();
+                if(botState){
+                    bot();
+                }
+            }
+            
             function coordEdit(input, x, y){
                 return [input[0]+x,input[1]+y];
             }
 
-            function changeDir(event, id){
+            function keyInput(event, id){
                 let key = event.key;
                 switch (key.toLowerCase()){
                     case "w":
@@ -285,12 +302,29 @@
                             botState = false;
                         }
                         break;
+                    case "8":
+                        boardSizeY = 9;
+                        start();
+                        break;
+                    case "9":
+                        boardSizeY = 11;
+                        start();
+                        break;
+                    case "0":
+                        boardSizeY = 13;
+                        start();
                     default:
                         break;
                 }
             }
 
+            function speedScale(value){
+                timescale = document.getElementById("timescale").value/100;
+                console.log(timescale);
+            }
+
             async function game(){
+                document.getElementById("timescale").defaultValue = 100;
                 fruits = {}, fruitID = 0, fruitCount = 5, snakeList = [];
                 direction = "right", newDirection = "", document.getElementById("input").value="";
                 let fruit1 = new fruit;
@@ -385,82 +419,74 @@
                     if (fruitCount >= 5){
                         fruit5.check();
                     }
-                    await sleep(300);
+                    await sleep(300/timescale);
+                }
+                if(botState){
+                    start();
                 }
             }
+            
             async function bot(){
+                console.log("new");
                 newDirection = "right";
+                let i=0;
                 while (botState){
-                    await sleep(100);
-                    if (document.getElementById("10,5").innerHTML == "Head"){
+                    if(newDirection==''){newDirection="right"}
+                    await sleep(1/timescale);
+                    if (document.getElementById(`${boardSizeX},${Math.ceil(boardSizeY/2)}`).innerHTML == "Head"){
                         newDirection = "up";
                     }
-                    if (document.getElementById("10,1").innerHTML == "Head"){
+                    if (document.getElementById(`${boardSizeX-i},1`).innerHTML == "Head" && (boardSizeX-i)%2==(boardSizeX)%2){
                         newDirection = "left";
+                        while (document.getElementById(`${boardSizeX-i},1`).innerHTML == "Head"){
+                            await sleep(1/timescale);
+                        }
+                        i++;
                     }
-                    if (document.getElementById("9,1").innerHTML == "Head"){
+                    if (document.getElementById(`${boardSizeX-i},1`).innerHTML == "Head" && (boardSizeX-i)%2==(boardSizeX-1)%2){
                         newDirection = "down";
                     }
-                    if (document.getElementById("9,8").innerHTML == "Head"){
-                        newDirection = "left";
+                    if ((boardSizeX-i)!=1){
+                        if (document.getElementById(`${boardSizeX-i},${boardSizeY-1}`).innerHTML == "Head" && (boardSizeX-i)%2==(boardSizeX-1)%2){
+                            newDirection = "left";
+                            while (document.getElementById(`${boardSizeX-i},${boardSizeY-1}`).innerHTML == "Head"){
+                                await sleep(1/timescale);
+                            }
+                            i++
+                        }
+                        if (document.getElementById(`${boardSizeX-i},${boardSizeY-1}`).innerHTML == "Head" && (boardSizeX-i)%2==(boardSizeX)%2){
+                            newDirection = "up";
+                        }
+                    } else {
+                        if (document.getElementById(`1,${boardSizeY}`).innerHTML == "Head"){
+                            newDirection = "right";
+                        }
+                        if (document.getElementById(`${boardSizeX},${boardSizeY}`).innerHTML == "Head"){
+                            newDirection = "up";
+                            i=0;
+                        }
                     }
-                    if (document.getElementById("8,8").innerHTML == "Head"){
-                        newDirection = "up";
+                    let terminate = true;
+                    for (let i=1; i<=boardSizeX; i++){
+                        for (let j=1; j<=boardSizeY; j++){
+                            if (document.getElementById(`${i},${j}`).innerHTML == "fruit" || document.getElementById(`${i},${j}`).innerHTML == ""){
+                                terminate = false;
+                            }
+                        }
                     }
-                    if (document.getElementById("8,1").innerHTML == "Head"){
-                        newDirection = "left";
-                    }
-                    if (document.getElementById("7,1").innerHTML == "Head"){
-                        newDirection = "down";
-                    }
-                    if (document.getElementById("7,8").innerHTML == "Head"){
-                        newDirection = "left";
-                    }
-                    if (document.getElementById("6,8").innerHTML == "Head"){
-                        newDirection = "up";
-                    }
-                    if (document.getElementById("6,1").innerHTML == "Head"){
-                        newDirection = "left";
-                    }
-                    if (document.getElementById("5,1").innerHTML == "Head"){
-                        newDirection = "down";
-                    }
-                    if (document.getElementById("5,8").innerHTML == "Head"){
-                        newDirection = "left";
-                    }
-                    if (document.getElementById("4,8").innerHTML == "Head"){
-                        newDirection = "up";
-                    }
-                    if (document.getElementById("4,1").innerHTML == "Head"){
-                        newDirection = "left";
-                    }
-                    if (document.getElementById("3,1").innerHTML == "Head"){
-                        newDirection = "down";
-                    }
-                    if (document.getElementById("3,8").innerHTML == "Head"){
-                        newDirection = "left";
-                    }
-                    if (document.getElementById("2,8").innerHTML == "Head"){
-                        newDirection = "up";
-                    }
-                    if (document.getElementById("2,1").innerHTML == "Head"){
-                        newDirection = "left";
-                    }
-                    if (document.getElementById("1,1").innerHTML == "Head"){
-                        newDirection = "down";
-                    }
-                    if (document.getElementById("1,9").innerHTML == "Head"){
-                        newDirection = "right";
-                    }
-                    if (document.getElementById("10,9").innerHTML == "Head"){
-                        newDirection = "up";
+                    if (terminate==true){
+                        console.log("Kill Bot");
+                        bot();
+                        break;
                     }
                 }
             }
         </script>
     </head>
     <body onload="start()">
-        <input id="input" onkeydown="changeDir(event, id)"> <label id="bot">Bot: Off</label><br><br>
+        <input id="input" onkeydown="keyInput(event, id)"><br>
+        <label>Timescale:</label><input onchange="speedScale(value)" min=50 max=300 style="position:relative;top:0.4vw;" type="range" id="timescale"><br>
+        <label id="bot">Bot: Off</label><br><br>
         <table id="board"></table>
         <div id="control">
             <div style="width:auto; text-align:center;"><button onclick="newDirection='up';">W</button></div>
