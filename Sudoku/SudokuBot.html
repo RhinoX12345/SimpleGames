@@ -75,9 +75,6 @@
             }
 
             function setup(){
-                if (document.getElementById("code").value!=""){
-                    code = document.getElementById("code").value;
-                }
                 document.getElementById("board").innerHTML="";
                 for (let i=1; i<=9; i++){
                     document.getElementById("board").innerHTML+=`<tr id=${i}></tr>`;
@@ -91,12 +88,11 @@
                         }
                     }
                 }
-                board = [];
-
-                for (let i=0; i<code.length; i++){
-                    board.push(code[i]);
+                if (document.getElementById("code").value!=""){
+                    board = document.getElementById("code").value;
+                } else {
+                    board = [...code];
                 }
-
                 for (let i=0; i<cells.length; i++){
                     if (board[i]!=0){
                         boardCells[cells[i]] = true;
@@ -104,7 +100,6 @@
                         boardCells[cells[i]] = false;
                     }
                 }
-
 
                 for (let i=0; i<cells.length; i++){
                     if (boardCells[cells[i]]==true){
@@ -158,7 +153,7 @@
 
             async function bot(){
                 const sleep = (sleep) => new Promise((resolve) => setTimeout(resolve, sleep))
-                let delay = 0;
+                let delay = 1;
                 let cellProfile = {}, emptyCells = [], numberProfile = {};
                 for (let i in cells){
                     if (window.getComputedStyle(document.getElementById(cells[i]), null)["fontSize"]=="10px"){
@@ -179,8 +174,8 @@
                 console.log("Bot Start")
                 let change = 0;
                 let step = 0;
-                while(true && step<200){
-                    //*Disable Switch
+                while(true && step<100){
+                    /*Disable Switch
                     if (change > 0){
                         let cellOutput = {}
                         for (let i in cellProfile){//sets tiles for only possible number
@@ -191,14 +186,13 @@
                                 set(cellProfile[i][0]);
                                 cellProfile[i]=[];
                                 change++;
-                                await sleep(delay)
+                                await sleep(delay);
                             }
                         }
                         console.log(cellOutput);
-                        change = 0;
                     }
                     //*/
-                    
+                    if (change >0){change=0;}
                     step++;
                     console.log("Step:", step)
                     for (let i=0; i<1; i++){//removes empty cells from cellProfile
@@ -210,6 +204,7 @@
                         }
                         cellProfile = {...tempObj}
                     }
+                    
                     
                     for (let i in cellProfile){//(Obvious Single, Last free cell, Last remaining cell, Last possible number) sets options for possible numbers by row, col, group (essentially autonotes)
                         let cell = cellProfile[i];
@@ -498,6 +493,7 @@
                                 possibleNum.push(cellProfile[groups[i][j]]);
                             }
                         }
+                        console.log(i, possibleNum)
                         possibleNum = possibleNum.flat().sort();
                         for (let j=1; j<=9; j++){
                             let amount = 0;
@@ -1266,7 +1262,7 @@
     <body onload="pageLoad()">
         <button onclick="setup()">Load</button>
         <button onclick="bot()">Bot</button>
-        <input id="code" style="width:600px" value="954210000862090004713008592145700200398021740627000000400006020236100007500002030">
+        <input id="code" style="width:600px" value="470800690000030100006000000560001900008000060002500000950400070000008004200000000">
         <br><br>
         <table id="board"></table>
         <table id="number">
