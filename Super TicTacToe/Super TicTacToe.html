@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Sudoku</title>
+        <title>Super TicTacToe</title>
         <style>
             body{
                 width:max-content;
@@ -48,10 +48,13 @@
             div p{
                 margin: 0px;
                 position: relative;
-                top: -67px;
+                top: 15px;
+                height: 50px;
+                width: 155px;
                 text-align: center;
-                font-size: 200px;
+                font-size: 120px;
                 color: white;
+                line-height: 130px;
             }
             #d1 {top:34px; left:8px;}
             #d2 {top:34px; left:166px;}
@@ -108,15 +111,12 @@
                     document.getElementById(cells[i]).addEventListener("click", e=>click(cells[i]));
                 }
                 targetGroup = -1;
-                document.getElementById("d1").hidden=true;
-                document.getElementById("d2").hidden=true;
-                document.getElementById("d3").hidden=true;
-                document.getElementById("d4").hidden=true;
-                document.getElementById("d5").hidden=true;
-                document.getElementById("d6").hidden=true;
-                document.getElementById("d7").hidden=true;
-                document.getElementById("d8").hidden=true;
-                document.getElementById("d9").hidden=true;
+                turnCount = 0;
+                document.getElementById("turn").innerHTML = "Turn: O";
+                for (let i=1; i<=9; i++){
+                    document.getElementById(`d${i}`).hidden=true;
+                    document.getElementById(`dp${i}`).innerHTML="";
+                }
             }
 
             function click(id){
@@ -129,8 +129,10 @@
                 if (document.getElementById(id).innerHTML==""){
                     if (turnCount%2==0){
                         document.getElementById(id).innerHTML="O";
+                        document.getElementById("turn").innerHTML="Turn: X";
                     } else {
                         document.getElementById(id).innerHTML="X";
+                        document.getElementById("turn").innerHTML="Turn: O";
                     }
                     turnCount++;
                     targetGroup = 3*((Number(id[1])-1)%3)+(Number(id[0]-1)%3)+1;
@@ -228,7 +230,7 @@
         </script>
     </head>
     <body onload="pageLoad()">
-        <button onclick="setup()">Load</button>
+        <button onclick="setup()">Load</button> <label id="turn">Turn: O</label>
         <br>
         <div id="d1" hidden><p id="dp1"></p></div>
         <div id="d2" hidden><p id="dp2"></p></div>
