@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta chardset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>2D Platformer</title>
+        <style>
+            body {
+                background-color: white;
+                overflow: hidden;
+            }
+            #controls {
+                position:fixed;
+                height: 100vh;
+                width: 100vw;
+                top: 0px;
+                left: 0px;
+                background-color: rgba(255, 255, 255, 0);
+                color:rgba(0, 0, 0, 0);
+                opacity: 0;
+                z-index: 10;
+                margin: 0px;
+                padding: 0px;
+                border: 0px;
+                pointer-events:stroke;
+                cursor:default;
+                
+            }
+            #player {
+                position: absolute;
+                height: 20px;
+                width: 20px;
+                background-color: black;
+            }
+
+            .platform {
+                position: absolute;
+                height: 10px;
+                width: 100px;
+                background-color: black;
+            }
+
+            #plat1{
+                bottom: 20px;
+                left: 100px;
+            }
+        </style>
+        <script>
+            const sleep = (sleep) => new Promise((resolve) => setTimeout(resolve, sleep))
+            async function setup(){
+                winHeight = window.innerHeight, winWidth = window.innerWidth;
+                onground = false, gravityEnabled = true, dragEnabled = true, facing = "right", dashCd = 0, dashAllow = true;
+                gameSpd = 25, gravity = 10, moveSpd = 5, jumpSpd = 10, dashSpd = 20;
+                gravityCap = -jumpSpd, spdCap = 5, airDrag = 1, groundDrag = 1;
+                ceiling = winHeight, ground = 0, wallL = 0, wallR = winWidth;
+                globalTime = 0, gravTime = 0;
+                player = "player";
+                playerSizeX = document.getElementById(player).getBoundingClientRect().height, playerSizeY = document.getElementById(player).getBoundingClientRect().width;
+                momentum = {"x":0.0, "y":0.0};
+                platforms = document.querySelectorAll(".platform");
+            }
+
+            async function pageLoad(){
+                await setup()
+                setInterval(timeLoops, gameSpd)
+                setInterval(gravityLoop, gameSpd)
+                setInterval(moveMomentum, gameSpd)
+                setInterval(checkState, gameSpd)
+                movementLoop()
+                //setInterval(inputLoop, 100)
+            }
+
+            function timeLoops(){
+                globalTime += gameSpd/1000;
+                if (getOffset(player).bottom > ground){
+                    gravTime += gameSpd/1000;
+                }
+                if (dashCd > 0){
+                    dashCd -= gameSpd/1000;
+                } else {
+                    dashCd = 0;
+                }
+            }
+
+            function getOffset(elem) {
+                const rect = document.getElementById(elem).getBoundingClientRect();
+                return {
+                    top: rect.top,
+                    left: rect.left,
+                    right: winWidth - rect.right,
+                    bottom: winHeight - rect.bottom,
+                    height: rect.height,
+                    width: rect.width
+                };
+            }
+
+            function gravityLoop(){
+                if (gravityEnabled == true){
+                    let dist = getOffset(player).bottom;
+                    if (dist >= ground){
+                        let newDist = dist - gravity*gravTime*gravTime;
+                        momentum["y"] = momentum["y"]-gravity*gravTime*gravTime;
+                        if (momentum["y"] < gravityCap){
+                            momentum["y"] = gravityCap;
+                        }
+                        if (newDist <= ground){
+                            newDist = ground;
+                            document.getElementById(player).style.bottom = `${newDist}px`
+                            gravTime = 0;
+                        }
+                    }
+                }
+            }
+
+            function checkState(){
+                let bottom = getOffset(player).bottom;
+                if (bottom <= ground){
+                    onground = true;
+                } else {
+                    onground = false;
+                }
+            }
+
+            /*let inputCondition = true;
+            let keyBuffer = "";
+            function inputLoop(){
+                if (keyBuffer == ""){
+                    inputCondition = true;
+                } else {
+                    movement(keyBuffer)
+                    keyBuffer = "";
+                }
+            }*/
+
+            let inputs = [];
+            async function movementBuffer(event, mode){
+                let t1 = globalTime;
+                while (globalTime == t1){
+                    await sleep(gameSpd)
+                }
+                console.log(0)
+                if (mode == true && inputs.includes(event.key) == false){
+                    inputs.push(event.key);
+                } else {
+                    inputs.splice(inputs.indexOf(event.key), 1);
+                }
+            }
+
+            async function movementLoop(){
+                while(true){
+                    await sleep(gameSpd)
+                    for (let i in inputs){
+                        key = inputs[i];
+                        switch (key.toLowerCase()){
+                            case "a":
+                                facing = "left";
+                                momentum["x"] = -moveSpd;
+                                break;
+                            case "d":
+                                facing = "right"
+                                momentum["x"] = moveSpd;
+                                break;
+                            case " ":
+                                if (getOffset(player).bottom == ground){
+                                    momentum["y"]=jumpSpd;
+                                }
+                                break;
+                            case "shift":
+                                if (onground == true){
+                                    dashAllow = true;
+                                }
+                                if (dashCd == 0 && dashAllow == true){
+                                    if (onground != true){
+                                        dashAllow = false;
+                                    }
+                                    dashCd = 0.5;
+                                    gravityEnabled = false, dragEnabled = false;
+                                    let xHold = momentum["x"];
+                                    momentum["y"] = 0;
+                                    if (facing == "right"){
+                                        momentum["x"] = dashSpd;
+                                    } else {
+                                        momentum["x"] = -dashSpd;
+                                    }
+                                    await sleep(100)
+                                    gravityEnabled = true, dragEnabled = true;
+                                    momentum["x"] = xHold;
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
+
+            function moveMomentum(){
+                let x = momentum["x"], y = momentum["y"];
+                if (x > 0){
+                    let dist = getOffset(player).left;
+                    let newDist = dist + x;
+                    if (newDist >= wallR - getOffset(player).width){
+                        newDist = wallR - getOffset(player).width;
+                        momentum["x"] = 0;
+                        console.log("touchright")
+                    }
+                    document.getElementById(player).style.left = `${newDist}px`;
+                    console.log(momentum)
+                    if (dragEnabled == true){
+                        if (onground == true){
+                            momentum["x"] = momentum["x"]-groundDrag;
+                            if (momentum["x"] < 0){
+                                momentum["x"] = 0;
+                            }
+                        } else {
+                            momentum["x"] = momentum["x"]-airDrag;
+                            if (momentum["x"] < 0){
+                                momentum["x"] = 0;
+                            }
+                        }
+                    }
+                } else if (x < 0){
+                    let dist = getOffset(player).left;
+                    let newDist = dist + x;
+                    if (newDist <= wallL){
+                        newDist = wallL;
+                        momentum["x"] = 0;
+                        console.log("touchleft")
+                    }
+                    document.getElementById(player).style.left = `${newDist}px`;
+                    console.log(momentum)
+                    if (dragEnabled == true){
+                        if (onground == true){
+                            momentum["x"] = momentum["x"]+groundDrag;;
+                            if (momentum["x"] > 0){
+                                momentum["x"] = 0;
+                            }
+                        } else {
+                            momentum["x"] = momentum["x"]+airDrag;
+                            if (momentum["x"] > 0){
+                                momentum["x"] = 0;
+                            }
+                        }
+                    }
+                }
+                if (y > 0){
+                    let dist = getOffset(player).bottom;
+                    let newDist = dist + y;
+                    if (newDist > ceiling - getOffset(player).height){
+                        newDist = ceiling - getOffset(player).height;
+                        momentum["y"] = 0;
+                        console.log("hithead")
+                    }
+                    document.getElementById(player).style.bottom = `${newDist}px`;
+                    console.log(momentum)
+                } else if (y < 0){
+                    let dist = getOffset(player).bottom;
+                    let newDist = dist + y;
+                    if (newDist < ground){
+                        newDist = ground;
+                        momentum["y"] = 0;
+                        console.log("onground")
+                    }
+                    document.getElementById(player).style.bottom = `${newDist}px`;
+                    console.log(momentum)
+                }
+            }
+
+            function collisionDetect(){
+
+            }
+        </script>
+    </head>
+    <body onload="pageLoad()">
+        <input id="controls" autofocus onkeydown="movementBuffer(event, true)" onkeyup="movementBuffer(event, false)">
+        <div id="player"></div>
+        <div id="plat1" class="platform"></div>
+    </body>
+</html>
