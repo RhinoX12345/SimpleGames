@@ -55,6 +55,7 @@
                 player = "player";
                 playerSizeX = document.getElementById(player).getBoundingClientRect().height, playerSizeY = document.getElementById(player).getBoundingClientRect().width;
                 momentum = {"x":0.0, "y":0.0};
+                inputs = [];
             }
 
             async function pageLoad(){
@@ -149,7 +150,6 @@
                 }
             }*/
 
-            let inputs = [];
             async function movementBuffer(event, mode){
                 let t1 = globalTime;
                 while (globalTime == t1){
@@ -360,8 +360,6 @@
                 ground =  Number(Object.keys(valid)[Object.keys(valid).length-1])
                 //console.log(wallR, wallL, ceiling, ground)
             }
-            
-
         </script>
     </head>
     <body onload="pageLoad()">
