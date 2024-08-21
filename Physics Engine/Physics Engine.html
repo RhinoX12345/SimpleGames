@@ -6,7 +6,6 @@
         <title>Physics Engine</title>
         <style>
             body {
-                background-color: white;
                 overflow: hidden;
             }
             #controls {
@@ -24,60 +23,125 @@
                 border: 0px;
                 pointer-events:stroke;
                 cursor:default;
-                
             }
             #player {
                 position: absolute;
                 height: 25px;
                 width: 25px;
-                bottom: 0px;
+                bottom: 50px;
+                left: 400px;
                 background-color: rgb(108, 108, 108);
             }
 
             .platform {
                 position: absolute;
-                background-color: black;
+                background-color: rgba(0, 0, 0, .5);
             }
 
-            #plat1{bottom: 0px; left: 100px; height: 40px; width: 100px;}
-            #plat2{bottom: 90px; left: 500px; height: 10px; width: 100px;}
+            #zero{position: absolute; background-color: rgba(0, 0, 0, .5); bottom: 0px; left: 0px; height: 0px; width: 0px}
+            #floor{bottom: 5px; left: 0px; height: 5px; width: 1400px;}
+            /*#plat1{bottom: 10px; left: 400px; height: 40px; width: 100px;}
+            #plat2{bottom: 210px; left: 200px; height: 5px; width: 300px;}
+            #plat3{bottom: 10px; left: 100px; height: 100px; width: 100px;}
+            #plat4{bottom: 37px; left: 250px; height: 50px; width: 50px;}
+            #plat5{bottom: 10px; left: 527px; height: 40px; width: 100px;}
+            #plat6{bottom: 300px; left: 500px; height: 5px; width: 200px;}*/
             
         </style>
         <script>
             const sleep = (sleep) => new Promise((resolve) => setTimeout(resolve, sleep))
-            async function setup(){
+            function getOffset(elem) {
+                const rect = document.getElementById(elem).getBoundingClientRect();
+                return {
+                    top: winHeight-rect.top,
+                    left: rect.left,
+                    right: rect.right, 
+                    bottom: winHeight-rect.bottom,
+                    height: rect.height,
+                    width: rect.width
+                }
+            }
+
+            function sortArray(array, reverse=false){
+                let sortTerm = true;
+                let hold = array[0]
+                while (sortTerm){
+                    sortTerm = false;
+                    for (let i=1; i<array.length; i++){
+                        if (reverse == false){
+                            if (hold > array[i]){
+                                hold = array[i]
+                                sortTerm = true
+                            }
+                        } else {
+                            if (hold < array[i]){
+                                hold = array[i]
+                                sortTerm = true
+                            }
+                        }
+                    }
+                    if (sortTerm == false){
+                        return hold
+                    }
+                }
+            }
+
+            function round(value, n=0, d="round"){
+                if (d == "round"){
+                    return Math.round(value*10**n)/10**n
+                } else if (d == "down"){
+                    return Math.floor(value*10**n)/10**n
+                } else if (d == "up"){
+                    return Math.ceil(value*10**n)/10**n
+                }
+            }
+
+            function setup(){
                 winHeight = window.innerHeight, winWidth = window.innerWidth;
-                onground = false, gravityEnabled = true, dragEnabled = true, facing = "right", dashCd = 0, dashAllow = true;
+                onground = true, touchingWall = false, gravityEnabled = true, dragEnabled = true, facing = "right", dashCd = 0, dashAllow = true;
                 gameSpd = 25, gravity = 10, moveSpd = 5, jumpSpd = 15, dashSpd = 20;
                 gravityCap = -jumpSpd, spdCap = moveSpd, airDrag = 1, groundDrag = 1;
-                ceiling = winHeight, ground = 0, wallL = 0, wallR = winWidth;
-                globalTime = 0, ingameTime = 0, gravTime = 0, pause = false, pauseTimer = 0;
+                globalTime = 0, ingameTime = 0, gravTime = 0, isPaused = false, pauseTimer = 0;
                 player = "player";
-                playerSizeX = document.getElementById(player).getBoundingClientRect().height, playerSizeY = document.getElementById(player).getBoundingClientRect().width;
                 momentum = {"x":0.0, "y":0.0};
                 inputs = [];
+                panSpeedX = 10, panSpeedY = 10;
             }
 
-            async function pageLoad(){
-                await setup()
+            function pageLoad(){
+                setup()
                 collisionDetect()
-                setInterval(gameLoop, gameSpd)
+                gameLoop()
                 controlLoop()
-                //setInterval(inputLoop, 100)
+                debug()
             }
 
-            function gameLoop(){
-                externalTimeLoops()
-                if (pause == false){
-                    timeLoops()
-                    gravityLoop()
-                    moveMomentum()
-                    checkState()
+            async function debug(){
+                while (true){
+                    await sleep(gameSpd)
+                    updateDisplay()
+                }
+            }
+
+            async function gameLoop(){
+                while(true){
+                    await sleep(gameSpd)
+                    externalTimeLoops()
+                    if (isPaused == false){
+                        //console.log("loopStart");
+                        checkState()
+                        timeLoops()
+                        screenPanning()
+                        gravityLoop()
+                        moveMomentum()
+                        checkState()
+                        //console.log("loopEnd");
+                    }
                 }
             }
 
             function externalTimeLoops(){
-                globalTime += gameSpd/1000
+                globalTime = round(globalTime + 0.025, 3)
                 if (pauseTimer > 0){
                     pauseTimer -= gameSpd/1000;
                 } else {
@@ -86,48 +150,47 @@
             }
 
             function timeLoops(){
-                ingameTime += gameSpd/1000;
-                if (getOffset(player).bottom > ground){
-                    gravTime += gameSpd/1000;
+                ingameTime = round(ingameTime + 0.025, 3);
+                if (getOffset(player).bottom > ground || isNaN(ground)){
+                    gravTime += 0.025;
+                } else {
+                    gravTime = 0;
                 }
                 if (dashCd > 0){
-                    dashCd -= gameSpd/1000;
+                    dashCd -= 0.025;
                 } else {
                     dashCd = 0;
                 }
             }
 
-            function getOffset(elem) {
-                const rect = document.getElementById(elem).getBoundingClientRect();
-                return {
-                    top: rect.top,
-                    left: rect.left,
-                    right: winWidth - rect.right,
-                    bottom: winHeight - rect.bottom,
-                    height: rect.height,
-                    width: rect.width
-                };
-            }
-
             function gravityLoop(){
+                //console.log("gravStart");
+                collisionDetect()
                 if (gravityEnabled == true){
                     let dist = getOffset(player).bottom;
-                    if (dist >= ground){
+                    if (dist > ground || isNaN(ground)==true){
                         let newDist = dist - gravity*gravTime;
-                        momentum["y"] = momentum["y"]-gravity*gravTime;
+                        newDist = round(newDist, 3);
+                        momentum["y"] = round(momentum["y"]-gravity*gravTime,2);
                         if (momentum["y"] < gravityCap){
                             momentum["y"] = gravityCap;
                         }
                         if (newDist <= ground){
                             newDist = ground;
-                            document.getElementById(player).style.bottom = `${newDist}px`
+                            onground = true;
+                            momentum["y"] = 0;
+                            let add = 0
+                            if (getOffset(player).bottom < -100){add=8}
+                            document.getElementById(player).style.bottom = `${newDist+add}px`
                             gravTime = 0;
                         }
                     }
                 }
+                //console.log("gravEnd");
             }
 
             function checkState(){
+                //console.log("stateCheckStart");
                 let bottom = getOffset(player).bottom;
                 if (bottom <= ground){
                     onground = true;
@@ -137,25 +200,21 @@
                 if (onground == true){
                     dashAllow = true;
                 }
+                let left = getOffset(player).left;
+                let right = getOffset(player).right;
+                if (round(left) == round(wallL) || round(right) == round(wallR)){
+                    touchingWall = true;
+                } else {
+                    touchingWall = false;
+                }
+                //console.log("stateCheckEnd");
             }
 
-            /*let inputCondition = true;
-            let keyBuffer = "";
-            function inputLoop(){
-                if (keyBuffer == ""){
-                    inputCondition = true;
-                } else {
-                    movement(keyBuffer)
-                    keyBuffer = "";
-                }
-            }*/
-
             async function movementBuffer(event, mode){
-                let t1 = globalTime;
+                /*let t1 = globalTime;
                 while (globalTime == t1){
                     await sleep(gameSpd)
-                }
-                console.log(inputs)
+                }*/
                 if (mode == true && inputs.includes(event.key.toLowerCase()) == false){
                     inputs.push(event.key.toLowerCase());
                 } else {
@@ -178,18 +237,21 @@
                         switch (key){
                             default:
                                 break;
+                            case "t":
+                                screenPanning();
+                                break;
                             case "p":
                                 if (pauseTimer == 0){
-                                    if (pause == false){
-                                        pause = true;
+                                    if (isPaused == false){
+                                        isPaused = true;
                                         inputs.splice(inputs.indexOf("p"),1);
-                                        pauseTimer = 0.2;
+                                        pauseTimer = 0.1;
                                         console.log("Paused")
                                         break;
                                     } else {
-                                        pause = false;
+                                        isPaused = false;
                                         inputs.splice(inputs.indexOf("p"),1);
-                                        pauseTimer = 0.2;
+                                        pauseTimer = 0.1;
                                         console.log("Unpaused")
                                         break;
                                     }
@@ -197,21 +259,26 @@
                                 break;
                             case "a":
                                 facing = "left";
-                                momentum["x"] = -moveSpd;
+                                if (momentum["x"] > -moveSpd){
+                                    momentum["x"] = -moveSpd;
+                                }
                                 break;
                             case "d":
                                 facing = "right"
-                                momentum["x"] = moveSpd;
+                                if (momentum["x"] < moveSpd){
+                                    momentum["x"] = moveSpd;
+                                }
                                 break;
                             case " ":
-                                if (getOffset(player).bottom == ground){
+                            if (getOffset(player).bottom == ground){
+                                    console.log("jump")
                                     momentum["y"]=jumpSpd;
                                 }
                                 break;
                             case "shift":
                                 if (dashCd == 0 && dashAllow == true){
                                     dashAllow = false;
-                                    dashCd = 0.3;
+                                    dashCd = 0.3, gravTime = 0;
                                     gravityEnabled = false, dragEnabled = false;
                                     let xHold = momentum["x"];
                                     momentum["y"] = 0;
@@ -220,7 +287,8 @@
                                     } else {
                                         momentum["x"] = -dashSpd;
                                     }
-                                    await sleep(100)
+                                    let now = ingameTime;
+                                    while (ingameTime < now+0.1){await sleep(1)}
                                     gravityEnabled = true, dragEnabled = true;
                                     momentum["x"] = xHold;
                                 }
@@ -230,16 +298,18 @@
                 }
             }
 
-            async function moveMomentum(){
-                await collisionDetect()
+            function moveMomentum(){
+                //console.log("moveStart");
+                collisionDetect()
                 let x = momentum["x"], y = momentum["y"];
                 if (x > 0){
-                    let dist = getOffset(player).left;
+                    let dist = round(getOffset(player).left);
                     let newDist = dist + x;
-                    if (newDist > wallR - getOffset(player).width){
-                        newDist = wallR - getOffset(player).width - 0.01;
+                    if (newDist >= wallR - getOffset(player).width){
+                        newDist = wallR - getOffset(player).width - 0.001;
                         momentum["x"] = 0;
                     }
+                    newDist = round(newDist, 3);
                     document.getElementById(player).style.left = `${newDist}px`;
                     
                     if (dragEnabled == true){
@@ -256,12 +326,13 @@
                         }
                     }
                 } else if (x < 0){
-                    let dist = getOffset(player).left;
+                    let dist = round(getOffset(player).left);
                     let newDist = dist + x;
                     if (newDist <= wallL){
-                        newDist = wallL + 0.01;
+                        newDist = wallL + 0.001;
                         momentum["x"] = 0;
                     }
+                    newDist = round(newDist, 3);
                     document.getElementById(player).style.left = `${newDist}px`;
                     
                     if (dragEnabled == true){
@@ -285,6 +356,7 @@
                         newDist = ceiling - getOffset(player).height;
                         momentum["y"] = 0;
                     }
+                    newDist = round(newDist, 3);
                     document.getElementById(player).style.bottom = `${newDist}px`;
                     
                 } else if (y < 0){
@@ -294,22 +366,24 @@
                         newDist = ground;
                         momentum["y"] = 0;
                     }
+                    newDist = round(newDist, 3);
                     document.getElementById(player).style.bottom = `${newDist}px`;
-                    
                 }
+                //console.log("moveEnd");
             }
-
-            async function collisionDetect(){
+            
+            function collisionDetect(){
+                //console.log("collideStart");
                 platforms = document.querySelectorAll(".platform");
-                let topP = getOffset(player).bottom+playerSizeY;
+                let topP = getOffset(player).bottom+getOffset(player).height;
                 let bottomP = getOffset(player).bottom;
                 let leftP = getOffset(player).left;
-                let rightP = getOffset(player).left+playerSizeX;
+                let rightP = getOffset(player).left+getOffset(player).width;
                 //collisions relative to the player character
-                groundCollision = {0:{"y":0, "x1":0, "x2":winWidth}};
-                ceilingCollision = {0:{"y":winHeight, "x1":0, "x2":winWidth}};
-                wallLCollision = {0:{"x":0, "y1":0, "y2":winHeight}};
-                wallRCollision = {0:{"x":winWidth, "y1":0, "y2":winHeight}};
+                groundCollision = {}// = {0:{"y":0, "x1":0, "x2":winWidth}};
+                ceilingCollision = {}// = {0:{"y":winHeight, "x1":0, "x2":winWidth}};
+                wallLCollision = {}// = {0:{"x":0, "y1":0, "y2":winHeight}};
+                wallRCollision = {}// = {0:{"x":winWidth, "y1":0, "y2":winHeight}};
                 //obtain planes from div
                 for (let i=0; i<platforms.length; i++){
                     let focus = platforms[i].id;
@@ -317,55 +391,218 @@
                     let top = getOffset(focus).bottom+document.getElementById(focus).getBoundingClientRect().height;
                     let left = getOffset(focus).left;
                     let right = getOffset(focus).left+document.getElementById(focus).getBoundingClientRect().width;
-                    let nId = i+1;
+                    let nId = i;
                     groundCollision[nId] = {"y":top, "x1":left, "x2":right};
                     ceilingCollision[nId] = {"y":bottom, "x1":left, "x2":right};
                     wallLCollision[nId] = {"x":right, "y1":bottom, "y2":top};
                     wallRCollision[nId] = {"x":left, "y1":bottom, "y2":top};
                 }
-                let valid = {};
+                let valid = [];
                 for (let i in wallRCollision){
                     let x = wallRCollision[i]["x"], y1 = wallRCollision[i]["y1"], y2 = wallRCollision[i]["y2"];
-                    if (rightP <= x && topP >= y1 && bottomP <= y2){
-                        valid[x] = i;
+                    if (rightP <= x && topP > y1 && bottomP < y2){
+                        valid.push(x);
                     }
                 }
-                wallR = Number(Object.keys(valid)[0]);
-
-                valid = {};
+                wallR = round(sortArray(valid, false),3);
+                
+                valid = [];
                 for (let i in wallLCollision){
                     let x = wallLCollision[i]["x"], y1 = wallLCollision[i]["y1"], y2 = wallLCollision[i]["y2"];
-                    if (leftP >= x && topP >= y1 && bottomP <= y2){
-                        valid[x] = i;
+                    if (leftP >= x && topP > y1 && bottomP < y2){
+                        valid.push(x);
                     }
                 }
-                wallL = Number(Object.keys(valid)[Object.keys(valid).length-1]);
-
-                valid = {};
+                wallL = round(sortArray(valid, true),3);
+                
+                valid = [];
                 for (let i in ceilingCollision){
                     let y = ceilingCollision[i]["y"], x1 = ceilingCollision[i]["x1"], x2 = ceilingCollision[i]["x2"];
-                    if (topP <= y && rightP >= x1 && leftP <= x2){
-                        valid[y] = i;
+                    if (topP <= y && rightP > x1 && leftP < x2){
+                        valid.push(y);
                     }
                 }
-                ceiling =  Number(Object.keys(valid)[0]);
-
-                valid = {}
+                ceiling = round(sortArray(valid, false),3);
+                
+                valid = [];
                 for (let i in groundCollision){
                     let y = groundCollision[i]["y"], x1 = groundCollision[i]["x1"], x2 = groundCollision[i]["x2"];
-                    if (bottomP >= y && rightP >= x1 && leftP <= x2){
-                        valid[y] = i;
+                    if (bottomP >= y && rightP > x1 && leftP < x2){
+                        valid.push(y);
                     }
                 }
-                ground =  Number(Object.keys(valid)[Object.keys(valid).length-1])
-                //console.log(wallR, wallL, ceiling, ground)
+                ground = round(sortArray(valid, true),3);
+                //console.log(leftP, rightP, topP, bottomP)
+                //console.log(wallL, wallR, ceiling, ground)
+                //console.log("collideEnd");
+            }
+            
+            function screenPanning(){
+                //console.log("panStart");
+                let screenCenterX = round(winWidth/2,3), screenCenterY = 250;
+                let playerCenterX = round(getOffset(player).left + getOffset(player).width/2,3), playerCenterY = getOffset(player).bottom;
+                let roomBorderLeft = wallLCollision[0]["x"], roomBorderRight = wallRCollision[0]["x"], roomBorderTop = ceilingCollision[0]["y"], roomBorderBottom = groundCollision[0]["y"];
+                let elements = document.querySelectorAll("div");
+                let origin = {"x":getOffset("zero").left, "y":getOffset("zero").bottom};
+
+
+                if (screenCenterX != playerCenterX){
+                    let panDistX = Math.sign(screenCenterX-playerCenterX)*(round(panSpeedX*Math.sqrt(Math.abs(screenCenterX-playerCenterX)/screenCenterX),1));
+                    if (origin["x"]+panDistX < 0){
+                        for (let i=0; i<elements.length; i++){
+                            let target = elements[i].id;
+                            let newPos = round(getOffset(target).left+panDistX);
+                            document.getElementById(target).style.left = `${newPos}px`;
+                        }
+                    }
+                }
+                
+                //console.log(screenCenterY, playerCenterY)
+                if (screenCenterY != playerCenterY){
+                    let panDistY = Math.sign(screenCenterY-playerCenterY)*(round(panSpeedY*Math.sqrt(Math.abs(screenCenterY-playerCenterY)/screenCenterY),1));
+                    if (origin["y"]+panDistY < 0){
+                        for (let i=0; i<elements.length; i++){
+                            let target = elements[i].id;
+                            let newPos = round(getOffset(target).bottom+panDistY);
+                            document.getElementById(target).style.bottom = `${newPos}px`;
+                        }
+                    } else if (origin["y"] != 0){
+                        panDistY = 0-origin["y"];
+                        for (let i=0; i<elements.length; i++){
+                            let target = elements[i].id;
+                            let newPos = round(getOffset(target).bottom+panDistY);
+                            document.getElementById(target).style.bottom = `${newPos}px`;
+                        }
+                    }
+                }
+                //console.log("panEnd");
+            }
+
+            async function createPlatform(...points){
+                //[200, 100], [200, 200], [150, 200], [150, 150], [100, 150], [100, 100]
+                for (let i=0; i<points.length; i+=2){
+                    let j = i+1
+                    if (j > points.length-1){
+                        return
+                    }
+                    pl1=points[i]
+                    pl2=points[j]
+                    let platNum = 0
+                    for (let k=0; k<platforms.length; k++){
+                        if (platforms[k].id.substr(0,4) == "plat"){
+                            platNum = Number(platforms[k].id.substr(4))+1;
+                        }
+                    }
+                    document.getElementById("gameArea").innerHTML += `<div id="plat${platNum}" class="platform"></div>`;
+                    if (pl1[0] <= pl2[0]){
+                        document.getElementById(`plat${platNum}`).style.left = `${pl1[0]}px`;
+                    } else if (pl1[0] > pl2[0]) {
+                        document.getElementById(`plat${platNum}`).style.left = `${pl2[0]}px`;
+                    }
+                    if (pl1[1] <= pl2[1]){
+                        document.getElementById(`plat${platNum}`).style.bottom = `${pl1[1]}px`;
+                    } else if (pl1[1] > pl2[1]) {
+                        document.getElementById(`plat${platNum}`).style.bottom = `${pl2[1]}px`;
+                    }
+                    if (pl1[0] - pl2[0] != 0){
+                        document.getElementById(`plat${platNum}`).style.width = `${Math.abs(pl1[0]-pl2[0])}px`;
+                    } else {
+                        document.getElementById(`plat${platNum}`).style.width = `1px`;
+                    }
+                    if (pl1[1] - pl2[1] != 0){
+                        document.getElementById(`plat${platNum}`).style.height = `${Math.abs(pl1[1]-pl2[1])}px`;
+                    } else {
+                        document.getElementById(`plat${platNum}`).style.height = `1px`;
+                    }
+                    await sleep(25)
+                }
+                return
+                if (points.length==2){
+                    let platNum = 0
+                    for (let i=0; i<platforms.length; i++){
+                        if (platforms[i].id.substr(0,4) == "plat"){
+                            platNum = Number(platforms[i].id.substr(4))+1;
+                        }
+                    }
+                    document.getElementById("gameArea").innerHTML += `<div id="plat${platNum}" class="platform"></div>`;
+                    let selected = document.getElementById(`plat${platNum}`);
+                    let width = Math.abs(points[0][0] - points[1][0]);
+                    let height = Math.abs(points[0][1] - points[1][1]);
+                    let x1 = NaN, y1 = NaN;
+                    for (let i of points){
+                        if (isNaN(x1)==true){
+                            x1 = i[0];
+                        } else if (i[0] < x1){
+                            x1 = i[0];
+                        }
+                        if (isNaN(y1)==true){
+                            y1 = i[1];
+                        } else if (i[1] < y1){
+                            y1 = i[1];
+                        }
+                    }
+                    selected.style.left = `${x1}px`;
+                    selected.style.bottom = `${y1}px`;
+                    selected.style.width = `${width}px`;
+                    selected.style.height = `${height}px`;
+                } else if (points.length == 4){
+
+                } else {
+                    console.log("Not implemented yet")
+                }
+            }
+
+            async function step(n=1){
+                isPaused = false;
+                await sleep(gameSpd*n)
+                isPaused = true;
+            }
+
+            function updateDisplay(){
+                document.getElementById("globalTime").innerHTML = "globalTime: " + globalTime;
+                document.getElementById("ingameTime").innerHTML = "ingameTime: " + ingameTime;
+                document.getElementById("isPaused").innerHTML = "isPaused: " + isPaused;
+                document.getElementById("gameSpd").innerHTML = "gameSpd: " + gameSpd;
+                document.getElementById("momentum").innerHTML = `x: ${momentum["x"]} y: ${momentum["y"]}`;
+                document.getElementById("gravTime").innerHTML = "GravTime: " + round(gravTime, 3);
+                document.getElementById("onGround").innerHTML = "onGround: " + onground;
+                document.getElementById("touchingWall").innerHTML = "touchingWall: " + touchingWall;
+                document.getElementById("facing").innerHTML = "facing: " + facing;
+                document.getElementById("left").innerHTML = "Left: " + getOffset(player).left+ ", "+ wallL;
+                document.getElementById("right").innerHTML = "Right: " + getOffset(player).right+ ", "+ wallR;
+                document.getElementById("top").innerHTML = "Top: " + getOffset(player).top+ ", "+ ceiling;
+                document.getElementById("bottom").innerHTML = "Bottom: " + getOffset(player).bottom+ ", "+ ground;
             }
         </script>
     </head>
     <body onload="pageLoad()">
-        <input id="controls" autofocus onkeydown="movementBuffer(event, true)" onkeyup="movementBuffer(event, false)">
-        <div id="player"></div>
-        <div id="plat1" class="platform"></div>
-        <div id="plat2" class="platform"></div>
+        <div id="debug">
+            <label id="globalTime"></label><br>
+            <label id="ingameTime"></label><br>
+            <label id="isPaused"></label><br>
+            <label id="gameSpd"></label><br>
+            <label id="momentum"></label><br>
+            <label id="gravTime"></label><br>
+            <label id="onGround"></label><br>
+            <label id="touchingWall"></label><br>
+            <label id="facing"></label><br>
+            <label id="left"></label><br>
+            <label id="right"></label><br>
+            <label id="top"></label><br>
+            <label id="bottom"></label><br>
+        </div>
+        <div id="gameArea">
+            <input id="controls" autofocus onkeydown="movementBuffer(event, true)" onkeyup="movementBuffer(event, false)">
+            <div id="zero"></div>
+            <div id="player"></div>
+            <div id="plat1" class="platform"></div>
+            <div id="plat2" class="platform"></div>
+            <div id="plat3" class="platform"></div>
+            <div id="plat4" class="platform"></div>
+            <div id="plat5" class="platform"></div>
+            <div id="plat6" class="platform"></div>
+            <div id="plat7" class="platform"></div>
+            <div id="floor" class="platform"></div>
+        </div>
     </body>
 </html>
