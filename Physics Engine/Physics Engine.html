@@ -8,6 +8,48 @@
             body {
                 overflow: hidden;
             }
+            .center {
+                position: relative;
+                top: 40%;
+                left: 50%;
+                -ms-transform: translate(-50%, -100%);
+                transform: translate(-50%, -100%);
+            }
+            .menu {
+                text-align: center;
+            }
+            .menuGroup {
+                z-index: 10;
+            }
+
+            #pauseMenu {
+                position:fixed;
+                height: 100vh;
+                width: 100vw;
+                top: 0px;
+                left: 0px;
+                background-color: rgba(0, 0, 0, 0.4);
+                color:rgba(0, 0, 0, 1);
+                opacity: 1;
+                margin: 0px;
+                padding: 0px;
+                border: 0px;
+                justify-content: center;
+            }
+            #optionsMenu {
+                position:fixed;
+                height: 100vh;
+                width: 100vw;
+                top: 0px;
+                left: 0px;
+                background-color: rgba(0, 0, 0, 0.4);
+                color:rgba(0, 0, 0, 1);
+                opacity: 1;
+                margin: 0px;
+                padding: 0px;
+                border: 0px;
+                justify-content: center;
+            }
             #controls {
                 position:fixed;
                 height: 100vh;
@@ -17,7 +59,7 @@
                 background-color: rgba(255, 255, 255, 0);
                 color:rgba(0, 0, 0, 1);
                 opacity: 0;
-                z-index: 10;
+                z-index: 5;
                 margin: 0px;
                 padding: 0px;
                 border: 0px;
@@ -40,15 +82,17 @@
 
             #zero{position: absolute; background-color: rgba(0, 0, 0, .5); bottom: 0px; left: 0px; height: 0px; width: 0px}
             #floor{bottom: 5px; left: 0px; height: 5px; width: 1400px;}
-            /*#plat1{bottom: 10px; left: 400px; height: 40px; width: 100px;}
+            #wall{bottom: 0px; left: 5px; height: 1400px; width: 5px;}
+            #plat1{bottom: 37px; left: 700px; height: 374px; width: 5px;}
             #plat2{bottom: 210px; left: 200px; height: 5px; width: 300px;}
             #plat3{bottom: 10px; left: 100px; height: 100px; width: 100px;}
             #plat4{bottom: 37px; left: 250px; height: 50px; width: 50px;}
-            #plat5{bottom: 10px; left: 527px; height: 40px; width: 100px;}
-            #plat6{bottom: 300px; left: 500px; height: 5px; width: 200px;}*/
+            #plat5{bottom: 10px; left: 760px; height: 400px; width: 5px;}
+            #plat6{bottom: 300px; left: 500px; height: 5px; width: 200px;}
             
         </style>
         <script>
+            //Setup
             const sleep = (sleep) => new Promise((resolve) => setTimeout(resolve, sleep))
             function getOffset(elem) {
                 const rect = document.getElementById(elem).getBoundingClientRect();
@@ -98,14 +142,14 @@
 
             function setup(){
                 winHeight = window.innerHeight, winWidth = window.innerWidth;
-                onground = true, touchingWall = false, gravityEnabled = true, dragEnabled = true, facing = "right", dashCd = 0, dashAllow = true;
-                gameSpd = 25, gravity = 10, moveSpd = 5, jumpSpd = 15, dashSpd = 20;
+                onground = true, touchingWall = false, wallSlide = false, gravityEnabled = true, dragEnabled = true, facing = "right", dashCd = 0, dashAllow = true, jumpCd = 0;
+                gameSpd = 25, gravity = 10, accelSpd = 2.5, moveSpd = 5, jumpSpd = 15, dashSpd = 20;
                 gravityCap = -jumpSpd, spdCap = moveSpd, airDrag = 1, groundDrag = 1;
                 globalTime = 0, ingameTime = 0, gravTime = 0, isPaused = false, pauseTimer = 0;
                 player = "player";
                 momentum = {"x":0.0, "y":0.0};
                 inputs = [];
-                panSpeedX = 10, panSpeedY = 10;
+                panSpeedX = 10, panSpeedY = 20;
             }
 
             function pageLoad(){
@@ -116,26 +160,18 @@
                 debug()
             }
 
-            async function debug(){
-                while (true){
-                    await sleep(gameSpd)
-                    updateDisplay()
-                }
-            }
-
+            //Game Stuff
             async function gameLoop(){
                 while(true){
                     await sleep(gameSpd)
                     externalTimeLoops()
                     if (isPaused == false){
-                        //console.log("loopStart");
                         checkState()
                         timeLoops()
                         screenPanning()
                         gravityLoop()
                         moveMomentum()
                         checkState()
-                        //console.log("loopEnd");
                     }
                 }
             }
@@ -161,10 +197,14 @@
                 } else {
                     dashCd = 0;
                 }
+                if (jumpCd > 0){
+                    jumpCd -= 0.025;
+                } else {
+                    jumpCd = 0;
+                }
             }
 
             function gravityLoop(){
-                //console.log("gravStart");
                 collisionDetect()
                 if (gravityEnabled == true){
                     let dist = getOffset(player).bottom;
@@ -186,18 +226,16 @@
                         }
                     }
                 }
-                //console.log("gravEnd");
             }
 
             function checkState(){
-                //console.log("stateCheckStart");
                 let bottom = getOffset(player).bottom;
                 if (bottom <= ground){
                     onground = true;
                 } else {
                     onground = false;
                 }
-                if (onground == true){
+                if (onground == true || wallSlide == true){
                     dashAllow = true;
                 }
                 let left = getOffset(player).left;
@@ -205,16 +243,24 @@
                 if (round(left) == round(wallL) || round(right) == round(wallR)){
                     touchingWall = true;
                 } else {
+                    wallSlide = false;
                     touchingWall = false;
                 }
-                //console.log("stateCheckEnd");
+                if (onground == true){
+                    wallSlide = false;
+                }
+                if (wallSlide == true){
+                    gravityCap = -gravity*.5;
+                } else {
+                    gravityCap = -jumpSpd;
+                }
             }
 
             async function movementBuffer(event, mode){
-                /*let t1 = globalTime;
+                let t1 = globalTime;
                 while (globalTime == t1){
                     await sleep(gameSpd)
-                }*/
+                }
                 if (mode == true && inputs.includes(event.key.toLowerCase()) == false){
                     inputs.push(event.key.toLowerCase());
                 } else {
@@ -240,19 +286,19 @@
                             case "t":
                                 screenPanning();
                                 break;
-                            case "p":
+                            case "escape":
                                 if (pauseTimer == 0){
                                     if (isPaused == false){
                                         isPaused = true;
-                                        inputs.splice(inputs.indexOf("p"),1);
+                                        inputs.splice(inputs.indexOf("escape"),1);
                                         pauseTimer = 0.1;
-                                        console.log("Paused")
+                                        document.getElementById("pauseMenu").hidden = false;
                                         break;
                                     } else {
                                         isPaused = false;
-                                        inputs.splice(inputs.indexOf("p"),1);
+                                        inputs.splice(inputs.indexOf("escape"),1);
                                         pauseTimer = 0.1;
-                                        console.log("Unpaused")
+                                        document.getElementById("pauseMenu").hidden = true;
                                         break;
                                     }
                                 }
@@ -260,19 +306,39 @@
                             case "a":
                                 facing = "left";
                                 if (momentum["x"] > -moveSpd){
-                                    momentum["x"] = -moveSpd;
+                                    momentum["x"] -= accelSpd;
+                                    if (momentum["x"] < -moveSpd){
+                                        momentum["x"] = -moveSpd;
+                                    }
                                 }
                                 break;
                             case "d":
                                 facing = "right"
                                 if (momentum["x"] < moveSpd){
-                                    momentum["x"] = moveSpd;
+                                    momentum["x"] += accelSpd;
+                                    if (momentum["x"] > moveSpd){
+                                        momentum["x"] = moveSpd;
+                                    }
                                 }
                                 break;
                             case " ":
-                            if (getOffset(player).bottom == ground){
-                                    console.log("jump")
-                                    momentum["y"]=jumpSpd;
+                                if (jumpCd == 0){
+                                    jumpCd = 0.075;
+                                    gravTime = 0;
+                                    if (getOffset(player).bottom == ground){
+                                        momentum["y"] = jumpSpd;
+                                    } else if (wallSlide == true){
+                                        if (facing == "right"){
+                                            momentum["x"] = -moveSpd*2;
+                                            facing = "left";
+                                        } else {
+                                            momentum["x"] = moveSpd*2;
+                                            facing = "right"
+                                        }
+                                        momentum["y"] = jumpSpd;
+                                    }
+                                } else {
+                                    jumpCd = 0.075;
                                 }
                                 break;
                             case "shift":
@@ -299,13 +365,15 @@
             }
 
             function moveMomentum(){
-                //console.log("moveStart");
                 collisionDetect()
                 let x = momentum["x"], y = momentum["y"];
                 if (x > 0){
                     let dist = round(getOffset(player).left);
                     let newDist = dist + x;
                     if (newDist >= wallR - getOffset(player).width){
+                        if (onground == false){
+                            wallSlide = true;
+                        }
                         newDist = wallR - getOffset(player).width - 0.001;
                         momentum["x"] = 0;
                     }
@@ -329,6 +397,9 @@
                     let dist = round(getOffset(player).left);
                     let newDist = dist + x;
                     if (newDist <= wallL){
+                        if (onground == false){
+                            wallSlide = true;
+                        }
                         newDist = wallL + 0.001;
                         momentum["x"] = 0;
                     }
@@ -352,7 +423,7 @@
                 if (y > 0){
                     let dist = getOffset(player).bottom;
                     let newDist = dist + y;
-                    if (newDist > ceiling - getOffset(player).height){
+                    if (newDist >= ceiling - getOffset(player).height){
                         newDist = ceiling - getOffset(player).height;
                         momentum["y"] = 0;
                     }
@@ -362,18 +433,16 @@
                 } else if (y < 0){
                     let dist = getOffset(player).bottom;
                     let newDist = dist + y;
-                    if (newDist < ground){
+                    if (newDist <= ground){
                         newDist = ground;
                         momentum["y"] = 0;
                     }
                     newDist = round(newDist, 3);
                     document.getElementById(player).style.bottom = `${newDist}px`;
                 }
-                //console.log("moveEnd");
             }
             
             function collisionDetect(){
-                //console.log("collideStart");
                 platforms = document.querySelectorAll(".platform");
                 let topP = getOffset(player).bottom+getOffset(player).height;
                 let bottomP = getOffset(player).bottom;
@@ -432,13 +501,9 @@
                     }
                 }
                 ground = round(sortArray(valid, true),3);
-                //console.log(leftP, rightP, topP, bottomP)
-                //console.log(wallL, wallR, ceiling, ground)
-                //console.log("collideEnd");
             }
             
             function screenPanning(){
-                //console.log("panStart");
                 let screenCenterX = round(winWidth/2,3), screenCenterY = 250;
                 let playerCenterX = round(getOffset(player).left + getOffset(player).width/2,3), playerCenterY = getOffset(player).bottom;
                 let roomBorderLeft = wallLCollision[0]["x"], roomBorderRight = wallRCollision[0]["x"], roomBorderTop = ceilingCollision[0]["y"], roomBorderBottom = groundCollision[0]["y"];
@@ -447,35 +512,28 @@
 
 
                 if (screenCenterX != playerCenterX){
-                    let panDistX = Math.sign(screenCenterX-playerCenterX)*(round(panSpeedX*Math.sqrt(Math.abs(screenCenterX-playerCenterX)/screenCenterX),1));
-                    if (origin["x"]+panDistX < 0){
-                        for (let i=0; i<elements.length; i++){
-                            let target = elements[i].id;
-                            let newPos = round(getOffset(target).left+panDistX);
-                            document.getElementById(target).style.left = `${newPos}px`;
-                        }
+                    let panDistX = Math.sign(screenCenterX-playerCenterX)*(round(panSpeedX*Math.sqrt(Math.abs(screenCenterX-playerCenterX)/screenCenterX)));
+                    if (origin["x"]+panDistX > 0){
+                        panDistX = 0-origin["x"]
+                    }
+                    for (let i=0; i<elements.length; i++){
+                        let target = elements[i].id;
+                        let newPos = round(getOffset(target).left+panDistX);
+                        document.getElementById(target).style.left = `${newPos}px`;
                     }
                 }
                 
-                //console.log(screenCenterY, playerCenterY)
                 if (screenCenterY != playerCenterY){
-                    let panDistY = Math.sign(screenCenterY-playerCenterY)*(round(panSpeedY*Math.sqrt(Math.abs(screenCenterY-playerCenterY)/screenCenterY),1));
-                    if (origin["y"]+panDistY < 0){
-                        for (let i=0; i<elements.length; i++){
-                            let target = elements[i].id;
-                            let newPos = round(getOffset(target).bottom+panDistY);
-                            document.getElementById(target).style.bottom = `${newPos}px`;
-                        }
-                    } else if (origin["y"] != 0){
+                    let panDistY = Math.sign(screenCenterY-playerCenterY)*(round(panSpeedY*Math.sqrt(Math.abs(screenCenterY-playerCenterY)/screenCenterY)));
+                    if (origin["y"]+panDistY > 0){
                         panDistY = 0-origin["y"];
-                        for (let i=0; i<elements.length; i++){
-                            let target = elements[i].id;
-                            let newPos = round(getOffset(target).bottom+panDistY);
-                            document.getElementById(target).style.bottom = `${newPos}px`;
-                        }
+                    }
+                    for (let i=0; i<elements.length; i++){
+                        let target = elements[i].id;
+                        let newPos = round(getOffset(target).bottom+panDistY);
+                        document.getElementById(target).style.bottom = `${newPos}px`;
                     }
                 }
-                //console.log("panEnd");
             }
 
             async function createPlatform(...points){
@@ -552,10 +610,18 @@
                 }
             }
 
+            //Debug
             async function step(n=1){
                 isPaused = false;
                 await sleep(gameSpd*n)
                 isPaused = true;
+            }
+
+            async function debug(){
+                while (true){
+                    await sleep(gameSpd)
+                    updateDisplay()
+                }
             }
 
             function updateDisplay(){
@@ -566,13 +632,31 @@
                 document.getElementById("momentum").innerHTML = `x: ${momentum["x"]} y: ${momentum["y"]}`;
                 document.getElementById("gravTime").innerHTML = "GravTime: " + round(gravTime, 3);
                 document.getElementById("onGround").innerHTML = "onGround: " + onground;
-                document.getElementById("touchingWall").innerHTML = "touchingWall: " + touchingWall;
+                document.getElementById("wallSlide").innerHTML = "wallSlide: " + wallSlide;
                 document.getElementById("facing").innerHTML = "facing: " + facing;
                 document.getElementById("left").innerHTML = "Left: " + getOffset(player).left+ ", "+ wallL;
                 document.getElementById("right").innerHTML = "Right: " + getOffset(player).right+ ", "+ wallR;
                 document.getElementById("top").innerHTML = "Top: " + getOffset(player).top+ ", "+ ceiling;
                 document.getElementById("bottom").innerHTML = "Bottom: " + getOffset(player).bottom+ ", "+ ground;
+                document.getElementById("inputs").innerHTML = "Inputs: " + [inputs];
             }
+            
+            //Menus
+            function focusControls(){
+                document.getElementById("controls").focus();
+            }
+
+            function switchMenus(menu){
+                for (let i of document.getElementsByClassName("menuGroup")){
+                    document.getElementById(i.id).hidden = true;
+                }
+                document.getElementById(menu).hidden = false;
+            }
+
+            function scrollMenu(menu){
+                
+            }
+
         </script>
     </head>
     <body onload="pageLoad()">
@@ -584,15 +668,16 @@
             <label id="momentum"></label><br>
             <label id="gravTime"></label><br>
             <label id="onGround"></label><br>
-            <label id="touchingWall"></label><br>
+            <label id="wallSlide"></label><br>
             <label id="facing"></label><br>
             <label id="left"></label><br>
             <label id="right"></label><br>
             <label id="top"></label><br>
             <label id="bottom"></label><br>
+            <label id="inputs"></label><br>
         </div>
         <div id="gameArea">
-            <input id="controls" autofocus onkeydown="movementBuffer(event, true)" onkeyup="movementBuffer(event, false)">
+            <input id="controls" autofocus onkeydown="movementBuffer(event, true)" onkeyup="movementBuffer(event, false)" onblur="focusControls()">
             <div id="zero"></div>
             <div id="player"></div>
             <div id="plat1" class="platform"></div>
@@ -603,6 +688,19 @@
             <div id="plat6" class="platform"></div>
             <div id="plat7" class="platform"></div>
             <div id="floor" class="platform"></div>
+            <div id="wall" class="platform"></div>
+        </div>
+        <div id="pauseMenu" class="menuGroup" hidden>
+            <h1 class="menu center">Paused</h1>
+            <button id="resume" class="menu center" onclick="focusControls(), inputs.push('escape')">Resume</button><br><br>
+            <button id="options" class="menu center" onclick="switchMenus('optionsMenu'), focusControls()">Options</button><br><br>
+            <button id="quit" class="menu center" onclick="alert('No quitting!'), focusControls()">Save & Quit</button>
+        </div>
+        <div id="optionsMenu" class="menuGroup" hidden onscroll="scrollMenu(id)">
+            <h1 class="menu center">Options</h1>
+            <button id="resume" class="menu center" onclick="focusControls()">Temp</button><br><br>
+            <button id="options" class="menu center" onclick="focusControls()">Temp</button><br><br>
+            <button id="back" class="menu center" onclick="switchMenus('pauseMenu'), focusControls()">Back</button>
         </div>
     </body>
 </html>
