@@ -17,11 +17,18 @@
             }
             .menu {
                 text-align: center;
+                background-color: rgba(255, 255, 255, 0);
+                border: 0px
+            }
+            button[class~="menu"]:hover{
+                text-decoration: overline underline white double 1px;
+            }
+            button[class~="selected"]{
+                text-decoration: overline underline white double 1px;
             }
             .menuGroup {
                 z-index: 10;
             }
-
             #pauseMenu {
                 position:fixed;
                 height: 100vh;
@@ -82,13 +89,14 @@
 
             #zero{position: absolute; background-color: rgba(0, 0, 0, .5); bottom: 0px; left: 0px; height: 0px; width: 0px}
             #floor{bottom: 5px; left: 0px; height: 5px; width: 1400px;}
-            #wall{bottom: 0px; left: 5px; height: 1400px; width: 5px;}
+            #wall{bottom: 0px; left: 5px; height: 2000px; width: 5px;}
             #plat1{bottom: 37px; left: 700px; height: 374px; width: 5px;}
             #plat2{bottom: 210px; left: 200px; height: 5px; width: 300px;}
             #plat3{bottom: 10px; left: 100px; height: 100px; width: 100px;}
-            #plat4{bottom: 37px; left: 250px; height: 50px; width: 50px;}
-            #plat5{bottom: 10px; left: 760px; height: 400px; width: 5px;}
+            #plat4{bottom: 35px; left: 225px; height: 50px; width: 50px;}
+            #plat5{bottom: 10px; left: 730px; height: 400px; width: 5px;}
             #plat6{bottom: 300px; left: 500px; height: 5px; width: 200px;}
+            #plat7{bottom: 2000px; left: 800px; height: 5px; width: 200px;}
             
         </style>
         <script>
@@ -142,14 +150,16 @@
 
             function setup(){
                 winHeight = window.innerHeight, winWidth = window.innerWidth;
-                onground = true, touchingWall = false, wallSlide = false, gravityEnabled = true, dragEnabled = true, facing = "right", dashCd = 0, dashAllow = true, jumpCd = 0;
+                onground = true, touchingWall = false, wallSlide = false, gravityEnabled = true, dragEnabled = true, facingX = "right", facingY = "neutral";
+                dashCd = 0, ingameDashCd = 0, canDash = true, isDashing = false, jumpCd = 0, canJump = true;
                 gameSpd = 25, gravity = 10, accelSpd = 2.5, moveSpd = 5, jumpSpd = 15, dashSpd = 20;
                 gravityCap = -jumpSpd, spdCap = moveSpd, airDrag = 1, groundDrag = 1;
                 globalTime = 0, ingameTime = 0, gravTime = 0, isPaused = false, pauseTimer = 0;
                 player = "player";
                 momentum = {"x":0.0, "y":0.0};
-                inputs = [];
+                inputs = [], inputCd = 0.055;
                 panSpeedX = 10, panSpeedY = 20;
+                selectedMenuButton = "", menuCd = 0, menuOpen = false;
             }
 
             function pageLoad(){
@@ -179,9 +189,14 @@
             function externalTimeLoops(){
                 globalTime = round(globalTime + 0.025, 3)
                 if (pauseTimer > 0){
-                    pauseTimer -= gameSpd/1000;
+                    pauseTimer -= 0.025;
                 } else {
                     pauseTimer = 0;
+                }
+                if (menuCd > 0){
+                    menuCd -= 0.025;
+                } else {
+                    menuCd = 0;
                 }
             }
 
@@ -192,15 +207,20 @@
                 } else {
                     gravTime = 0;
                 }
-                if (dashCd > 0){
-                    dashCd -= 0.025;
+                if (ingameDashCd > 0){
+                    ingameDashCd -= 0.025;
                 } else {
-                    dashCd = 0;
+                    ingameDashCd = 0;
                 }
                 if (jumpCd > 0){
                     jumpCd -= 0.025;
                 } else {
                     jumpCd = 0;
+                }
+                if (dashCd > 0){
+                    dashCd -= 0.025;
+                } else {
+                    dashCd = 0;
                 }
             }
 
@@ -209,12 +229,9 @@
                 if (gravityEnabled == true){
                     let dist = getOffset(player).bottom;
                     if (dist > ground || isNaN(ground)==true){
-                        let newDist = dist - gravity*gravTime;
+                        let newDist = dist - Math.min(gravityCap, gravity*gravTime);
                         newDist = round(newDist, 3);
-                        momentum["y"] = round(momentum["y"]-gravity*gravTime,2);
-                        if (momentum["y"] < gravityCap){
-                            momentum["y"] = gravityCap;
-                        }
+                        momentum["y"] = Math.max(gravityCap, round(momentum["y"]-gravity*gravTime,2));
                         if (newDist <= ground){
                             newDist = ground;
                             onground = true;
@@ -236,7 +253,15 @@
                     onground = false;
                 }
                 if (onground == true || wallSlide == true){
-                    dashAllow = true;
+                    canDash = true;
+                }
+                if (onground == true || wallSlide == true){
+                    canJump = true;
+                } else {
+                    canJump = false;
+                }
+                if (inputs.includes("w", "s") == false){
+                    facingY = "neutral"
                 }
                 let left = getOffset(player).left;
                 let right = getOffset(player).right;
@@ -253,6 +278,15 @@
                     gravityCap = -gravity*.5;
                 } else {
                     gravityCap = -jumpSpd;
+                }
+                if (wallSlide == true){
+                    if (round(left) == round(wallL) && round(right) == round(wallR)){
+                        let a=1
+                    } else if (round(left) == round(wallL)){
+                        facingX = "right";
+                    } else if (round(right) == round(wallR)){
+                        facingX = "left"
+                    }
                 }
             }
 
@@ -288,80 +322,119 @@
                                 break;
                             case "escape":
                                 if (pauseTimer == 0){
-                                    if (isPaused == false){
+                                    if (menuOpen == false && isPaused == false){
                                         isPaused = true;
-                                        inputs.splice(inputs.indexOf("escape"),1);
-                                        pauseTimer = 0.1;
-                                        document.getElementById("pauseMenu").hidden = false;
-                                        break;
-                                    } else {
-                                        isPaused = false;
-                                        inputs.splice(inputs.indexOf("escape"),1);
-                                        pauseTimer = 0.1;
-                                        document.getElementById("pauseMenu").hidden = true;
-                                        break;
                                     }
+                                    selectedMenuButton = "";
+                                    menuManager()
+                                }
+                                pauseTimer = inputCd;
+                                break;
+                            case "w":
+                                if (menuOpen == false){
+                                    facingY = "up";
+                                } else {
+                                    if (menuCd == 0){
+                                        menuSelect("up")
+                                    }
+                                    menuCd = inputCd;
+                                }
+                                break;
+                            case "s":
+                                if (menuOpen == false){
+                                    facingY = "down";
+                                } else {
+                                    if (menuCd == 0){
+                                        menuSelect("down")
+                                    }
+                                    menuCd = inputCd;
                                 }
                                 break;
                             case "a":
-                                facing = "left";
-                                if (momentum["x"] > -moveSpd){
-                                    momentum["x"] -= accelSpd;
-                                    if (momentum["x"] < -moveSpd){
-                                        momentum["x"] = -moveSpd;
+                                if (isDashing == false){
+                                    if (wallSlide == false){
+                                        facingX = "left";
+                                    }
+                                    if (momentum["x"] > -moveSpd){
+                                        momentum["x"] -= accelSpd;
+                                        if (momentum["x"] < -moveSpd){
+                                            momentum["x"] = -moveSpd;
+                                        }
                                     }
                                 }
                                 break;
                             case "d":
-                                facing = "right"
-                                if (momentum["x"] < moveSpd){
-                                    momentum["x"] += accelSpd;
-                                    if (momentum["x"] > moveSpd){
-                                        momentum["x"] = moveSpd;
+                                if (isDashing == false){
+                                    if (wallSlide == false){
+                                        facingX = "right";
+                                    }
+                                    if (momentum["x"] < moveSpd){
+                                        momentum["x"] += accelSpd;
+                                        if (momentum["x"] > moveSpd){
+                                            momentum["x"] = moveSpd;
+                                        }
                                     }
                                 }
                                 break;
                             case " ":
-                                if (jumpCd == 0){
-                                    jumpCd = 0.075;
+                                if (jumpCd == 0 && canJump == true){
                                     gravTime = 0;
-                                    if (getOffset(player).bottom == ground){
-                                        momentum["y"] = jumpSpd;
-                                    } else if (wallSlide == true){
-                                        if (facing == "right"){
-                                            momentum["x"] = -moveSpd*2;
-                                            facing = "left";
-                                        } else {
+                                    if (wallSlide == true){
+                                        if (facingX == "right"){
                                             momentum["x"] = moveSpd*2;
-                                            facing = "right"
+                                        } else {
+                                            momentum["x"] = -moveSpd*2;
                                         }
-                                        momentum["y"] = jumpSpd;
+                                        if (round(getOffset(player).left) == round(wallL) && round(getOffset(player).right) == round(wallR)){
+                                            if (facingX == "right"){
+                                                facingX = "left";
+                                            } else {
+                                                facingX = "right";
+                                            }
+                                        }
                                     }
-                                } else {
-                                    jumpCd = 0.075;
+                                    momentum["y"] = jumpSpd;
                                 }
+                                jumpCd = inputCd;
                                 break;
                             case "shift":
-                                if (dashCd == 0 && dashAllow == true){
-                                    dashAllow = false;
-                                    dashCd = 0.3, gravTime = 0;
-                                    gravityEnabled = false, dragEnabled = false;
-                                    let xHold = momentum["x"];
-                                    momentum["y"] = 0;
-                                    if (facing == "right"){
-                                        momentum["x"] = dashSpd;
-                                    } else {
-                                        momentum["x"] = -dashSpd;
+                                if (dashCd == 0){
+                                    if (ingameDashCd == 0 && canDash == true){
+                                        dash()
                                     }
-                                    let now = ingameTime;
-                                    while (ingameTime < now+0.1){await sleep(1)}
-                                    gravityEnabled = true, dragEnabled = true;
-                                    momentum["x"] = xHold;
+                                }
+                                dashCd = inputCd;
+                                break;
+                            case "enter":
+                                if (menuOpen == true){
+                                    if (menuCd == 0){
+                                        click()
+                                    }
+                                    menuCd = 0.1;
                                 }
                                 break;
                         }
                     }
                 }
+            }
+
+            async function dash(){
+                isDashing = true;
+                canDash = false;
+                ingameDashCd = 0.3, gravTime = 0;
+                gravityEnabled = false, dragEnabled = false;
+                let xHold = momentum["x"];
+                momentum["y"] = 0;
+                if (facingX == "right"){
+                    momentum["x"] = dashSpd;
+                } else {
+                    momentum["x"] = -dashSpd;
+                }
+                let now = ingameTime;
+                while (ingameTime < now+0.15){await sleep(1)}
+                gravityEnabled = true, dragEnabled = true;
+                momentum["x"] = xHold;
+                isDashing = false;
             }
 
             function moveMomentum(){
@@ -633,7 +706,8 @@
                 document.getElementById("gravTime").innerHTML = "GravTime: " + round(gravTime, 3);
                 document.getElementById("onGround").innerHTML = "onGround: " + onground;
                 document.getElementById("wallSlide").innerHTML = "wallSlide: " + wallSlide;
-                document.getElementById("facing").innerHTML = "facing: " + facing;
+                document.getElementById("facingX").innerHTML = "facingX: " + facingX;
+                document.getElementById("facingY").innerHTML = "facingY: " + facingY;
                 document.getElementById("left").innerHTML = "Left: " + getOffset(player).left+ ", "+ wallL;
                 document.getElementById("right").innerHTML = "Right: " + getOffset(player).right+ ", "+ wallR;
                 document.getElementById("top").innerHTML = "Top: " + getOffset(player).top+ ", "+ ceiling;
@@ -646,11 +720,120 @@
                 document.getElementById("controls").focus();
             }
 
-            function switchMenus(menu){
-                for (let i of document.getElementsByClassName("menuGroup")){
-                    document.getElementById(i.id).hidden = true;
+            async function menuManager(id=""){
+                if (menuOpen == false){
+                    menuOpen = true;
+                    switchMenus("pauseMenu")
+                    menuSelect()
+                } else {
+                    let current = ""
+                    for (let i of document.getElementsByClassName("menuGroup")){
+                        if (i.hidden == false){
+                            current = i.id;
+                            break;
+                        }
+                    }
+                    if (id == ""){
+                        if (current == "pauseMenu"){
+                            isPaused = false;
+                            menuOpen = false;
+                            document.getElementById("pauseMenu").hidden = true;
+                        } else {
+                            switch (current){
+                                default:
+                                    break;
+                                case "optionsMenu":
+                                    switchMenus("pauseMenu")
+                                    break;
+                            }
+                        }
+                    } else {
+                        switch (id){
+                            default:
+                                break;
+                            case "optionsBack":
+                                switchMenus("pauseMenu")
+                                break;
+                            case "options":
+                                switchMenus("optionsMenu")
+                                break;
+                        }
+                    }
+                    await sleep(1)
+                    menuSelect()
                 }
-                document.getElementById(menu).hidden = false;
+            }
+
+            function switchMenus(menu){
+                selectedMenuButton = "";
+                for (let i of document.getElementsByClassName("menuGroup")){
+                    toggleMenu(i.id, true);
+                }
+                toggleMenu(menu, false);
+            }
+
+            function menuSelect(direction){
+                let buttons = [];
+                for (let i of document.getElementsByClassName("menu")){
+                    if (i.tagName == "BUTTON"){
+                        let cl = [...document.getElementById(i.id).classList];
+                        if (cl.includes("selected")){
+                            cl.splice(cl.indexOf("selected"), 1)
+                            document.getElementById(i.id).classList = cl.toString().replace(",", " ");
+                        }
+                        if (document.getElementById(i.id).parentElement.hidden == false){
+                            buttons.push(i.id)
+                        }
+                    }
+                }
+                if (buttons.length > 0){
+                    if (selectedMenuButton == ""){
+                        selectedMenuButton = buttons[0];
+                    } else {
+                        if (direction == "up"){
+                            let index = buttons.indexOf(selectedMenuButton)-1
+                            if (index < 0){
+                                index = buttons.length-1;
+                            }
+                            selectedMenuButton = buttons[index]
+                        } else {
+                            let index = buttons.indexOf(selectedMenuButton)+1
+                            if (index > buttons.length-1){
+                                index = 0;
+                            }
+                            selectedMenuButton = buttons[index]
+                        }
+                    }
+                    document.getElementById(selectedMenuButton).classList = [document.getElementById(selectedMenuButton).classList + " selected"]
+                }
+            }
+
+            function click(){
+                if (selectedMenuButton != ""){
+                    document.getElementById(selectedMenuButton).onclick();
+                    for (let i of document.getElementsByClassName("menu")){
+                        if (i.tagName == "BUTTON" && i.id != selectedMenuButton){
+                            let cl = [...document.getElementById(i.id).classList];
+                            if (cl.includes("selected")){
+                                cl.splice(cl.indexOf("selected"), 1)
+                                document.getElementById(i.id).classList = cl.toString().replace(",", " ");
+                            }
+                        }
+                    }
+                }
+            }
+
+            function toggleMenu(id, pref=""){
+                if (id == ""){return}
+                if (pref == ""){
+                    if (document.getElementById(id).hidden == true){
+                        document.getElementById(id).hidden = false;
+                    } else {
+                        document.getElementById(id).hidden = true;
+                    }
+                } else {
+                    document.getElementById(id).hidden = pref;
+                }
             }
 
             function scrollMenu(menu){
@@ -669,7 +852,8 @@
             <label id="gravTime"></label><br>
             <label id="onGround"></label><br>
             <label id="wallSlide"></label><br>
-            <label id="facing"></label><br>
+            <label id="facingX"></label><br>
+            <label id="facingY"></label><br>
             <label id="left"></label><br>
             <label id="right"></label><br>
             <label id="top"></label><br>
@@ -692,15 +876,15 @@
         </div>
         <div id="pauseMenu" class="menuGroup" hidden>
             <h1 class="menu center">Paused</h1>
-            <button id="resume" class="menu center" onclick="focusControls(), inputs.push('escape')">Resume</button><br><br>
-            <button id="options" class="menu center" onclick="switchMenus('optionsMenu'), focusControls()">Options</button><br><br>
+            <button id="resume" class="menu center" onclick="menuManager(), focusControls()">Resume</button><br><br>
+            <button id="options" class="menu center" onclick="menuManager(id), focusControls()">Options</button><br><br>
             <button id="quit" class="menu center" onclick="alert('No quitting!'), focusControls()">Save & Quit</button>
         </div>
-        <div id="optionsMenu" class="menuGroup" hidden onscroll="scrollMenu(id)">
+        <div id="optionsMenu" class="menuGroup" hidden parent="pauseMenu">
             <h1 class="menu center">Options</h1>
-            <button id="resume" class="menu center" onclick="focusControls()">Temp</button><br><br>
-            <button id="options" class="menu center" onclick="focusControls()">Temp</button><br><br>
-            <button id="back" class="menu center" onclick="switchMenus('pauseMenu'), focusControls()">Back</button>
+            <button id="debugToggle" class="menu center" onclick="toggleMenu('debug'), focusControls()">Toggle Debug</button><br><br>
+            <button id="temp2" class="menu center" onclick="focusControls()">Temp</button><br><br>
+            <button id="optionsBack" class="menu center" onclick="menuManager(id), focusControls()">Back</button>
         </div>
     </body>
 </html>
