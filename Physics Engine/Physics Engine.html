@@ -18,6 +18,7 @@
             .menu {
                 text-align: center;
                 background-color: rgba(255, 255, 255, 0);
+                color: rgb(255, 255, 255);
                 border: 0px
             }
             button[class~="menu"]:hover{
@@ -27,35 +28,18 @@
                 text-decoration: overline underline white double 1px;
             }
             .menuGroup {
+                position:fixed;
+                height: 100vh;
+                width: 100vw;
+                top: 0px;
+                left: 0px;
+                background-color: rgba(0, 0, 0, 0.5);
+                color:rgb(255, 255, 255);
+                opacity: 1;
+                margin: 0px;
+                padding: 0px;
+                border: 0px;
                 z-index: 10;
-            }
-            #pauseMenu {
-                position:fixed;
-                height: 100vh;
-                width: 100vw;
-                top: 0px;
-                left: 0px;
-                background-color: rgba(0, 0, 0, 0.4);
-                color:rgba(0, 0, 0, 1);
-                opacity: 1;
-                margin: 0px;
-                padding: 0px;
-                border: 0px;
-                justify-content: center;
-            }
-            #optionsMenu {
-                position:fixed;
-                height: 100vh;
-                width: 100vw;
-                top: 0px;
-                left: 0px;
-                background-color: rgba(0, 0, 0, 0.4);
-                color:rgba(0, 0, 0, 1);
-                opacity: 1;
-                margin: 0px;
-                padding: 0px;
-                border: 0px;
-                justify-content: center;
             }
             #controls {
                 position:fixed;
@@ -88,7 +72,7 @@
             }
 
             #zero{position: absolute; background-color: rgba(0, 0, 0, .5); bottom: 0px; left: 0px; height: 0px; width: 0px}
-            #floor{bottom: 5px; left: 0px; height: 5px; width: 1400px;}
+            #floor{bottom: 5px; left: 0px; height: 5px; width: 3000px;}
             #wall{bottom: 0px; left: 5px; height: 2000px; width: 5px;}
             #plat1{bottom: 37px; left: 700px; height: 374px; width: 5px;}
             #plat2{bottom: 210px; left: 200px; height: 5px; width: 300px;}
@@ -96,7 +80,7 @@
             #plat4{bottom: 35px; left: 225px; height: 50px; width: 50px;}
             #plat5{bottom: 10px; left: 730px; height: 400px; width: 5px;}
             #plat6{bottom: 300px; left: 500px; height: 5px; width: 200px;}
-            #plat7{bottom: 2000px; left: 800px; height: 5px; width: 200px;}
+            #plat7{bottom: 35px; left: 300px; height: 50px; width: 50px;}
             
         </style>
         <script>
@@ -158,8 +142,9 @@
                 player = "player";
                 momentum = {"x":0.0, "y":0.0};
                 inputs = [], inputCd = 0.055;
-                panSpeedX = 10, panSpeedY = 20;
+                panSpeedX = 15, panSpeedY = 20;
                 selectedMenuButton = "", menuCd = 0, menuOpen = false;
+                debugStepCd = 0;
             }
 
             function pageLoad(){
@@ -170,16 +155,27 @@
                 debug()
             }
 
+            function updateWindowSize(){
+                if (winHeight != window.innerHeight){
+                    winHeight = window.innerHeight;
+                }
+                if (winWidth != window.innerWidth){
+                    winWidth = window.innerWidth;
+                }
+            }
+
             //Game Stuff
             async function gameLoop(){
                 while(true){
                     await sleep(gameSpd)
+                    updateWindowSize()
                     externalTimeLoops()
                     if (isPaused == false){
                         checkState()
                         timeLoops()
                         screenPanning()
                         gravityLoop()
+                        collisionDetect()
                         moveMomentum()
                         checkState()
                     }
@@ -197,6 +193,11 @@
                     menuCd -= 0.025;
                 } else {
                     menuCd = 0;
+                }
+                if (debugStepCd > 0){
+                    debugStepCd -= 0.025;
+                } else {
+                    debugStepCd = 0;
                 }
             }
 
@@ -225,7 +226,6 @@
             }
 
             function gravityLoop(){
-                collisionDetect()
                 if (gravityEnabled == true){
                     let dist = getOffset(player).bottom;
                     if (dist > ground || isNaN(ground)==true){
@@ -279,15 +279,6 @@
                 } else {
                     gravityCap = -jumpSpd;
                 }
-                if (wallSlide == true){
-                    if (round(left) == round(wallL) && round(right) == round(wallR)){
-                        let a=1
-                    } else if (round(left) == round(wallL)){
-                        facingX = "right";
-                    } else if (round(right) == round(wallR)){
-                        facingX = "left"
-                    }
-                }
             }
 
             async function movementBuffer(event, mode){
@@ -319,6 +310,12 @@
                                 break;
                             case "t":
                                 screenPanning();
+                                break;
+                            case "l":
+                                if (debugStepCd == 0){
+                                    step()
+                                }
+                                debugStepCd = inputCd;
                                 break;
                             case "escape":
                                 if (pauseTimer == 0){
@@ -385,13 +382,6 @@
                                         } else {
                                             momentum["x"] = -moveSpd*2;
                                         }
-                                        if (round(getOffset(player).left) == round(wallL) && round(getOffset(player).right) == round(wallR)){
-                                            if (facingX == "right"){
-                                                facingX = "left";
-                                            } else {
-                                                facingX = "right";
-                                            }
-                                        }
                                     }
                                     momentum["y"] = jumpSpd;
                                 }
@@ -438,7 +428,6 @@
             }
 
             function moveMomentum(){
-                collisionDetect()
                 let x = momentum["x"], y = momentum["y"];
                 if (x > 0){
                     let dist = round(getOffset(player).left);
@@ -446,6 +435,7 @@
                     if (newDist >= wallR - getOffset(player).width){
                         if (onground == false){
                             wallSlide = true;
+                            facingX = "left";
                         }
                         newDist = wallR - getOffset(player).width - 0.001;
                         momentum["x"] = 0;
@@ -472,6 +462,7 @@
                     if (newDist <= wallL){
                         if (onground == false){
                             wallSlide = true;
+                            facingX = "right";
                         }
                         newDist = wallL + 0.001;
                         momentum["x"] = 0;
@@ -574,18 +565,39 @@
                     }
                 }
                 ground = round(sortArray(valid, true),3);
+
+                let x = momentum["x"], y = momentum["y"]
+                if (x > 0 && y > 0){
+                    //check top right
+                    //topP, rightP, ceiling, wallR
+                    console.log("top right")
+                } else if (x < 0 && y > 0){
+                    //check top left
+                    //ceilingCollision, wallLCollision
+                    //topP, leftP, ceiling, wallL
+                    console.log("top left")
+                } else if (x > 0 && y < 0){
+                    //check bottom right
+                    //groundCollision, wallRCollision
+                    //bottomP, rightP, ground, wallR
+                    console.log("bottom right")
+                } else if (x < 0 && y < 0){
+                    //check bottom left
+                    //groundCollision, wallLCollision
+                    //bottomP, leftP, ground, wallL
+                    console.log("bottom left")
+                }
             }
             
             function screenPanning(){
-                let screenCenterX = round(winWidth/2,3), screenCenterY = 250;
-                let playerCenterX = round(getOffset(player).left + getOffset(player).width/2,3), playerCenterY = getOffset(player).bottom;
-                let roomBorderLeft = wallLCollision[0]["x"], roomBorderRight = wallRCollision[0]["x"], roomBorderTop = ceilingCollision[0]["y"], roomBorderBottom = groundCollision[0]["y"];
+                let screenCenterX = round(winWidth/2), screenCenterY = round(winHeight*0.4);
+                let playerCenterX = round(getOffset(player).left + getOffset(player).width/2,1), playerCenterY = round(getOffset(player).bottom,1);
+                //let roomBorderLeft = wallLCollision[0]["x"], roomBorderRight = wallRCollision[0]["x"], roomBorderTop = ceilingCollision[0]["y"], roomBorderBottom = groundCollision[0]["y"];
                 let elements = document.querySelectorAll("div");
                 let origin = {"x":getOffset("zero").left, "y":getOffset("zero").bottom};
-
-
+                
                 if (screenCenterX != playerCenterX){
-                    let panDistX = Math.sign(screenCenterX-playerCenterX)*(round(panSpeedX*Math.sqrt(Math.abs(screenCenterX-playerCenterX)/screenCenterX)));
+                    let panDistX = Math.sign(screenCenterX-playerCenterX)*(round(panSpeedX*Math.log2(Math.abs(screenCenterX-playerCenterX)/screenCenterX+1),2));
                     if (origin["x"]+panDistX > 0){
                         panDistX = 0-origin["x"]
                     }
@@ -597,7 +609,8 @@
                 }
                 
                 if (screenCenterY != playerCenterY){
-                    let panDistY = Math.sign(screenCenterY-playerCenterY)*(round(panSpeedY*Math.sqrt(Math.abs(screenCenterY-playerCenterY)/screenCenterY)));
+                    let panDistY = Math.sign(screenCenterY-playerCenterY)*(round(panSpeedY*Math.log2(Math.abs(screenCenterY-playerCenterY)/screenCenterY+1),2));
+                    console.log(screenCenterY, playerCenterY, panDistY)
                     if (origin["y"]+panDistY > 0){
                         panDistY = 0-origin["y"];
                     }
