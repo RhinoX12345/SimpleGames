@@ -71,8 +71,13 @@
                 position: absolute;
                 background-color: rgba(0, 0, 0, .5);
             }
+            .damaging {
+                position: absolute;
+                background-color: rgba(255, 0, 0, 0.5);
+            }
 
             #origin{position: absolute; background-color: rgba(0, 0, 0, .5); bottom: 0px; left: 0px; height: 0px; width: 0px}
+            #deathPlane{bottom: 0px; left: -10000px; height: 5px; width: 20000px;}
             #floor{bottom: 5px; left: 0px; height: 5px; width: 3000px;}
             #wall{bottom: 0px; left: 5px; height: 2000px; width: 5px;}
             #plat1{bottom: 37px; left: 700px; height: 374px; width: 5px;}
@@ -82,7 +87,8 @@
             #plat5{bottom: 10px; left: 730px; height: 400px; width: 5px;}
             #plat6{bottom: 300px; left: 500px; height: 5px; width: 200px;}
             #plat7{bottom: 10px; left: 300px; height: 50px; width: 50px;}
-            #plat8{bottom: 10px; left: 450px; height: 111px; width: 5px;}
+            #plat8{bottom: 10px; left: 450px; height: 50px; width: 50px;}
+            #plat9{bottom: 10px; left: 500px; height: 49px; width: 50px;}
             
         </style>
         <script>
@@ -107,31 +113,44 @@
                     return Math.floor(value*10**n)/10**n
                 } else if (d == "up"){
                     return Math.ceil(value*10**n)/10**n
+                } else if (d == "none"){
+                    return Number(String(value*10**n).split(".")[0])/10**n
                 }
             }
 
-            function setup(){
-                winHeight = window.innerHeight, winWidth = window.innerWidth;
-                onground = true, touchingWall = false, wallSlide = false, gravityEnabled = true, dragEnabled = true, facingX = "right", facingY = "neutral";
-                dashCd = 0, ingameDashCd = 0, canDash = true, isDashing = false, jumpCd = 0, canJump = true;
-                gameSpd = 25, gravity = 10, accelSpd = 2.5, moveSpd = 5, jumpSpd = 15, dashSpd = 20;
-                gravityCap = -jumpSpd, spdCap = moveSpd, airDrag = 1, groundDrag = 1;
-                globalTime = 0, ingameTime = 0, gravTime = 0, isPaused = false, pauseTimer = 0;
-                player = "player";
-                momentum = {"x":0.0, "y":0.0};
-                rawInputs = [], inputCd = 0.055;
-                panSpeedX = 15, panSpeedY = 20;
-                selectedMenuButton = "", menuCd = 0, menuOpen = false;
-                debugStepCd = 0;
-                startTime = new Date()
-            }
-
             function pageLoad(){
-                setup()
+                globalSetup()
+                playerSetup()
                 collisionDetect()
                 gameLoop()
                 controlLoop()
                 debug()
+            }
+
+            function globalSetup(){
+                //Global
+                winHeight = window.innerHeight, winWidth = window.innerWidth;
+                gameSpd = 25, gravity = 10;
+                globalTime = 0, ingameTime = 0, isPaused = false;
+                player = "player";
+                rawInputs = [];
+                panSpeedX = 20, panSpeedY = 30;
+                selectedMenuButton = "", menuOpen = false;
+                startTime = new Date()
+            }
+
+            function playerSetup(){
+                //Player
+                onground = true, touchingWall = false, wallSlide = false
+                gravityEnabled = true, dragEnabled = true
+                facingX = "right", facingY = "neutral";
+                dashCd = 0, canDash = true, isDashing = false, canJump = true;
+                accelSpd = 2.5, moveSpd = 5, jumpSpd = 15, dashSpd = 20, gravityCap = -jumpSpd;
+                spdCap = moveSpd, airDrag = 1, groundDrag = 1;
+                gravTime = 0;
+                momentum = {"x":0, "y":0};
+                playerHealth = 5;
+                spawnPoint = {"x":400, "y":230}
             }
 
             function updateWindowSize(){
@@ -144,6 +163,7 @@
             }
 
             //Game Stuff
+             //Global
             async function gameLoop(){
                 while(true){
                     await sleep(gameSpd)
@@ -157,46 +177,24 @@
                         gravityLoop()
                         collisionDetect()
                         moveMomentum()
+                        checkDamage()
                         checkState()
                     }
                 }
             }
 
+             //Global
             function externalTimeLoops(){
                 globalTime = round(globalTime + 0.025, 3)
-                if (pauseTimer > 0){
-                    pauseTimer -= 0.025;
-                } else {
-                    pauseTimer = 0;
-                }
-                if (menuCd > 0){
-                    menuCd -= 0.025;
-                } else {
-                    menuCd = 0;
-                }
-                if (debugStepCd > 0){
-                    debugStepCd -= 0.025;
-                } else {
-                    debugStepCd = 0;
-                }
             }
 
+             //Individual
             function timeLoops(){
                 ingameTime = round(ingameTime + 0.025, 3);
-                if (getOffset(player).bottom > ground || isNaN(ground)){
+                if (round(getOffset(player).bottom) > ground[0] || isNaN(ground[0])){
                     gravTime += 0.025;
                 } else {
                     gravTime = 0;
-                }
-                if (ingameDashCd > 0){
-                    ingameDashCd -= 0.025;
-                } else {
-                    ingameDashCd = 0;
-                }
-                if (jumpCd > 0){
-                    jumpCd -= 0.025;
-                } else {
-                    jumpCd = 0;
                 }
                 if (dashCd > 0){
                     dashCd -= 0.025;
@@ -205,29 +203,32 @@
                 }
             }
 
+             //Individual
             function gravityLoop(){
                 if (gravityEnabled == true){
-                    let dist = getOffset(player).bottom;
-                    if (dist > ground || isNaN(ground)==true){
+                    let dist = round(getOffset(player).bottom);
+                    if (dist > ground[0] || isNaN(ground[0])==true){
+                        momentum["y"] = Math.max(gravityCap, round(momentum["y"]-gravity*gravTime,2));
+                        /*
                         let newDist = dist - Math.min(gravityCap, gravity*gravTime);
                         newDist = round(newDist, 3);
-                        momentum["y"] = Math.max(gravityCap, round(momentum["y"]-gravity*gravTime,2));
-                        if (newDist <= ground){
-                            newDist = ground;
+                        if (newDist <= ground[0]){
+                            newDist = ground[0];
                             onground = true;
                             momentum["y"] = 0;
                             let add = 0
-                            if (getOffset(player).bottom < -100){add=8}
+                            if (round(getOffset(player).bottom) < -100){add=8}
                             document.getElementById(player).style.bottom = `${newDist+add}px`
                             gravTime = 0;
-                        }
+                        }*/
                     }
                 }
             }
 
+             //Individual
             function checkState(){
-                let bottom = getOffset(player).bottom;
-                if (bottom <= ground){
+                let bottom = round(getOffset(player).bottom);
+                if (bottom <= ground[0]){
                     onground = true;
                 } else {
                     onground = false;
@@ -240,12 +241,12 @@
                 } else {
                     canJump = false;
                 }
-                if (rawInputs.includes("w", "s") == false){
+                if (rawInputs.includes("w") == false && rawInputs.includes("s") == false){
                     facingY = "neutral"
                 }
-                let left = getOffset(player).left;
-                let right = getOffset(player).right;
-                if (round(left) == round(wallL) || round(right) == round(wallR)){
+                let left = round(getOffset(player).left);
+                let right = round(getOffset(player).right);
+                if (round(left) == round(wallL[0]) || round(right) == round(wallR[0])){
                     touchingWall = true;
                 } else {
                     wallSlide = false;
@@ -261,6 +262,7 @@
                 }
             }
 
+             //Global/Player
             async function movementBuffer(event, mode){
                 let key = event.key.toLowerCase()
                 if (event.repeat == false){
@@ -276,6 +278,7 @@
                 }
             }
 
+             //Global/Player
             async function controlLoop(){
                 let inputs = [...rawInputs]
                 if (inputs.includes("a") && inputs.includes("d")){
@@ -301,40 +304,30 @@
                             break;
                         case "l":
                             rawInputs.splice(rawInputs.indexOf(key,1))
-                            if (debugStepCd == 0){
-                                step()
-                            }
-                            debugStepCd = inputCd;
+                            step()
                             break;
                         case "escape":
                             rawInputs.splice(rawInputs.indexOf(key,1))
-                            if (pauseTimer == 0){
                             if (menuOpen == false && isPaused == false){
-                                    isPaused = true;
-                                }
-                                selectedMenuButton = "";
-                                menuManager()
+                                isPaused = true;
                             }
-                            pauseTimer = inputCd;
+                            selectedMenuButton = "";
+                            menuManager()
                             break;
                         case "w":
                             if (menuOpen == false){
                                 facingY = "up";
                             } else {
-                                if (menuCd == 0){
-                                    menuSelect("up")
-                                }
-                                menuCd = inputCd;
+                                rawInputs.splice(rawInputs.indexOf(key,1))
+                                menuSelect("up")
                             }
                             break;
                         case "s":
                             if (menuOpen == false){
                                 facingY = "down";
                             } else {
-                                if (menuCd == 0){
-                                    menuSelect("down")
-                                }
-                                menuCd = inputCd;
+                                rawInputs.splice(rawInputs.indexOf(key,1))
+                                menuSelect("down")
                             }
                             break;
                         case "a":
@@ -365,7 +358,7 @@
                             break;
                         case " ":
                             rawInputs.splice(rawInputs.indexOf(key,1))
-                            if (jumpCd == 0 && canJump == true){
+                            if (canJump == true){
                                 gravTime = 0;
                                 if (wallSlide == true){
                                     if (facingX == "right"){
@@ -376,34 +369,28 @@
                                 }
                                 momentum["y"] = jumpSpd;
                             }
-                            jumpCd = inputCd;
                             break;
                         case "shift":
                             rawInputs.splice(rawInputs.indexOf(key,1))
-                            if (dashCd == 0){
-                                if (ingameDashCd == 0 && canDash == true){
-                                    dash()
-                                }
+                            if (dashCd == 0 && canDash == true){
+                                dash()
                             }
-                            dashCd = inputCd;
                             break;
                         case "enter":
                             rawInputs.splice(rawInputs.indexOf(key,1))
                             if (menuOpen == true){
-                                if (menuCd == 0){
-                                    click()
-                                }
-                                menuCd = 0.1;
+                                click()
                             }
                             break;
                     }
                 }
             }
 
+             //Individual
             async function dash(){
                 isDashing = true;
                 canDash = false;
-                ingameDashCd = 0.3, gravTime = 0;
+                dashCd = 0.3, gravTime = 0;
                 gravityEnabled = false, dragEnabled = false;
                 let xHold = momentum["x"];
                 momentum["y"] = 0;
@@ -419,36 +406,37 @@
                 isDashing = false;
             }
 
+             //Individual
             function moveMomentum(){
                 let x = momentum["x"], y = momentum["y"];
-                let left = getOffset(player).left, bottom = getOffset(player).bottom, right = getOffset(player).right, top = getOffset(player).top;
+                let left = round(getOffset(player).left), bottom = round(getOffset(player).bottom), right = round(getOffset(player).right), top = round(getOffset(player).top);
                 if (x > 0 && y > 0){
-                    if (right + x >= cornerX && top + y >= cornerY){
-                        if (cornerY-top>cornerX-right){
+                    if (right + x >= cornerX[0] && top + y >= cornerY[0]){
+                        if (cornerY[0]-top>cornerX[0]-right){
                             momentum["x"] = 0;
                         } else {
                             momentum["y"] = 0;
                         }
                     }
                 } else if (x < 0 && y > 0){
-                    if (left + x <= cornerX && top + y >= cornerY){
-                        if (cornerY-top>left-cornerX){
+                    if (left + x <= cornerX[0] && top + y >= cornerY[0]){
+                        if (cornerY[0]-top>left-cornerX[0]){
                             momentum["x"] = 0;
                         } else {
                             momentum["y"] = 0;
                         }
                     }
                 } else if (x > 0 && y < 0){
-                    if (right + x >= cornerX && bottom + y <= cornerY){
-                        if (bottom-cornerY>cornerX-right){
+                    if (right + x >= cornerX[0] && bottom + y <= cornerY[0]){
+                        if (bottom-cornerY[0]>cornerX[0]-right){
                             momentum["x"] = 0;
                         } else {
                             momentum["y"] = 0;
                         }
                     }
                 } else if (x < 0 && y < 0){
-                    if (left + x <= cornerX && bottom + y <= cornerY){
-                        if (bottom-cornerY>left-cornerX){
+                    if (left + x <= cornerX[0] && bottom + y <= cornerY[0]){
+                        if (bottom-cornerY[0]>left-cornerX[0]){
                             momentum["x"] = 0;
                         } else {
                             momentum["y"] = 0;
@@ -458,17 +446,16 @@
                 x = momentum["x"], y = momentum["y"];
                 if (x > 0){
                     let newDist = left + x;
-                    if (newDist >= wallR - getOffset(player).width){
+                    if (newDist >= wallR[0] - getOffset(player).width){
                         if (onground == false){
                             wallSlide = true;
                             facingX = "left";
                         }
-                        newDist = wallR - getOffset(player).width - 0.001;
+                        newDist = wallR[0] - getOffset(player).width - 0.00001;
                         momentum["x"] = 0;
                     }
                     newDist = round(newDist, 3);
                     document.getElementById(player).style.left = `${newDist}px`;
-                    
                     if (dragEnabled == true){
                         if (onground == true){
                             momentum["x"] = momentum["x"]-groundDrag;
@@ -484,17 +471,16 @@
                     }
                 } else if (x < 0){
                     let newDist = left + x;
-                    if (newDist <= wallL){
+                    if (newDist <= wallL[0]){
                         if (onground == false){
                             wallSlide = true;
                             facingX = "right";
                         }
-                        newDist = wallL + 0.001;
+                        newDist = wallL[0] + 0.00001;
                         momentum["x"] = 0;
                     }
                     newDist = round(newDist, 3);
                     document.getElementById(player).style.left = `${newDist}px`;
-                    
                     if (dragEnabled == true){
                         if (onground == true){
                             momentum["x"] = momentum["x"]+groundDrag;;
@@ -511,8 +497,8 @@
                 }
                 if (y > 0){
                     let newDist = bottom + y;
-                    if (newDist >= ceiling - getOffset(player).height){
-                        newDist = ceiling - getOffset(player).height;
+                    if (newDist >= ceiling[0] - getOffset(player).height){
+                        newDist = ceiling[0] - getOffset(player).height;
                         momentum["y"] = 0;
                     }
                     newDist = round(newDist, 3);
@@ -520,8 +506,8 @@
                     
                 } else if (y < 0){
                     let newDist = bottom + y;
-                    if (newDist <= ground){
-                        newDist = ground;
+                    if (newDist <= ground[0]){
+                        newDist = ground[0];
                         momentum["y"] = 0;
                     }
                     newDist = round(newDist, 3);
@@ -529,66 +515,85 @@
                 }
             }
             
+             //Individual
             function collisionDetect(){
                 platforms = document.querySelectorAll(".platform");
-                let topP = getOffset(player).bottom+getOffset(player).height;
-                let bottomP = getOffset(player).bottom;
-                let leftP = getOffset(player).left;
-                let rightP = getOffset(player).left+getOffset(player).width;
-                //collisions relative to the player character
-                groundCollision = {}// = {0:{"y":0, "x1":0, "x2":winWidth}};
-                ceilingCollision = {}// = {0:{"y":winHeight, "x1":0, "x2":winWidth}};
-                wallLCollision = {}// = {0:{"x":0, "y1":0, "y2":winHeight}};
-                wallRCollision = {}// = {0:{"x":winWidth, "y1":0, "y2":winHeight}};
+                damaging = document.querySelectorAll(".damaging");
+                let topP = round(getOffset(player).top), bottomP = round(getOffset(player).bottom), leftP = round(getOffset(player).left), rightP = round(getOffset(player).right);
+                groundCollision = {}, ceilingCollision = {}, wallLCollision = {}, wallRCollision = {};
                 //obtain planes from div
-                for (let i=0; i<platforms.length; i++){
-                    let focus = platforms[i].id;
-                    let bottom = getOffset(focus).bottom;
-                    let top = getOffset(focus).top;
-                    let left = getOffset(focus).left;
-                    let right = getOffset(focus).right;
-                    let nId = i;
-                    groundCollision[nId] = {"y":top, "x1":left, "x2":right};
-                    ceilingCollision[nId] = {"y":bottom, "x1":left, "x2":right};
-                    wallLCollision[nId] = {"x":right, "y1":bottom, "y2":top};
-                    wallRCollision[nId] = {"x":left, "y1":bottom, "y2":top};
+                for (let i of platforms){
+                    let focus = i.id, bottom = getOffset(focus).bottom, top = getOffset(focus).top, left = getOffset(focus).left, right = getOffset(focus).right;
+                    groundCollision[focus] = {"y":top, "x1":left, "x2":right, "id":focus};
+                    ceilingCollision[focus] = {"y":bottom, "x1":left, "x2":right, "id":focus};
+                    wallLCollision[focus] = {"x":right, "y1":bottom, "y2":top, "id":focus};
+                    wallRCollision[focus] = {"x":left, "y1":bottom, "y2":top, "id":focus};
                 }
+                let damageEntity = []
+                for (let i of damaging){
+                    damageEntity.push(i.id)
+                }
+
                 let valid = [];
                 for (let i in wallRCollision){
-                    let x = wallRCollision[i]["x"], y1 = wallRCollision[i]["y1"], y2 = wallRCollision[i]["y2"];
+                    i = wallRCollision[i];
+                    let x = i["x"], y1 = i["y1"], y2 = i["y2"], id = i["id"];
                     if (rightP <= x && topP > y1 && bottomP < y2){
-                        valid.push(x);
+                        if (damageEntity.includes(id)==true){
+                            valid.push([x, "dmg"]);
+                        } else {
+                            valid.push([x, "none"]);
+                        }
                     }
                 }
-                wallR = round(valid.sort((a,b) => {return a-b})[0],3);
+                wallR = valid.sort((a,b) => {return a[0]-b[0]})[0]
+                if (wallR == undefined){wallR = [NaN, "none"];}
                 
                 valid = [];
                 for (let i in wallLCollision){
-                    let x = wallLCollision[i]["x"], y1 = wallLCollision[i]["y1"], y2 = wallLCollision[i]["y2"];
+                    i = wallLCollision[i];
+                    let x = i["x"], y1 = i["y1"], y2 = i["y2"], id = i["id"];
                     if (leftP >= x && topP > y1 && bottomP < y2){
-                        valid.push(x);
+                        if (damageEntity.includes(id)==true){
+                            valid.push([x, "dmg"]);
+                        } else {
+                            valid.push([x, "none"]);
+                        }
                     }
                 }
-                wallL = round(valid.sort((a,b) => {return b-a})[0],3);
+                wallL = valid.sort((a,b) => {return b[0]-a[0]})[0]
+                if (wallL == undefined){wallL = [NaN, "none"];}
                 
                 valid = [];
                 for (let i in ceilingCollision){
-                    let y = ceilingCollision[i]["y"], x1 = ceilingCollision[i]["x1"], x2 = ceilingCollision[i]["x2"];
+                    i = ceilingCollision[i];
+                    let y = i["y"], x1 = i["x1"], x2 = i["x2"], id = i["id"];
                     if (topP <= y && rightP > x1 && leftP < x2){
-                        valid.push(y);
+                        if (damageEntity.includes(id)==true){
+                            valid.push([y, "dmg"]);
+                        } else {
+                            valid.push([y, "none"]);
+                        }
                     }
                 }
-                ceiling = round(valid.sort((a,b) => {return a-b})[0],3);
+                ceiling = valid.sort((a,b) => {return a[0]-b[0]})[0]
+                if (ceiling == undefined){ceiling = [NaN, "none"];}
                 
                 valid = [];
                 for (let i in groundCollision){
-                    let y = groundCollision[i]["y"], x1 = groundCollision[i]["x1"], x2 = groundCollision[i]["x2"];
+                    i = groundCollision[i]
+                    let y = i["y"], x1 = i["x1"], x2 = i["x2"], id = i["id"];
                     if (bottomP >= y && rightP > x1 && leftP < x2){
-                        valid.push(y);
+                        if (damageEntity.includes(id)==true){
+                            valid.push([y, "dmg"]);
+                        } else {
+                            valid.push([y, "none"]);
+                        }
                     }
                 }
-                ground = round(valid.sort((a,b) => {return b-a})[0],3);
-                
+                ground = valid.sort((a,b) => {return b[0]-a[0]})[0]
+                if (ground == undefined){ground = [NaN, "none"];}
+
                 let x = momentum["x"], y = momentum["y"]
                 if (x!=0 && y!= 0){
                     let newTopP = topP + momentum["y"];
@@ -598,105 +603,200 @@
                     let valid = []
                     if (x > 0 && y > 0){
                         for (let i in wallRCollision){
-                            let x = wallRCollision[i]["x"], y1 = wallRCollision[i]["y1"], y2 = wallRCollision[i]["y2"];
+                            i = wallRCollision[i];
+                            let x = i["x"], y1 = i["y1"], y2 = i["y2"], id = i["id"];
                             if (rightP <= x && newTopP > y1 && newBottomP < y2){
-                                valid.push(x);
+                                if (damageEntity.includes(id)==true){
+                                    valid.push([x, "dmg"]);
+                                } else {
+                                    valid.push([x, "none"]);
+                                }
                             }
                         }
-                        cornerX = round(valid.sort((a,b) => {return a-b})[0],3);
+                        cornerX = valid.sort((a,b) => {return a[0]-b[0]})[0]
+                        if (cornerX == undefined){cornerX = [NaN, "none"];}
                         valid = [];
                         for (let i in ceilingCollision){
-                            let y = ceilingCollision[i]["y"], x1 = ceilingCollision[i]["x1"], x2 = ceilingCollision[i]["x2"];
+                            i = ceilingCollision[i]
+                            let y = i["y"], x1 = i["x1"], x2 = i["x2"], id = i["id"];
                             if (topP <= y && newRightP > x1 && newLeftP < x2){
-                                valid.push(y);
+                                if (damageEntity.includes(id)==true){
+                                    valid.push([y, "dmg"]);
+                                } else {
+                                    valid.push([y, "none"]);
+                                }
                             }
                         }
-                        cornerY = round(valid.sort((a,b) => {return a-b})[0],3);
+                        cornerY = valid.sort((a,b) => {return a[0]-b[0]})[0]
+                        if (cornerY == undefined){cornerY = [NaN, "none"];}
                     } else if (x < 0 && y > 0){
                         for (let i in wallLCollision){
-                            let x = wallLCollision[i]["x"], y1 = wallLCollision[i]["y1"], y2 = wallLCollision[i]["y2"];
+                            i = wallLCollision[i]
+                            let x = i["x"], y1 = i["y1"], y2 = i["y2"], id = i["id"];                            
                             if (leftP >= x && newTopP > y1 && newBottomP < y2){
-                                valid.push(x);
+                                if (damageEntity.includes(id)==true){
+                                    valid.push([x, "dmg"]);
+                                } else {
+                                    valid.push([x, "none"]);
+                                }
                             }
                         }
-                        cornerX = round(valid.sort((a,b) => {return b-a})[0],3);
+                        cornerX = valid.sort((a,b) => {return b[0]-a[0]})[0]
+                        if (cornerX == undefined){cornerX = [NaN, "none"];}
                         valid = [];
                         for (let i in ceilingCollision){
-                            let y = ceilingCollision[i]["y"], x1 = ceilingCollision[i]["x1"], x2 = ceilingCollision[i]["x2"];
+                            i = ceilingCollision[i]
+                            let y = i["y"], x1 = i["x1"], x2 = i["x2"], id = i["id"];
                             if (topP <= y && newRightP > x1 && newLeftP < x2){
-                                valid.push(y);
+                                if (damageEntity.includes(id)==true){
+                                    valid.push([y, "dmg"]);
+                                } else {
+                                    valid.push([y, "none"]);
+                                }
                             }
                         }
-                        cornerY = round(valid.sort((a,b) => {return a-b})[0],3);
+                        cornerY = valid.sort((a,b) => {return a[0]-b[0]})[0]
+                        if (cornerY == undefined){cornerY = [NaN, "none"];}
                     } else if (x > 0 && y < 0){
                         for (let i in wallRCollision){
-                            let x = wallRCollision[i]["x"], y1 = wallRCollision[i]["y1"], y2 = wallRCollision[i]["y2"];
+                            i = wallRCollision[i]
+                            let x = i["x"], y1 = i["y1"], y2 = i["y2"], id = i["id"];                            
                             if (rightP <= x && newTopP > y1 && newBottomP < y2){
-                                valid.push(x);
+                                if (damageEntity.includes(id)==true){
+                                    valid.push([x, "dmg"]);
+                                } else {
+                                    valid.push([x, "none"]);
+                                }
                             }
                         }
-                        cornerX = round(valid.sort((a,b) => {return a-b})[0],3);
+                        cornerX = valid.sort((a,b) => {return a[0]-b[0]})[0]
+                        if (cornerX == undefined){cornerX = [NaN, "none"];}
                         valid = [];
                         for (let i in groundCollision){
-                            let y = groundCollision[i]["y"], x1 = groundCollision[i]["x1"], x2 = groundCollision[i]["x2"];
+                            i = groundCollision[i]
+                            let y = i["y"], x1 = i["x1"], x2 = i["x2"], id = i["id"];
                             if (bottomP >= y && newRightP > x1 && newLeftP < x2){
-                                valid.push(y);
+                                if (damageEntity.includes(id)==true){
+                                    valid.push([y, "dmg"]);
+                                } else {
+                                    valid.push([y, "none"]);
+                                }
                             }
                         }
-                        cornerY = round(valid.sort((a,b) => {return b-a})[0],3);
+                        cornerY = valid.sort((a,b) => {return b[0]-a[0]})[0]
+                        if (cornerY == undefined){cornerY = [NaN, "none"];}
                     } else if (x < 0 && y < 0){
                         for (let i in wallLCollision){
-                            let x = wallLCollision[i]["x"], y1 = wallLCollision[i]["y1"], y2 = wallLCollision[i]["y2"];
+                            i = wallLCollision[i]
+                            let x = i["x"], y1 = i["y1"], y2 = i["y2"], id = i["id"];                            
                             if (leftP >= x && newTopP > y1 && newBottomP < y2){
-                                valid.push(x);
+                                if (damageEntity.includes(id)==true){
+                                    valid.push([x, "dmg"]);
+                                } else {
+                                    valid.push([x, "none"]);
+                                }
                             }
                         }
-                        cornerX = round(valid.sort((a,b) => {return b-a})[0],3);
+                        cornerX = valid.sort((a,b) => {return b[0]-a[0]})[0]
+                        if (cornerX == undefined){cornerX = [NaN, "none"];}
                         valid = [];
                         for (let i in groundCollision){
-                            let y = groundCollision[i]["y"], x1 = groundCollision[i]["x1"], x2 = groundCollision[i]["x2"];
+                            i = groundCollision[i]
+                            let y = i["y"], x1 = i["x1"], x2 = i["x2"], id = i["id"];
                             if (bottomP >= y && newRightP > x1 && newLeftP < x2){
-                                valid.push(y);
+                                if (damageEntity.includes(id)==true){
+                                    valid.push([y, "dmg"]);
+                                } else {
+                                    valid.push([y, "none"]);
+                                }
                             }
                         }
-                        cornerY = round(valid.sort((a,b) => {return b-a})[0],3);
+                        cornerY = valid.sort((a,b) => {return b[0]-a[0]})[0]
+                        if (cornerY == undefined){cornerY = [NaN, "none"];}
                     }
                 }
             }
-            
+
+             //Global/Player
             function screenPanning(){
                 let screenCenterX = round(winWidth/2), screenCenterY = round(winHeight*0.4);
-                let playerCenterX = round(getOffset(player).left + getOffset(player).width/2,1), playerCenterY = round(getOffset(player).bottom,1);
-                //let roomBorderLeft = wallLCollision[0]["x"], roomBorderRight = wallRCollision[0]["x"], roomBorderTop = ceilingCollision[0]["y"], roomBorderBottom = groundCollision[0]["y"];
+                let playerCenterX = round(round(getOffset(player).left) + getOffset(player).width/2,1), playerCenterY = round(getOffset(player).bottom);
                 let elements = document.querySelectorAll("div");
                 let origin = {"x":getOffset("origin").left, "y":getOffset("origin").bottom};
-                
                 if (screenCenterX != playerCenterX){
-                    let panDistX = Math.sign(screenCenterX-playerCenterX)*(round(panSpeedX*Math.log2(Math.abs(screenCenterX-playerCenterX)/screenCenterX+1),2));
+                    let panDistX = Math.sign(screenCenterX-playerCenterX)*round(panSpeedX*Math.log2(Math.abs(screenCenterX-playerCenterX)/screenCenterX+1),3);
                     if (origin["x"]+panDistX > 0){
                         panDistX = 0-origin["x"]
                     }
                     for (let i=0; i<elements.length; i++){
                         let target = elements[i].id;
                         let newPos = round(getOffset(target).left+panDistX);
+                        if (Math.abs(panDistX)<0.5 && Math.abs(panDistX)>0.05){
+                            newPos = getOffset(target).left+Math.sign(screenCenterX-playerCenterX);
+                        }
                         document.getElementById(target).style.left = `${newPos}px`;
                     }
                 }
                 
                 if (screenCenterY != playerCenterY){
-                    let panDistY = Math.sign(screenCenterY-playerCenterY)*(round(panSpeedY*Math.log2(Math.abs(screenCenterY-playerCenterY)/screenCenterY+1),2));
+                    let panDistY = Math.sign(screenCenterY-playerCenterY)*round(panSpeedY*Math.log2(Math.abs(screenCenterY-playerCenterY)/screenCenterY+1),3);
                     if (origin["y"]+panDistY > 0){
                         panDistY = 0-origin["y"];
                     }
                     for (let i=0; i<elements.length; i++){
                         let target = elements[i].id;
                         let newPos = round(getOffset(target).bottom+panDistY);
+                        if (Math.abs(panDistY)<0.5 && Math.abs(panDistY)>0.05){
+                            newPos = getOffset(target).bottom+Math.sign(screenCenterY-playerCenterY);
+                        }
                         document.getElementById(target).style.bottom = `${newPos}px`;
                     }
                 }
             }
 
-            async function createPlatform(...points){
+             //Individual
+            function checkDamage(){
+                let top = round(getOffset(player).top), bottom = round(getOffset(player).bottom), left = round(getOffset(player).left), right = round(getOffset(player).right);
+                if (top == ceiling[0] && ceiling[1] == "dmg"){
+                    damage(player, Infinity)
+                }
+                if (bottom == ground[0] && ground[1] == "dmg"){
+                    damage(player, Infinity)
+                }
+                if (left == wallL[0] && wallL[1] == "dmg"){
+                    damage(player, Infinity)
+                }
+                if (right == wallR[0] && wallR[1] == "dmg"){
+                    damage(player, Infinity)
+                }
+            }
+
+             //Global
+            async function damage(target, amount){
+                isPaused = true;
+                await sleep(200)
+                if (target == player){
+                    playerHealth -= amount;
+                    if (playerHealth <= 0){
+                        killPlayer()
+                    }
+                }
+                isPaused = false;
+            }
+
+             //Global
+            function killPlayer(){
+                let originX = getOffset("origin").left, originY = getOffset("origin").bottom;
+                document.getElementById(player).style.left = `${originX+spawnPoint["x"]}px`
+                document.getElementById(player).style.bottom = `${originY+spawnPoint["y"]}px`
+                playerSetup()
+                for (let i=0; i<1000; i++){
+                    screenPanning()
+                }
+            }
+
+             //Global
+            async function createPlatform(points, modifier){
                 //[200, 100], [200, 200], [150, 200], [150, 150], [100, 150], [100, 100]
                 let originX = getOffset("origin").left, originY = getOffset("origin").bottom;
                 /*
@@ -744,7 +844,7 @@
                             platNum = Number(platforms[i].id.substr(4))+1;
                         }
                     }
-                    document.getElementById("gameArea").innerHTML += `<div id="plat${platNum}" class="platform"></div>`;
+                    document.getElementById("gameArea").innerHTML += `<div id="plat${platNum}" class="platform ${modifier}"></div>`;
                     let selected = document.getElementById(`plat${platNum}`);
                     let width = Math.abs(points[0][0] - points[1][0]);
                     let height = Math.abs(points[0][1] - points[1][1]);
@@ -805,20 +905,14 @@
                 document.getElementById("rawInputs").innerHTML = "Inputs: " + [rawInputs];
             }
 
-            async function test(n){
-                let tl = []
-                for (let i=0; i<100; i++){
-                    let start = new Date()
-                    await sleep(n)
-                    let end = new Date()
-                    tl.push(end-start)
+            function test(){
+                let li = [];
+                for (let i=10; i>0; i-=2){
+                    let a = []
+                    a.push(i, i-1)
+                    li.push(a)
                 }
-                let x = 0;
-                for (let i of tl){
-                    x+=i
-                }
-                console.log(x/tl.length)
-                console.log(findExtreme(tl), findExtreme(tl, true), tl.sort((a,b) => {return a-b}))
+                console.log(li.sort((a,b)=> {console.log(a[0],b[0]);return a[0]-b[0]}))
             }
 
             //Menus
@@ -948,7 +1042,7 @@
 
         </script>
     </head>
-    <body onload="pageLoad()">
+    <body onload="pageLoad()" onblur="if(isPaused==false){rawInputs.push('escape')}">
         <div id="debug">
             <label id="realTime"></label><br>
             <label id="globalTime"></label><br>
@@ -979,8 +1073,10 @@
             <div id="plat6" class="platform"></div>
             <div id="plat7" class="platform"></div>
             <div id="plat8" class="platform"></div>
+            <div id="plat9" class="platform damaging"></div>
             <div id="floor" class="platform"></div>
             <div id="wall" class="platform"></div>
+            <div id="deathPlane" class="platform damaging"></div>
         </div>
         <div id="pauseMenu" class="menuGroup" hidden>
             <h1 class="menu center">Paused</h1>
