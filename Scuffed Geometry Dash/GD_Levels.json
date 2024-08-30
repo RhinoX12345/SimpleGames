@@ -1,0 +1,24 @@
+{
+    "levels": [
+        {
+            "id": 0,
+            "blocks": [
+                {"x":0, "y":0, "width":30, "height":30, "modifier": "damaging"},
+                {"x":300, "y":0, "width":30, "height":30, "modifier": "damaging"},
+                {"x":330, "y":0, "width":30, "height":30, "modifier": "none"},
+                {"x":30, "y":0, "width":120, "height":30, "modifier": "damaging"},
+                {"x":120, "y":0, "width":30, "height":60, "modifier": "none"},
+                {"x":30, "y":0, "width":120, "height":30, "modifier": "damaging"},
+                {"x":120, "y":0, "width":30, "height":90, "modifier": "none"},
+                {"x":480, "y":0, "width":30, "height":30, "modifier": "damaging"},
+                {"x":240, "y":0, "width":420, "height":30, "modifier": "none"},
+                {"x":195, "y":30, "width":30, "height":30, "modifier": "damaging"},
+                {"x":225, "y":0, "width":90, "height":30, "modifier": "damaging"},
+                {"x":90, "y":0, "width":420, "height":60, "modifier": "none"},
+                {"x":195, "y":60, "width":30, "height":30, "modifier": "damaging"},
+                {"x":225, "y":0, "width":90, "height":30, "modifier": "damaging"},
+                {"x":600, "y":0, "width":5, "height":1000, "modifier": "win"}
+            ]
+        }
+    ]
+}

@@ -838,11 +838,18 @@
                 }*/
                 
                 if (points.length==2){
+                    let exists = []
                     let platNum = 0
+                    platforms = document.querySelectorAll(".platform");
                     for (let i=0; i<platforms.length; i++){
                         if (platforms[i].id.substr(0,4) == "plat"){
-                            platNum = Number(platforms[i].id.substr(4))+1;
+                            exists.push(Number(platforms[i].id.substr(4)))
                         }
+                    }
+                    for (let i=1; i<=platforms.length; i++){
+                        let j = i
+                        while (exists.includes(j)){j++}
+                        platNum = j
                     }
                     document.getElementById("gameArea").innerHTML += `<div id="plat${platNum}" class="platform ${modifier}"></div>`;
                     let selected = document.getElementById(`plat${platNum}`);

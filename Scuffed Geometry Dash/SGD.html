@@ -60,8 +60,8 @@
             }
             #player {
                 position: absolute;
-                height: 30px;
-                width: 30px;
+                height: 40px;
+                width: 40px;
                 bottom: 10px;
                 left: -100px;
                 background-color: rgb(108, 108, 108);
@@ -117,6 +117,7 @@
                 gameLoop()
                 controlLoop()
                 debug()
+                killPlayer()
             }
 
             function globalSetup(){
@@ -139,15 +140,16 @@
                 gravityEnabled = true;
                 facingX = "right";
                 canJump = true;
-                moveSpd = 5, jumpSpd = 16, gravityCap = -jumpSpd;
-                spdCap = moveSpd;
-                momentum = {"x":8, "y":0};
+                jumpSpd = 16, gravityCap = -jumpSpd;
+                momentum = {"x":0, "y":0};
                 playerHealth = 5;
                 spawnPoint = {"x":50, "y":5}
-                mode = "normal"; //normal, ship, dino, flappy
-                //block height=30px, width=30px
+                mode = "dino"; //normal, ship, dino, flappy
+                blockHeight=30, blockWidth=30
+                gd = ["normal", "ship"];
+                other = ["dino", "flappy"]
             }
-
+            
             function updateWindowSize(){
                 if (winHeight != window.innerHeight){
                     winHeight = window.innerHeight;
@@ -167,7 +169,6 @@
                     if (isPaused == false){
                         checkState()
                         timeLoops()
-                        moveObstacles()
                         screenPanning()
                         gravityLoop()
                         collisionDetect()
@@ -187,7 +188,7 @@
             }
 
             function gravityLoop(){
-                if (gravityEnabled == true){
+                if (gravityEnabled == true && mode!="debug"){
                     let dist = round(getOffset(player).bottom);
                     if (dist > ground[0] || isNaN(ground[0])==true){
                         momentum["y"] = Math.max(gravityCap, momentum["y"]-gravity);
@@ -204,8 +205,6 @@
                 }
                 if (onground == true){
                     canJump = true;
-                } else {
-                    canJump = false;
                 }
             }
 
@@ -251,6 +250,23 @@
                             rawInputs.splice(rawInputs.indexOf(key,1))
                             step()
                             break;
+                        case "m":
+                            rawInputs.splice(rawInputs.indexOf(key,1))
+                            switch (mode){
+                                case "normal":
+                                    momentum = {"x":round(getOffset(player).width/4.5), "y":0}
+                                    mode = "ship";
+                                    break;
+                                case "ship":
+                                    momentum = {"x":0, "y":0}
+                                    mode = "debug";
+                                    break;
+                                case "debug":
+                                    momentum = {"x":round(getOffset(player).width/4.5), "y":0}
+                                    mode = "normal";
+                                    break;
+                            }
+                            break;
                         case "escape":
                             rawInputs.splice(rawInputs.indexOf(key,1))
                             if (menuOpen == false && isPaused == false){
@@ -263,25 +279,50 @@
                             if (menuOpen == true){
                                 rawInputs.splice(rawInputs.indexOf(key,1))
                                 menuSelect("up")
+                            } else {
+                                if (mode=="debug"){
+                                    document.getElementById(player).style.bottom = `${getOffset(player).bottom+jumpSpd}px`
+                                }
                             }
                             break;
                         case "s":
                             if (menuOpen == true){
                                 rawInputs.splice(rawInputs.indexOf(key,1))
                                 menuSelect("down")
+                            } else {
+                                if (mode=="debug"){
+                                    document.getElementById(player).style.bottom = `${getOffset(player).bottom-jumpSpd}px`
+                                }
                             }
                             break;
                         case "a":
+                            if (menuOpen == true){
+                                rawInputs.splice(rawInputs.indexOf(key,1))
+                            } else {
+                                if (mode=="debug"){
+                                    document.getElementById(player).style.left = `${getOffset(player).left-jumpSpd*2}px`
+                                }
+                            }
                             break;
                         case "d":
+                            if (menuOpen == true){
+                                rawInputs.splice(rawInputs.indexOf(key,1))
+                            } else {
+                                if (mode=="debug"){
+                                    document.getElementById(player).style.left = `${getOffset(player).left+jumpSpd*2}px`
+                                }
+                            }
                             break;
                         case " ":
                             if (mode=="normal" || mode=="dino"){
                                 if (canJump == true){
                                     momentum["y"] = jumpSpd;
+                                    canJump = false;
                                 }
-                            } else if (mode=="ship" || mode=="flappy") {
-                                momentum["y"] = Math.min(-gravityCap, momentum["y"]+gravity*2);;
+                            } else if (mode=="ship") {
+                                momentum["y"] = Math.min(-gravityCap*2, momentum["y"]+gravity*3);
+                            } else if (mode=="flappy"){
+                                momentum["y"] = Math.min(-gravityCap, momentum["y"]+gravity*3);
                             }
                             break;
                         case "enter":
@@ -299,32 +340,32 @@
                 let left = round(getOffset(player).left), bottom = round(getOffset(player).bottom), right = round(getOffset(player).right), top = round(getOffset(player).top);
                 if (x > 0 && y > 0){
                     if (right + x >= cornerX[0] && top + y >= cornerY[0]){
-                        if (cornerY[0]-top>cornerX[0]-right){
-                            a=1//momentum["x"] = 0;
+                        if (cornerY[0]-top>=cornerX[0]-right){
+                            momentum["x"] = 0.1;
                         } else {
                             momentum["y"] = 0;
                         }
                     }
                 } else if (x < 0 && y > 0){
                     if (left + x <= cornerX[0] && top + y >= cornerY[0]){
-                        if (cornerY[0]-top>left-cornerX[0]){
-                            a=1//momentum["x"] = 0;
+                        if (cornerY[0]-top>=left-cornerX[0]){
+                            momentum["x"] = -0.1;
                         } else {
                             momentum["y"] = 0;
                         }
                     }
                 } else if (x > 0 && y < 0){
                     if (right + x >= cornerX[0] && bottom + y <= cornerY[0]){
-                        if (bottom-cornerY[0]>cornerX[0]-right){
-                            a=1//momentum["x"] = 0;
+                        if (bottom-cornerY[0]>=cornerX[0]-right){
+                            momentum["x"] = 0.1;
                         } else {
                             momentum["y"] = 0;
                         }
                     }
                 } else if (x < 0 && y < 0){
                     if (left + x <= cornerX[0] && bottom + y <= cornerY[0]){
-                        if (bottom-cornerY[0]>left-cornerX[0]){
-                            a=1//momentum["x"] = 0;
+                        if (bottom-cornerY[0]>=left-cornerX[0]){
+                            momentum["x"] = -0.1;
                         } else {
                             momentum["y"] = 0;
                         }
@@ -574,21 +615,37 @@
             function screenPanning(){
                 let screenCenterX = Number()
                 if (facingX=="right"){
-                    screenCenterX = round(winWidth*0.15)
+                    screenCenterX = round(winWidth*0.2)
                 } else {
-                    screenCenterX = round(winWidth*0.85)
+                    screenCenterX = round(winWidth*0.8)
                 }
                 let screenCenterY = round(winHeight*0.5);
                 let playerCenterX = round(round(getOffset(player).left) + getOffset(player).width/2,1), playerCenterY = round(getOffset(player).bottom);
                 let elements = document.getElementById("gameArea").querySelectorAll("div");
+                platforms = document.querySelectorAll(".platform");
                 let origin = {"x":getOffset("origin").left, "y":getOffset("origin").bottom};
                 let limit = {"x":Infinity, "y":getOffset("roof").bottom}
                 if (screenCenterX != playerCenterX){
-                    panDistX = Math.sign(screenCenterX-playerCenterX)*round(panSpeedX*Math.log2(Math.abs(screenCenterX-playerCenterX)/(winWidth/4)+1),3);
+                    let panDistX = Math.sign(screenCenterX-playerCenterX)*round(panSpeedX*Math.log2(Math.abs(screenCenterX-playerCenterX)/(winWidth/4)+1),3);
                     let newPos = round(getOffset(player).left+panDistX);
                     document.getElementById(player).style.left = `${newPos}px`;
+                    for (let i of platforms){
+                        if (i.id.substr(0,4)=="plat"){
+                            let newPos = round(getOffset(i.id).left+panDistX);
+                            if (facingX=="right" && getOffset(i.id).right < 0 && other.includes(mode)){
+                                document.getElementById(i.id).remove()
+                            } else if (facingX=="left" && getOffset(i.id).left < winWidth && other.includes(mode)){
+                                document.getElementById(i.id).remove()
+                            } else {
+                                document.getElementById(i.id).style.left = `${newPos}px`;
+                            }
+                        }
+                    }
+                    newPos = round(getOffset("origin").left+panDistX);
+                    document.getElementById("origin").style.left = `${newPos}px`;
                 }
                 
+                elements = document.getElementById("gameArea").querySelectorAll("div");
                 if (screenCenterY != playerCenterY){
                     let panDistY = Math.sign(screenCenterY-playerCenterY)*round(panSpeedY*Math.log2(Math.abs(screenCenterY-playerCenterY)/screenCenterY+1),3);
                     if (origin["y"]+panDistY > 0){
@@ -608,18 +665,26 @@
             }
 
             function checkDamage(){
-                let top = round(getOffset(player).top), bottom = round(getOffset(player).bottom), left = round(getOffset(player).left), right = round(getOffset(player).right);
-                if (top == ceiling[0] && ceiling[1] == "dmg"){
-                    damage(player, Infinity)
-                }
-                if (bottom == ground[0] && ground[1] == "dmg"){
-                    damage(player, Infinity)
-                }
-                if (left == wallL[0]){
-                    damage(player, Infinity)
-                }
-                if (right == wallR[0]){
-                    damage(player, Infinity)
+                if (mode!="debug"){
+                    let top = round(getOffset(player).top), bottom = round(getOffset(player).bottom), left = round(getOffset(player).left), right = round(getOffset(player).right);
+                    if (top == ceiling[0] && ceiling[1] == "dmg"){
+                        damage(player, Infinity)
+                    }
+                    if (top == ceiling[0] && mode=="normal"){
+                        damage(player, Infinity)
+                    }
+                    if (bottom == ground[0] && ground[1] == "dmg"){
+                        damage(player, Infinity)
+                    }
+                    if (bottom == ground[0] && ingameTime>2 && mode=="flappy"){
+                        damage(player, Infinity)
+                    }
+                    if (left == wallL[0]){
+                        damage(player, Infinity)
+                    }
+                    if (right == wallR[0]){
+                        damage(player, Infinity)
+                    }
                 }
             }
 
@@ -635,40 +700,38 @@
             }
 
             function killPlayer(){
-                if (mode=="dino" || mode=="flappy"){
+                if (other.includes(mode)){
                     obstacleSpawn = false;
-                    for (let i of platforms){
-                        let id = i.id
-                        if (id.substr(0,4)=="plat"){
-                            document.getElementById(id).remove()
-                        }
+                }
+                platforms = document.querySelectorAll(".platform");
+                for (let i of platforms){
+                    let id = i.id
+                    if (id.substr(0,4)=="plat"){
+                        document.getElementById(id).remove()
                     }
                 }
                 let originX = getOffset("origin").left, originY = getOffset("origin").bottom;
                 document.getElementById(player).style.left = `${originX+spawnPoint["x"]}px`;
                 document.getElementById(player).style.bottom = `${originY+spawnPoint["y"]}px`;
                 playerSetup()
-                for (let i=0; i<1000; i++){
+                if (gd.includes(mode)){
+                    loadLevel()
+                    momentum["x"] = round(getOffset(player).width/4.5)
+                    jumpSpd = round(getOffset(player).height*0.47,1)
+                    gravityCap = -jumpSpd;
+                }
+                if (mode=="debug"){
+                    loadLevel()
+                    jumpSpd = round(getOffset(player).height*0.47,1)
+                    gravityCap = -jumpSpd;
+                }
+                for (let i=0; i<100; i++){
                     screenPanning()
                 }
-                if (mode=="dino" || mode=="flappy"){
-                    obstacleSpawn = true;
-                }
-            }
-
-            function moveObstacles(){
-                let elements = document.getElementById("gameArea").querySelectorAll(".platform");
-                for (let i of elements){
-                    if (i.id.substr(0,4)=="plat"){
-                        if (facingX=="right" && getOffset(i.id).right < -100){
-                            document.getElementById(i.id).remove()
-                            continue
-                        } else if (facingX=="left" && getOffset(i.id).left < winWidth+100){
-                            document.getElementById(i.id).remove()
-                            continue
-                        }
-                        document.getElementById(i.id).style.left = `${getOffset(i.id).left-momentum["x"]}px`;
-                    }
+                if (other.includes(mode)){
+                    ingameTime = 0;
+                    //obstacleSpawn = true;
+                    momentum["x"] = 8
                 }
             }
 
@@ -676,7 +739,7 @@
                 while (true){
                     let delay = 0
                     if (mode=="dino"){
-                        delay = (Math.random()+.3)*2;
+                        delay = (Math.random()+.6)
                         momentum["x"] = round(ingameTime/20,0,"down")*2+8;
                     } else if (mode=="flappy"){
                         delay = 1.2;
@@ -684,17 +747,21 @@
                     let start = ingameTime
                     while (ingameTime-start < delay){
                         await sleep(1)
+                        if (obstacleSpawn == false){
+                            obstacleSpawn = true
+                            start = ingameTime
+                        }
                     }
-
                     if (obstacleSpawn == true && mode=="dino"){
+                        console.log(1)
                         let originX = getOffset("origin").left, originY = getOffset("origin").bottom;
-                        createPlatform([[(winWidth-getOffset(player).right)+(getOffset(player).left-originX), 5],[(winWidth-getOffset(player).right)+(getOffset(player).left-originX)+30, 35]], "damaging")
+                        createPlatform([[(winWidth-getOffset(player).right)+(getOffset(player).left-originX), 5],[(winWidth-getOffset(player).right)+(getOffset(player).left-originX)+blockWidth, 5+blockHeight]], "damaging")
                     } else if (obstacleSpawn == true && mode=="flappy"){
                         let originX = getOffset("origin").left, originY = getOffset("origin").bottom;
                         let limit = {"top":getOffset("roof").bottom, "bottom":getOffset("floor").top}
                         let gap = 150;
                         let gapPos = Math.max(100, Math.floor(Math.random()*(limit["top"]-100-gap)))
-                        createPlatform([[(winWidth-getOffset(player).right)+(getOffset(player).left-originX)+momentum["x"], 0],[(winWidth-getOffset(player).right)+(getOffset(player).left-originX)+30+momentum["x"], gapPos]], "damaging")
+                        createPlatform([[(winWidth-getOffset(player).right)+(getOffset(player).left-originX), 0],[(winWidth-getOffset(player).right)+(getOffset(player).left-originX)+30, gapPos]], "damaging")
                         await sleep(25)
                         createPlatform([[(winWidth-getOffset(player).right)+(getOffset(player).left-originX), gapPos+gap],[(winWidth-getOffset(player).right)+(getOffset(player).left-originX)+30, limit["top"]]], "damaging")
                     } else {
@@ -707,11 +774,18 @@
                 let originX = getOffset("origin").left, originY = getOffset("origin").bottom;
                 
                 if (points.length==2){
+                    let exists = []
                     let platNum = 0
+                    platforms = document.querySelectorAll(".platform");
                     for (let i=0; i<platforms.length; i++){
                         if (platforms[i].id.substr(0,4) == "plat"){
-                            platNum = Number(platforms[i].id.substr(4))+1;
+                            exists.push(Number(platforms[i].id.substr(4)))
                         }
+                    }
+                    for (let i=1; i<=platforms.length; i++){
+                        let j = i
+                        while (exists.includes(j)){j++}
+                        platNum = j
                     }
                     document.getElementById("gameArea").innerHTML += `<div id="plat${platNum}" class="platform ${modifier}"></div>`;
                     let selected = document.getElementById(`plat${platNum}`);
@@ -741,6 +815,24 @@
                 }
             }
 
+            async function loadLevel(){
+                levelData = {}
+                let scale = getOffset(player).width/blockWidth
+                await fetch('./GD_Levels.json').then((response) => response.json()).then((json) => levelData = new Object(json["levels"]))
+                for (let level of levelData){
+                    console.log(`Level ${level["id"]}`)
+                    let x = 600
+                    let y = 5
+                    for (let i of level["blocks"]){
+                        x += i["x"];
+                        let x1 = x*scale, x2 = (x + i["width"])*scale, y1 = y + i["y"]*scale, y2 = y + (i["y"] + i["height"])*scale;
+                        x1 = round(x1), x2 = round(x2), y1 = round(y1), y2 = round(y2)
+                        console.log(x1, y1, x2, y2)
+                        await createPlatform([[x1, y1], [x2, y2]], i["modifier"])
+                    }
+                    break
+                }
+            }
             //Debug
             async function step(n=1){
                 isPaused = false;
