@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title></title>
+        <style>
+            body{
+                background-color: rgb(172, 207, 241);
+                user-select: none;
+                height: fit-content;
+                width: fit-content;
+                overflow: hidden;;
+            }
+
+            #filler {
+                height: 100vh;
+                width: 100vw;
+                position: absolute;
+                top: 0px;
+                left: 0px;
+                z-index: 0;
+            }
+
+            img {
+                margin: 0px;
+            }
+
+            #sunDisplay {
+                position: absolute;
+                top: 20px;
+                left: 100px;
+                background-color: rgb(255, 255, 255);
+                padding: 0px;
+                display: flex;
+                flex-direction: row;
+            }
+            
+            #sunDisplay p {
+                margin: auto 10px auto 10px;
+            }
+            
+            #plantSelector {
+                position: absolute;
+                top: 20px;
+                left: 5px;
+                display: flex;
+                flex-direction: column;
+                width: auto;
+                height: auto;
+            }
+            
+            #plantSelector>* {
+                background-color: white;
+                margin: 1px auto;
+                width: 80px;
+                height: 40px;
+            }
+
+            #playField {
+                position: absolute;
+                top: 70px;
+                left: 120px;
+                border-spacing: 0px;
+                padding: 0px;
+                height: 300px;
+            }
+
+            #playField tbody tr td {
+                width: 50px;
+            }
+
+            td:hover {
+                background-color: #fff;;
+            }
+
+            #testSquare {
+                position: absolute;
+                width:50px;
+                height:50px;
+                background-color:rgb(255, 255, 255);
+            }
+
+            #mousePos {
+                position: absolute;
+                bottom: 15px;
+                right: 5px
+            }
+
+            #debugMapSwitch {
+                position: absolute;
+                bottom: 5px;
+                right: 5px;
+            }
+        </style>
+        <script>
+            const sleep = (sleep) => new Promise((resolve) => setTimeout(resolve, sleep))
+            function getOffset(elem) {
+                const rect = document.getElementById(elem).getBoundingClientRect();
+                return {
+                    top: window.innerHeight-rect.top,
+                    left: rect.left,
+                    right: rect.right, 
+                    bottom: window.innerHeight-rect.bottom,
+                    height: rect.height,
+                    width: rect.width
+                }
+            }
+
+            function round(value, n=0, d="round"){
+                if (d == "round"){
+                    return Math.round(value*10**n)/10**n
+                } else if (d == "down"){
+                    return Math.floor(value*10**n)/10**n
+                } else if (d == "up"){
+                    return Math.ceil(value*10**n)/10**n
+                } else if (d == "none"){
+                    return Number(String(value*10**n).split(".")[0])/10**n
+                } else {
+                    return value
+                }
+            }
+
+            function setup(){
+                fieldType = "lawn";
+                mowers = [];
+            }
+
+            function pageLoad(){
+                setup()
+                fieldSetup()
+            }
+
+            async function fieldSetup(){
+                document.getElementById("playField").innerHTML = "";
+                for (let i of mowers){
+                    document.getElementById(i["id"]).remove();
+                }
+                switch (fieldType){
+                    default:
+                        break;
+                    case "lawn":
+                        document.getElementById("document").style.backgroundColor = "rgb(172, 207, 241)";
+                        for (let i=1; i<=5; i++){
+                            document.getElementById("playField").innerHTML += `<tr id="${i}"></tr>`;
+                            for (let j=0; j<=9; j++){
+                                document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}" onmouseenter="changeHover(id, style, event)" onmouseleave="changeHover(id, style, event)"></td>`;
+                                let a = (i-1)*9 + j;
+                                let g1 = "rgb(26, 132, 20)";
+                                let g2 = "rgb(40, 162, 24)";
+                                let g3 = "rgb(54, 206, 41)";
+                                let side = "rgb(252, 239, 208)";
+                                if (j==0){
+                                    document.getElementById(`${i}${j}`).style.backgroundColor = side;
+                                } else if (i%2==1){
+                                    if (a%2==0){
+                                        document.getElementById(`${i}${j}`).style.backgroundColor = g1;
+                                    } else {
+                                        document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                    }
+                                } else {
+                                    if (a%2==0){
+                                        document.getElementById(`${i}${j}`).style.backgroundColor = g3;
+                                    } else {
+                                        document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                    }
+                                }
+                            }
+                        }
+                        mower1 = new Lawnmower("mower1", 1, 0, "lawn");
+                        mower2 = new Lawnmower("mower2", 2, 0, "lawn");
+                        mower3 = new Lawnmower("mower3", 3, 0, "lawn");
+                        mower4 = new Lawnmower("mower4", 4, 0, "lawn");
+                        mower5 = new Lawnmower("mower5", 5, 0, "lawn");
+                        mowers = [mower1, mower2, mower3, mower4, mower5];
+                        break;
+                    case "nightLawn":
+                        document.getElementById("document").style.backgroundColor = "rgb(0, 38, 111)";
+                        for (let i=1; i<=5; i++){
+                            document.getElementById("playField").innerHTML += `<tr id="${i}"></tr>`;
+                            for (let j=0; j<=9; j++){
+                                document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}" onmouseenter="changeHover(id, style, event)" onmouseleave="changeHover(id, style, event)"></td>`;
+                                let a = (i-1)*9 + j;
+                                let g1 = "rgb(12, 50, 55)";
+                                let g2 = "rgb(21, 70, 65)";
+                                let g3 = "rgb(40, 80, 70)";
+                                let side = "rgb(140, 150, 165)";
+                                if (j==0){
+                                    document.getElementById(`${i}${j}`).style.backgroundColor = side;
+                                } else if (i%2==1){
+                                    if (a%2==0){
+                                        document.getElementById(`${i}${j}`).style.backgroundColor = g1;
+                                    } else {
+                                        document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                    }
+                                } else {
+                                    if (a%2==0){
+                                        document.getElementById(`${i}${j}`).style.backgroundColor = g3;
+                                    } else {
+                                        document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                    }
+                                }
+                            }
+                        }
+                        mower1 = new Lawnmower("mower1", 1, 0, "nightLawn");
+                        mower2 = new Lawnmower("mower2", 2, 0, "nightLawn");
+                        mower3 = new Lawnmower("mower3", 3, 0, "nightLawn");
+                        mower4 = new Lawnmower("mower4", 4, 0, "nightLawn");
+                        mower5 = new Lawnmower("mower5", 5, 0, "nightLawn");
+                        mowers = [mower1, mower2, mower3, mower4, mower5];
+                        break;
+                    case "pool":
+                        document.getElementById("document").style.backgroundColor = "rgb(172, 207, 241)";
+                        for (let i=1; i<=6; i++){
+                            document.getElementById("playField").innerHTML += `<tr id="${i}"></tr>`;
+                            for (let j=0; j<=9; j++){
+                                document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}" onmouseenter="changeHover(id, style, event)" onmouseleave="changeHover(id, style, event)"></td>`;
+                                let a = (i-1)*9 + j;
+                                let g1 = "rgb(40, 162, 24)";
+                                let g2 = "rgb(19, 224, 28)";
+                                let water = "rgb(26, 199, 254)";
+                                let side = "rgb(252, 239, 208)";
+                                if (j==0) {
+                                    document.getElementById(`${i}${j}`).style.backgroundColor = side;
+                                } else if (i==1 || i==6){
+                                    if (a%2==0){
+                                        document.getElementById(`${i}${j}`).style.backgroundColor = g1;
+                                    } else {
+                                        document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                    }
+                                } else if (i==2 || i==5){
+                                    if (a%2==0){
+                                        document.getElementById(`${i}${j}`).style.backgroundColor = g1;
+                                    } else {
+                                        document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                    }
+                                } else if (i==3 || i==4){
+                                    document.getElementById(`${i}${j}`).style.backgroundColor = water;
+                                }
+                            }
+                        }
+                        mower1 = new Lawnmower("mower1", 1, 0, "lawn");
+                        mower2 = new Lawnmower("mower2", 2, 0, "lawn");
+                        mower3 = new Lawnmower("mower3", 3, 0, "pool");
+                        mower4 = new Lawnmower("mower4", 4, 0, "pool");
+                        mower5 = new Lawnmower("mower5", 5, 0, "lawn");
+                        mower6 = new Lawnmower("mower6", 6, 0, "lawn");
+                        mowers = [mower1, mower2, mower3, mower4, mower5, mower6];
+                        break;
+                    case "nightPool":
+                        document.getElementById("document").style.backgroundColor = "rgb(0, 38, 111)";
+                        for (let i=1; i<=6; i++){
+                            document.getElementById("playField").innerHTML += `<tr id="${i}"></tr>`;
+                            for (let j=0; j<=9; j++){
+                                document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}" onmouseenter="changeHover(id, style, event)" onmouseleave="changeHover(id, style, event)"></td>`;
+                                let a = (i-1)*9 + j;
+                                let g1 = "rgb(17, 51, 63)";
+                                let g2 = "rgb(16, 73, 58)";
+                                let water = "rgb(20, 85, 206)";
+                                let side = "rgb(140, 150, 165)";
+                                if (j==0) {
+                                    document.getElementById(`${i}${j}`).style.backgroundColor = side;
+                                } else if (i==1 || i==6){
+                                    if (a%2==0){
+                                        document.getElementById(`${i}${j}`).style.backgroundColor = g1;
+                                    } else {
+                                        document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                    }
+                                } else if (i==2 || i==5){
+                                    if (a%2==0){
+                                        document.getElementById(`${i}${j}`).style.backgroundColor = g1;
+                                    } else {
+                                        document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                    }
+                                } else if (i==3 || i==4){
+                                    document.getElementById(`${i}${j}`).style.backgroundColor = water;
+                                }
+                            }
+                        }
+                        mower1 = new Lawnmower("mower1", 1, 0, "nightLawn");
+                        mower2 = new Lawnmower("mower2", 2, 0, "nightLawn");
+                        mower3 = new Lawnmower("mower3", 3, 0, "nightPool");
+                        mower4 = new Lawnmower("mower4", 4, 0, "nightPool");
+                        mower5 = new Lawnmower("mower5", 5, 0, "nightLawn");
+                        mower6 = new Lawnmower("mower6", 6, 0, "nightLawn");
+                        mowers = [mower1, mower2, mower3, mower4, mower5, mower6];
+                        break;
+                    case "roof":
+                        document.getElementById("document").style.backgroundColor = "rgb(172, 207, 241)";
+                        for (let i=1; i<=5; i++){
+                            document.getElementById("playField").innerHTML += `<tr id="${i}"></tr>`;
+                            for (let j=0; j<=9; j++){
+                                document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}" onmouseenter="changeHover(id, style, event)" onmouseleave="changeHover(id, style, event)"></td>`;
+                                let a = (i-1)*9 + j;
+                                let roof = "rgb(224, 86, 58)";
+                                let side = "rgb(252, 239, 208)";
+                                if (j==0){
+                                    document.getElementById(`${i}${j}`).style.backgroundColor = side;
+                                } else {
+                                    document.getElementById(`${i}${j}`).style.backgroundColor = roof;
+                                }
+                            }
+                        }
+                        mower1 = new Lawnmower("mower1", 1, 0, "roof");
+                        mower2 = new Lawnmower("mower2", 2, 0, "roof");
+                        mower3 = new Lawnmower("mower3", 3, 0, "roof");
+                        mower4 = new Lawnmower("mower4", 4, 0, "roof");
+                        mower5 = new Lawnmower("mower5", 5, 0, "roof");
+                        mowers = [mower1, mower2, mower3, mower4, mower5];
+                        break;
+                }
+            }
+
+            function changeHover(id, style, event){
+                if (event["type"] == "mouseenter"){
+                    if (document.getElementById(id).style.backgroundColor == "rgb(26, 132, 20)"){
+                        document.getElementById(id).style.backgroundColor = "rgb(187, 218, 185)";
+                    } else if (document.getElementById(id).style.backgroundColor == "rgb(40, 162, 24)"){
+                        document.getElementById(id).style.backgroundColor = "rgb(202, 232, 198)";
+                    } else if (document.getElementById(id).style.backgroundColor == "rgb(54, 206, 41)"){
+                        document.getElementById(id).style.backgroundColor = "rgb(214, 245, 211)";
+                    }
+                    for (let i=1; i<=6; i++){
+                        let newId = `${i}${id[1]}`;
+                        if (newId == id){continue}
+                        try {
+                            let color = document.getElementById(newId).style.backgroundColor;
+                            if (color == "rgb(26, 132, 20)"){
+                                document.getElementById(newId).style.backgroundColor = "rgb(130, 188, 127)";
+                            } else if (color == "rgb(40, 162, 24)"){
+                                document.getElementById(newId).style.backgroundColor = "rgb(157, 213, 150)";
+                            } else if (color == "rgb(54, 206, 41)"){
+                                document.getElementById(newId).style.backgroundColor = "rgb(164, 233, 158)";
+                            }
+                        } catch {
+                            break;
+                        }
+                    }
+                    for (let i=1; i<=9; i++){
+                        let newId = `${id[0]}${i}`;
+                        if (newId == id){continue}
+                        try {
+                            let color = document.getElementById(newId).style.backgroundColor;
+                            if (color == "rgb(26, 132, 20)"){
+                                document.getElementById(newId).style.backgroundColor = "rgb(130, 188, 127)";
+                            } else if (color == "rgb(40, 162, 24)"){
+                                document.getElementById(newId).style.backgroundColor = "rgb(157, 213, 150)";
+                            } else if (color == "rgb(54, 206, 41)"){
+                                document.getElementById(newId).style.backgroundColor = "rgb(164, 233, 158)";
+                            }
+                        } catch {
+                            break;
+                        }
+                    }
+                } else {
+                    if (document.getElementById(id).style.backgroundColor == "rgb(187, 218, 185)"){
+                        document.getElementById(id).style.backgroundColor = "rgb(26, 132, 20)";
+                    } else if (document.getElementById(id).style.backgroundColor == "rgb(202, 232, 198)"){
+                        document.getElementById(id).style.backgroundColor = "rgb(40, 162, 24)";
+                    } else if (document.getElementById(id).style.backgroundColor == "rgb(214, 245, 211)"){
+                        document.getElementById(id).style.backgroundColor = "rgb(54, 206, 41)";
+                    }
+                    for (let i=1; i<=6; i++){
+                        let newId = `${i}${id[1]}`;
+                        if (newId == id){continue}
+                        try {
+                            let color = document.getElementById(newId).style.backgroundColor;
+                            if (color == "rgb(130, 188, 127)"){
+                                document.getElementById(newId).style.backgroundColor = "rgb(26, 132, 20)";
+                            } else if (color == "rgb(157, 213, 150)"){
+                                document.getElementById(newId).style.backgroundColor = "rgb(40, 162, 24)";
+                            } else if (color == "rgb(164, 233, 158)"){
+                                document.getElementById(newId).style.backgroundColor = "rgb(54, 206, 41)";
+                            }
+                        } catch {
+                            break;
+                        }
+                    }
+                    for (let i=1; i<=9; i++){
+                        let newId = `${id[0]}${i}`;
+                        if (newId == id){continue}
+                        try {
+                            let color = document.getElementById(newId).style.backgroundColor;
+                            if (color == "rgb(130, 188, 127)"){
+                                document.getElementById(newId).style.backgroundColor = "rgb(26, 132, 20)";
+                            } else if (color == "rgb(157, 213, 150)"){
+                                document.getElementById(newId).style.backgroundColor = "rgb(40, 162, 24)";
+                            } else if (color == "rgb(164, 233, 158)"){
+                                document.getElementById(newId).style.backgroundColor = "rgb(54, 206, 41)";
+                            }
+                        } catch {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            function updateMouse(event){
+                if (event.type == "click"){
+                    console.log(1)
+                }
+                if (event.type == "mousedown"){
+                    console.log(2)
+                }
+                if (event.type == "mouseup"){
+                    console.log(3)
+                }
+                if (event.type == "mousemove"){
+                    document.getElementById("mousePos").innerHTML = `X: ${event.pageX}, Y: ${event.pageY}`;
+                    validTargets = ["testSquare"]
+                    if (event.buttons > 0 && validTargets.includes(event.toElement.id)==true){
+                        let id = event.toElement.id;
+                        document.getElementById(id).style.left = `${event.pageX-getOffset(id).width/2}px`;
+                        document.getElementById(id).style.top = `${event.pageY-getOffset(id).height/2}px`;
+                    }
+                }
+            }
+
+            class Lawnmower{
+                constructor(id, row, col, costume){
+                    this.id = id;
+                    this.row = row;
+                    this.col = col;
+                    this.costume = costume;
+                    document.getElementById("ingame").innerHTML += `<div id=${this.id} class="mower"></div>`;
+                    document.getElementById(this.id).style.width = "30px";
+                    document.getElementById(this.id).style.height = "30px";
+                    this.x = getOffset(`${row}${col}`).left+getOffset(`${row}${col}`).width/2-getOffset(this.id).width/2;
+                    this.y = getOffset(`${row}${col}`).bottom+getOffset(`${row}${col}`).height/2-getOffset(this.id).height/2;
+                    document.getElementById(this.id).style.position = "absolute";
+                    document.getElementById(this.id).style.bottom = `${this.y}px`;
+                    document.getElementById(this.id).style.left = `${this.x}px`;
+                    switch (this.costume){
+                        default:
+                            break;
+                        case "lawn":
+                            document.getElementById(this.id).style.backgroundColor = "rgb(194, 31, 29)";
+                            break;
+                        case "nightLawn":
+                            document.getElementById(this.id).style.backgroundColor = "rgb(194, 31, 29)";
+                            break;
+                        case "pool":
+                            document.getElementById(this.id).style.backgroundColor = "rgb(80, 116, 192)";
+                            break;
+                        case "nightPool":
+                            document.getElementById(this.id).style.backgroundColor = "rgb(80, 116, 192)";
+                            break;
+                        case "roof":
+                            document.getElementById(this.id).style.backgroundColor = "rgb(136, 132, 131)";
+                            break;
+                    }
+                }
+                
+                async mow(){
+                    while (getOffset(this.id).left < getOffset("playField").right){
+                        document.getElementById(this.id).style.left = `${getOffset(this.id).left+2}px`;
+                        await sleep(10)
+                    }
+                    document.getElementById(this.id).hidden = true;
+                }
+            }
+            
+
+            //Debug
+            function switchMap(){
+                if (fieldType == "lawn"){
+                    fieldType = "pool";
+                } else if (fieldType == "pool"){
+                    fieldType = "nightLawn";
+                } else if (fieldType == "nightLawn"){
+                    fieldType = "nightPool";
+                } else if (fieldType == "nightPool"){
+                    fieldType = "roof";
+                } else if (fieldType == "roof"){
+                    fieldType = "lawn";
+                }
+                document.getElementById("debugMapSwitch").innerHTML = fieldType;
+                fieldSetup()
+            }
+        </script>
+    </head>
+    <body onload="pageLoad()" id="document" onmouseup="updateMouse(event)" onmousedown="updateMouse(event)" onclick="updateMouse(event)" onmousemove="updateMouse(event)">
+        <div id="filler"></div>
+        <div id="ingame">
+            <div id="sunDisplay"><img src="Sun.png" width="40px" height="40px"><p id="sunCount">50</p></div>
+            <div id="plantSelector">
+                <div><p>1</p></div>
+                <div><p>2</p></div>
+                <div><p>3</p></div>
+                <div><p>4</p></div>
+                <div><p>5</p></div>
+                <div><p>6</p></div>
+                <div><p>7</p></div>
+                <div><p>8</p></div>
+                <div><p>9</p></div>
+            </div>
+            <table id="playField"></table>
+        </div>
+        <div id="debug">
+            <div id="testSquare" ondrag="console.log(event)"></div>
+            <p id="mousePos">Mouse Position</p>
+            <button id="debugMapSwitch" onclick="switchMap()">FieldType</button>
+        </div>
+        <!--<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>-->
+    </body>
+</html>
