@@ -81,7 +81,7 @@
                 //debugStepped=true;
                 setup();
                 test();
-                //bot();
+                bot();
             }
 
             function setup(){
@@ -165,7 +165,7 @@
             async function bot(){
                 const sleep = (sleep) => new Promise((resolve) => setTimeout(resolve, sleep))
                 let delay = 1;
-                let cellProfile = {}, emptyCells = [], numberProfile = {};
+                cellProfile = {}, emptyCells = [], numberProfile = {};
                 for (let i in cells){
                     if (window.getComputedStyle(document.getElementById(cells[i]), null)["fontSize"]=="10px"){
                         document.getElementById(cells[i]).innerHTML="";
@@ -185,6 +185,7 @@
                 console.log("Bot Start")
                 let change = 0;
                 let step = 0;
+                corrections = 0;
                 while(true && step<100){
                     //*Disable Switch
                     if (fill){
@@ -194,6 +195,7 @@
                                 if (cellProfile[i].length == 1){
                                     cellOutput[i] = cellProfile[i][0];
                                     emptyCells.splice(emptyCells.indexOf(String(i)),1);
+                                    numberProfile[cellProfile[i][0]].splice(numberProfile[cellProfile[i][0]].indexOf(i), 1)
                                     click(i);
                                     set(cellProfile[i][0]);
                                     cellProfile[i]=[];
@@ -378,7 +380,7 @@
                             }
                             for (let j in twoLength){
                                 let cell = twoLength[j];
-                                let group = Math.ceil(Number(j[0])/3)*3-3+Math.ceil(Number(j[1])/3);
+                                let group = Math.ceil(Number(j[1])/3)*3-3+Math.ceil(Number(j[0])/3);
                                 let neighbors = [];
                                 for (let k in groups[group]){
                                     if (Object.keys(twoLength).includes(groups[group][k])){
@@ -487,6 +489,142 @@
                                 }
                             }
                         }
+                        if (change > 0){continue;}
+                    }
+                    //*/
+
+                    
+                    if (tbd){
+                        /*
+                        for (let i=1; i<=9; i++){//eliminate options if there are twins in a group
+                            let cellList = [...groups[i]];
+                            for (let j in cellList){
+                                let cell = cellList[j];
+                                if (emptyCells.includes(cell)==true && cellProfile[cell].length == 2){
+                                    for (let k in cellList){
+                                        let neighbor = cellList[k];
+                                        if (emptyCells.includes(neighbor)==true && cellProfile[neighbor].length == 2 && Number(cell)<Number(neighbor)){
+                                            if (String(cellProfile[cell])==String(cellProfile[neighbor])){
+                                                let twins = [cell, neighbor];
+                                                let elim = cellProfile[twins[0]];
+                                                for (let l in elim){
+                                                    for (let m in cellList){
+                                                        let target = cellList[m];
+                                                        if (twins.includes(target)==false && String(cellProfile[target]).includes(elim[l])){
+                                                            console.log("Obvious Pair Group", target, elim[l], twins);
+                                                            change++;
+                                                            cellProfile[target].splice(cellProfile[target].indexOf(elim[l]),1);
+                                                            numberProfile[elim[l]].splice(numberProfile[elim[l]].indexOf(target),1);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }*/
+                        for (let i=1; i<=9; i++){//eliminate options if there are twins in a col
+                            for (let j=1; j<=9; j++){
+                                for (let k=j+1; k<=9; k++){
+                                    for (let l=k+1; l<=9; l++){
+                                        let cell = `${i}${j}`;
+                                        let neighbor1 = `${i}${k}`;
+                                        let neighbor2 = `${i}${l}`;
+                                        if (emptyCells.includes(cell)==true && emptyCells.includes(neighbor1)==true && emptyCells.includes(neighbor2)==true){
+                                            if (String(cellProfile[cell])!=String(cellProfile[neighbor1]) && String(cellProfile[cell])!=String(cellProfile[neighbor2]) && String(cellProfile[neighbor1])!=String(cellProfile[neighbor2])){
+                                                if (false&&cellProfile[cell].length == 2 && cellProfile[neighbor1].length == 2 && cellProfile[neighbor2].length == 3){
+                                                    let tempList = [cellProfile[cell], cellProfile[neighbor1]].flat().sort()
+                                                    for (let m=0; m<tempList.length-1; m++){
+                                                        if (tempList[m+1]==tempList[m]){
+                                                            tempList.splice(m+1, 1)
+                                                            let check = [0, 1, 2]
+                                                            check.splice(m, 1)
+                                                            if (Object.values(cellProfile[neighbor2]).includes(tempList[check[0]]) && Object.values(cellProfile[neighbor2]).includes(tempList[check[1]])){
+                                                                console.log(1, cell, neighbor1, neighbor2, tempList, m, [tempList[check[0]], tempList[check[1]]])
+                                                                numberProfile[tempList[m]].splice(numberProfile[tempList[m]].indexOf(neighbor2),1);
+                                                                cellProfile[neighbor2] = [tempList[check[0]], tempList[check[1]]];
+                                                                change++
+                                                            }
+                                                            break;
+                                                        }
+                                                    }
+                                                } else if (false&&cellProfile[cell].length == 2 && cellProfile[neighbor1].length == 3 && cellProfile[neighbor2].length == 2){
+                                                    let tempList = [cellProfile[cell], cellProfile[neighbor2]].flat().sort()
+                                                    for (let m=0; m<tempList.length-1; m++){
+                                                        if (tempList[m+1]==tempList[m]){
+                                                            tempList.splice(m+1, 1)
+                                                            let check = [0, 1, 2]
+                                                            check.splice(m, 1)
+                                                            if (Object.values(cellProfile[neighbor1]).includes(tempList[check[0]]) && Object.values(cellProfile[neighbor1]).includes(tempList[check[1]])){
+                                                                console.log(2, cell, neighbor1, neighbor2, tempList, [tempList[check[0]], tempList[check[1]]])
+                                                                numberProfile[tempList[m]].splice(numberProfile[tempList[m]].indexOf(neighbor1),1);
+                                                                cellProfile[neighbor1] = [tempList[check[0]], tempList[check[1]]];
+                                                                change++
+                                                            }
+                                                            break;
+                                                        }
+                                                    }
+                                                } else if (cellProfile[cell].length == 3 && cellProfile[neighbor1].length == 2 && cellProfile[neighbor2].length == 2){
+                                                    let tempList = [cellProfile[neighbor1], cellProfile[neighbor2]].flat().sort()
+                                                    for (let m=0; m<tempList.length-1; m++){
+                                                        if (tempList[m+1]==tempList[m]){
+                                                            console.log(3, cell, neighbor1, neighbor2)
+                                                            tempList.splice(m+1, 1)
+                                                            console.log(tempList)
+                                                            let check = [0, 1, 2]
+                                                            check.splice(m, 1)
+                                                            console.log(check, m)
+                                                            if (Object.values(cellProfile[cell]).includes(tempList[check[0]]) && Object.values(cellProfile[cell]).includes(tempList[check[1]])){
+                                                                //console.log(3, cell, neighbor1, neighbor2, tempList, m, [tempList[check[0]], tempList[check[1]]])
+                                                                for (let n of cellProfile[cell]){
+                                                                    if ([tempList[check[0]], tempList[check[1]]].includes(n)==false){
+                                                                        console.log([tempList[check[0]], tempList[check[1]]], n)
+                                                                        numberProfile[n].splice(numberProfile[n].indexOf(cell),1);
+                                                                    }
+                                                                }
+                                                                numberProfile[tempList[m]].splice(numberProfile[tempList[m]].indexOf(cell),1);
+                                                                cellProfile[cell] = [tempList[check[0]], tempList[check[1]]];
+                                                                change++
+                                                            }
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        /*
+                        for (let i=1; i<=9; i++){//eliminate options if there are twins in a row
+                            for (let j=1; j<=9; j++){
+                                let cell = `${j}${i}`;
+                                if (emptyCells.includes(cell)==true && cellProfile[cell].length == 2){
+                                    for (let k=1; k<=9; k++){
+                                        let neighbor = `${k}${i}`;
+                                        if (emptyCells.includes(neighbor)==true && cellProfile[neighbor].length == 2 && Number(cell)<Number(neighbor)){
+                                            if (String(cellProfile[cell])==String(cellProfile[neighbor])){
+                                                let twins = [cell, neighbor];
+                                                let elim = cellProfile[twins[0]];
+                                                for (let l in elim){
+                                                    for (let m=1; m<=9; m++){
+                                                        let target = `${m}${i}`;
+                                                        if (twins.includes(target)==false && String(cellProfile[target]).includes(elim[l])){
+                                                            console.log("Obvious Pair Group", target, elim[l], twins);
+                                                            change++;
+                                                            cellProfile[target].splice(cellProfile[target].indexOf(elim[l]),1);
+                                                            numberProfile[elim[l]].splice(numberProfile[elim[l]].indexOf(target),1);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }*/
                         if (change > 0){continue;}
                     }
                     //*/
@@ -1030,6 +1168,80 @@
                     //*/
 
                     //*Disable Switch
+                    //Box Line Reduction
+                    if (boxLineReduc){
+                        //iter through rows per group
+                        //for each number, save group & row
+                        //for each row, if num of groups == 1: remove other rows in that group
+                        for (let i=1; i<9; i+=3){
+                            let g1 = i, g2 = i+1, g3 = i+2;
+                            for (let j=1; j<=9; j++){
+                                let c = [[0,0,0],[0,0,0],[0,0,0]];
+                                for (let k of numberProfile[j]){
+                                    if (groups[g1].includes(k) || groups[g2].includes(k) || groups[g3].includes(k)){
+                                        let group = Math.ceil(Number(k[0])/3)-1;
+                                        let row = Number(k[1]%3)!=0 ? Number(k[1]%3)-1 : 2;
+                                        c[row][group]+=1
+                                    }
+                                }
+                                for (let row in c){
+                                    let total = c[row].reduce((total, value)=>{return total+value})
+                                    let max = c[row].reduce((total, value)=>{return total>value ? total : value})
+                                    if (total == max && max > 0){
+                                        for (let k of numberProfile[j]){
+                                            let group = Math.ceil(Number(k[1])/3)*3-3+Math.ceil(Number(k[0])/3);
+                                            let tRow = Number(k[1]);
+                                            if ([g1,g2,g3][c[row].indexOf(total)]==group){
+                                                if (tRow == Number(row)+g1){
+                                                    continue
+                                                }
+                                                console.log("Box Line Reduction Horizontal", k)
+                                                cellProfile[k].splice(cellProfile[k].indexOf(j),1);
+                                                numberProfile[j].splice(numberProfile[j].indexOf(k),1);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        //iter through cols per group
+                        for (let i=1; i<=3; i++){
+                            let g1 = i, g2 = i+3, g3 = i+6;
+                            for (let j=1; j<=9; j++){
+                                let c = [[0,0,0],[0,0,0],[0,0,0]];
+                                for (let k of numberProfile[j]){
+                                    if (groups[g1].includes(k) || groups[g2].includes(k) || groups[g3].includes(k)){
+                                        let group = Math.ceil(Number(k[1])/3)-1;
+                                        let col = Number(k[0]%3)!=0 ? Number(k[0]%3)-1 : 2;
+                                        c[col][group]+=1
+                                    }
+                                }
+                                for (let col in c){
+                                    let total = c[col].reduce((total, value)=>{return total+value})
+                                    let max = c[col].reduce((total, value)=>{return total>value ? total : value})
+                                    if (total == max && max > 0){
+                                        for (let k of numberProfile[j]){
+                                            let group = Math.ceil(Number(k[1])/3)*3-3+Math.ceil(Number(k[0])/3);
+                                            let tCol = Number(k[0]);
+                                            if ([g1,g2,g3][c[col].indexOf(total)]==group){
+                                                if (tCol == g1*3-2+Number(col)){
+                                                    continue
+                                                }
+                                                console.log("Box Line Reduction Vertical", k)
+                                                cellProfile[k].splice(cellProfile[k].indexOf(j),1);
+                                                numberProfile[j].splice(numberProfile[j].indexOf(k),1);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (change > 0){continue;}
+                    }
+                    //*/
+
+                    //*Disable Switch
                     //X-wing
                     if (xWing){
                         for (let i in cellProfile){
@@ -1119,7 +1331,7 @@
                         for (let i in cellProfile){
                             if (emptyCells.includes(i)==false){continue;}
                             let cell1 = i;
-                            let group = Math.ceil(Number(cell1[0])/3)*3-3+Math.ceil(Number(cell1[1])/3);
+                            let group = Math.ceil(Number(cell1[1])/3)*3-3+Math.ceil(Number(cell1[0])/3);
                             if (Object.values(cellProfile[cell1]).length == 2){
                                 let cellList2 = [], cellList3 = [];
                                 for (let j=1; j<=9; j++){
@@ -1316,6 +1528,7 @@
                                 numberProfile[j] = [...numberProfile[j], tempList[i]].sort();
                             }
                             change++;
+                            corrections++;
                             click(tempList[i]);
                             set(0);
                         }
@@ -1399,14 +1612,16 @@
                 fill = 1;
                 obviousPair = 1;
                 obviousTriple = 1;
+                tbd = 0;
                 hiddenSingle = 1;
                 hiddenPair = 1;
                 hiddenTriple = 1;
                 pointingPairTriple = 1;
+                boxLineReduc = 1;
                 xWing = 1;
-                yWing = 0;
+                yWing = 1;
                 swordfish = 1;
-                autoCorrect = 0;
+                autoCorrect = 1;
             }
         </script>
     </head>
