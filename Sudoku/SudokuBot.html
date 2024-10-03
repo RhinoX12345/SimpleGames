@@ -7,14 +7,16 @@
                 width:max-content;
                 font-family:"Segoe UI";
             }
+
             table{
                 color:black;
                 border:1px solid black;
                 border-spacing:0;
                 text-align:center;
-                background-color:aliceblue;
+                background-color:rgb(240, 248, 255);
                 font-size:25px;
             }
+
             td{
                 height:50px;
                 width:50px;
@@ -22,10 +24,35 @@
                 border:1px solid black;
                 cursor:pointer;
             }
+
             #spacer {
                 height:0px;
                 width:0px;
             }
+
+            .notes {
+                position: relative;
+                top: 0px;
+                display:grid;
+                width:auto;
+                height:auto;
+                grid-template-columns: 33.3% 33.3% 33.3%;
+                grid-template-rows: 33.3% 33.3% 33.3%;
+                grid-template-areas: "n1 n2 n3" "n4 n5 n6" "n7 n8 n9";
+                font-size: 12px;
+                color: gray;
+            }
+
+            #n1 {grid-area: "n1";}
+            #n2 {grid-area: "n2";}
+            #n3 {grid-area: "n3";}
+            #n4 {grid-area: "n4";}
+            #n5 {grid-area: "n5";}
+            #n6 {grid-area: "n6";}
+            #n7 {grid-area: "n7";}
+            #n8 {grid-area: "n8";}
+            #n9 {grid-area: "n9";}
+
             #number{
                 position:absolute;
                 top: 60px;
@@ -40,9 +67,16 @@
                 border: 1px solid black;
                 border-radius: 2px;
             }
+
             input{
                 width:600px;
                 margin: 3px 0px;
+            }
+
+            .otherMenus {
+                position: absolute;
+                right: 5px;
+                top: 5px;
             }
             
         </style>
@@ -67,7 +101,7 @@
                 7: ['17', '27', '37', '18', '28', '38', '19', '29', '39'], 
                 8: ['47', '57', '67', '48', '58', '68', '49', '59', '69'], 
                 9: ['77', '87', '97', '78', '88', '98', '79', '89', '99']};
-            selectedCell="", board=[], boardCells={}, diff = [];
+            selectedCell="", board=[], boardCells={}, noting=false;
             code = "000000000000000000000000000000000000000000000000000000000000000000000000000000000";
             answer = "671438529392715864854926137518374296726859341943261785487593612269187453135642978";
             debugStep = false, debugStepped = false;
@@ -224,6 +258,9 @@
                             set(Number(event.key))
                         }
                         break;
+                        case "n":
+                        toggleNote("note")
+                        break;
                         case "Backspace":
                         set(0)
                         break;
@@ -240,12 +277,37 @@
                 }else if (num == 0 && boardCells[selectedCell]==false){
                     document.getElementById(selectedCell).innerHTML="";
                     document.getElementById(selectedCell).attributes["content"]["value"] = "";
+                    if (noting){
+                        document.getElementById(selectedCell).attributes["notes"]["value"] = "";
+                    } else {
+                        setNotes(selectedCell, document.getElementById(selectedCell).attributes["notes"]["value"]);
+                    }
                 } else if (boardCells[selectedCell]==false){
                     if (document.getElementById(selectedCell).attributes["content"]["value"]==""){
-                        document.getElementById(selectedCell).innerHTML = num;
-                        document.getElementById(selectedCell).attributes["content"]["value"] = num;
-                        document.getElementById(selectedCell).style.color = "blue";
-                        document.getElementById(selectedCell).style.fontSize="25px";
+                        if (noting==false){
+                            document.getElementById(selectedCell).innerHTML = num;
+                            document.getElementById(selectedCell).attributes["content"]["value"] = num;
+                            document.getElementById(selectedCell).style.color = "blue";
+                            document.getElementById(selectedCell).style.fontSize="25px";
+                        } else {
+                            let notes = document.getElementById(selectedCell).attributes["notes"]["value"];
+                            notes = notes.trim(",").split(",").sort()
+                            let temp = []
+                            for (let i of notes){
+                                if (i == ''){continue}
+                                temp.push(Number(i))
+                            }
+                            notes = temp;
+                            if (notes.includes('')){notes.splice(notes.indexOf(''), 1)}
+                            if (notes.includes(num)==false){
+                                notes.push(num);
+                                notes = notes.sort();
+                            } else {
+                                notes.splice(notes.indexOf(num), 1);
+                            }
+                            document.getElementById(selectedCell).attributes["notes"]["value"] = notes;
+                            setNotes(selectedCell, notes)
+                        }
                     }
                 }
                 click(selectedCell);
@@ -255,6 +317,43 @@
                     }
                 }
                 return "Finished"
+            }
+
+            function toggleNote(id){
+                if (noting==true){
+                    noting=false;
+                    document.getElementById(id).style.backgroundColor="rgb(240, 248, 255)";
+                } else {
+                    noting=true;
+                    document.getElementById(id).style.backgroundColor="rgb(190, 210, 230)";
+                }
+            }
+
+            function hoverNote(id, state){
+                if (state){
+                    document.getElementById(id).style.backgroundColor='rgb(220, 228, 235)';
+                } else {
+                    if (noting){
+                        document.getElementById(id).style.backgroundColor="rgb(190, 210, 230)";
+                    } else {
+                        document.getElementById(id).style.backgroundColor="rgb(240, 248, 255)";
+                    }
+                }
+            }
+
+            function setNotes(id, notes){
+                document.getElementById(id).innerHTML = '<div class="notes"></div>';
+                for (let i of document.getElementsByClassName("notes")){
+                    if (i.parentElement.id==id){
+                        for (let j=1; j<=9; j++){
+                            if (notes.includes(j)){
+                                i.innerHTML += `<div id="n${j}">${j}</div>`;
+                            } else {
+                                i.innerHTML += `<div id="n${j}"><br></div>`;
+                            }
+                        }
+                    }
+                }
             }
 
             async function bot(){
@@ -1828,9 +1927,8 @@
                     for (let i in cells){
                         if(document.getElementById(cells[i]).innerHTML==""){
                             for (let j of groupProfile.entries()){
-                                document.getElementById(j[0]).innerHTML = j[1];
                                 document.getElementById(j[0]).attributes["notes"]["value"]+=j[1];
-                                document.getElementById(j[0]).style.fontSize="10px";
+                                setNotes(j[0], j[1])
                             }
                             state = "Incomplete"
                         }
@@ -1906,14 +2004,16 @@
             lastStep = 0;
             function snapshot(n=lastStep){
                 try {
-                    for (let i of Object.keys(snapShot[n])){
+                    console.log(snapShot[n])
+                    console.log(snapShot[n]["key"])
+                    /*for (let i of Object.keys(snapShot[n])){
                         click(i);
                         set(0)
                         if (typeof(snapShot[n][i])=="number"){
                             console.log(i, snapShot[n][i])
                             set(snapShot[n][i])
                         }
-                    }
+                    }*/
                 } catch {
                     return "no value"
                 }
@@ -1964,6 +2064,9 @@
             </tr>
             <tr>
                 <td onclick="set(0)" colspan="3">Erase</td>
+            </tr>
+            <tr>
+                <td id="note" onclick="toggleNote(id)" onmouseenter="hoverNote(id, true)" onmouseleave="hoverNote(id, false)" colspan="3">Note</td>
             </tr>
         </table>
         <label>Output: </label><input id="output" readonly>
