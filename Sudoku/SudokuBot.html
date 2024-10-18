@@ -104,7 +104,7 @@
             const sleep = (sleep) => new Promise((resolve) => setTimeout(resolve, sleep))
             selectedCell="", board=[], boardCells={}, noting=false;
             code = "000000000000000000000000000000000000000000000000000000000000000000000000000000000";
-            answer = "671438529392715864854926137518374296726859341943261785487593612269187453135642978";
+            answer = "";
             debugStep = false, debugStepped = false;
 
             async function pageLoad(){
@@ -400,8 +400,8 @@
                     }
                     return returnVal
                 }
-                let delay = 1;
-                cellProfile = {}, numberProfile = {}, boardLayout = {}, snapShot = {};
+                let delay = 0;
+                cellProfile = {}, numberProfile = {1:[],2:[],3:[],4:[],5:[],6:[],7:[],8:[],9:[]}, boardLayout = {}, snapShot = {};
                 for (let i in cells){
                     boardLayout[cells[i]] = board[i];
                 }
@@ -419,7 +419,7 @@
                 console.log("Bot Start")
                 let change = 0;
                 let step = 0;
-                corrections = 0;
+                let log = [];
                 while(true && step<100){
                     if (fill){
                         if (change > 0){
@@ -432,10 +432,13 @@
                                     click(i);
                                     set(cellProfile[i][0]);
                                     cellProfile[i]=[];
-                                    await sleep(delay);
+                                    if (delay>0){
+                                        await sleep(delay);
+                                    }
                                 }
                             }
                             if (Object.keys(cellOutput).length > 0){
+                                log.push(cellOutput)
                                 console.log("Cell Output:", cellOutput);
                             }
                         }
@@ -502,7 +505,7 @@
                         let values = cellProfile[i];
                         let group = Math.ceil(Number(i[1])/3)*3-3+Math.ceil(Number(i[0])/3);
                         for (let j=1; j<=9; j++){//row
-                            let tempValue = Number(document.getElementById(`${i[0]}${j}`).attributes["content"]["value"]);
+                            let tempValue = boardLayout[`${i[0]}${j}`];
                             if (tempValue!=0){
                                 if (cellProfile[i].includes(tempValue)){
                                     cellProfile[i].splice(cellProfile[i].indexOf(tempValue), 1);
@@ -513,7 +516,7 @@
                             }
                         }
                         for (let j=1; j<=9; j++){//col
-                            let tempValue = Number(document.getElementById(`${j}${i[1]}`).attributes["content"]["value"]);
+                            let tempValue = boardLayout[`${j}${i[1]}`];
                             if (tempValue!=0){
                                 if (cellProfile[i].includes(tempValue)){
                                     cellProfile[i].splice(cellProfile[i].indexOf(tempValue), 1);
@@ -524,7 +527,7 @@
                             }
                         }
                         for (let j of groups[group].filter((val)=>{return val!=i})){//group
-                            let tempValue = Number(document.getElementById(j).attributes["content"]["value"]);
+                            let tempValue = boardLayout[j];
                             if (tempValue!=0){
                                 if (cellProfile[i].includes(tempValue)){
                                     cellProfile[i].splice(cellProfile[i].indexOf(tempValue), 1);
@@ -536,7 +539,7 @@
                         }
                         if (localChange>0){console.log("Obvious Single");}
                     }
-                    if (change > 0){continue;}
+                    if (change > 0){log.push("ObvSingle");continue;}
                     
                     //Obvious Pairs
                     if (obviousPair){
@@ -622,7 +625,7 @@
                                 }
                             }
                         }
-                        if (change > 0){continue;}
+                        if (change > 0){log.push("ObvPair");continue;}
                     }
                     
                     //Obvious Triple
@@ -741,7 +744,7 @@
                                 }
                             }
                         }
-                        if (change > 0){continue;}
+                        if (change > 0){log.push("ObvTriple");continue;}
                     }
                     
                     //Obvious Quad
@@ -857,7 +860,7 @@
                                                         if ([n1, n2, n3, n4].includes(n)==false){
                                                             for (let o of Object.values(cellProfile[n])){
                                                                 if (temp.includes(o)==true){
-                                                                    console.log("Obvious Quad Col");
+                                                                    console.log("Obvious Quad Row");
                                                                     change++;
                                                                     cellProfile[n].splice(cellProfile[n].indexOf(o),1);
                                                                     numberProfile[o].splice(numberProfile[o].indexOf(n),1);
@@ -872,7 +875,7 @@
                                 }
                             }
                         }
-                        if (change > 0){continue;}
+                        if (change > 0){log.push("ObvQuad");continue;}
                     }
                     
                     //Hidden Single
@@ -973,7 +976,7 @@
                                 }
                             }
                         }
-                        if (change > 0){continue;}
+                        if (change > 0){log.push("HiddenSingle");continue;}
                     }
 
                     //Hidden Pairs
@@ -1133,7 +1136,7 @@
                                 }
                             }
                         }
-                        if (change > 0){continue;}
+                        if (change > 0){log.push("HiddenPair");continue;}
                     }
                     
                     //Hidden Triple
@@ -1291,7 +1294,7 @@
                                 }
                             }
                         }
-                        if (change > 0){continue;}
+                        if (change > 0){log.push("HiddenTriple");continue;}
                     }
                     
                     //Hidden Quads
@@ -1418,7 +1421,7 @@
                                 }
                             }
                         }
-                        for (let i=1; i<=9; i++){//col
+                        for (let i=1; i<=9; i++){//row
                             let placeholder = Object.entries(cellProfile).filter(([key,value]) => key[1]==i);
                             let candidates = {};
                             for (let j in placeholder){
@@ -1479,7 +1482,7 @@
                                 }
                             }
                         }
-                        if (change > 0){continue;}
+                        if (change > 0){log.push("HiddenQuad");continue;}
                     }
                     
                     //Pointing Pairs & Pointing Triple
@@ -1551,7 +1554,7 @@
                                 }
                             }
                         }
-                        if (change > 0){continue;}
+                        if (change > 0){log.push("PointingPairTriple");continue;}
                     }
                     
                     //Box Line Reduction
@@ -1561,7 +1564,7 @@
                         //for each row, if num of groups == 1: remove other rows in that group
                         for (let i=1; i<9; i+=3){
                             let g1 = i, g2 = i+1, g3 = i+2;
-                            for (let j=1; j<=9; j++){
+                            for (let j of Object.keys(numberProfile)){
                                 let c = [[0,0,0],[0,0,0],[0,0,0]];
                                 for (let k of numberProfile[j]){
                                     if (groups[g1].includes(k) || groups[g2].includes(k) || groups[g3].includes(k)){
@@ -1595,7 +1598,7 @@
                         //iter through cols per group
                         for (let i=1; i<=3; i++){
                             let g1 = i, g2 = i+3, g3 = i+6;
-                            for (let j=1; j<=9; j++){
+                            for (let j of Object.keys(numberProfile)){
                                 let c = [[0,0,0],[0,0,0],[0,0,0]];
                                 for (let k of numberProfile[j]){
                                     if (groups[g1].includes(k) || groups[g2].includes(k) || groups[g3].includes(k)){
@@ -1625,12 +1628,12 @@
                                 }
                             }
                         }
-                        if (change > 0){continue;}
+                        if (change > 0){log.push("Box Line Reduction");continue;}
                     }
                     
                     //Rectangle Elimination
                     if (rectElim){
-                        for (let i=1; i<=9; i++){
+                        for (let i of Object.keys(numberProfile)){
                             for (let hinge of numberProfile[i]){
                                 let hGroup = Math.ceil(Number(hinge[1])/3)*3-3+Math.ceil(Number(hinge[0])/3);
                                 let colN = numberProfile[i].filter((value)=>{return value[0] == hinge[0] && value != hinge && groups[hGroup].includes(value)==false});
@@ -1665,7 +1668,7 @@
                                 }
                             }
                         }
-                        if (change > 0){continue;}
+                        if (change > 0){log.push("Rectangle Elimination");continue;}
                     }
                     
                     //X-wing
@@ -1766,7 +1769,7 @@
                                 }
                             }
                         }
-                        if (change > 0){continue;}
+                        if (change > 0){log.push("X-Wing");continue;}
                     }
 
                     //Y-wing
@@ -1822,7 +1825,7 @@
                                 }
                             }
                         }
-                        if (change > 0){continue;}
+                        if (change > 0){log.push("Y-Wing");continue;}
                     }
 
                     //Swordfish
@@ -1947,70 +1950,9 @@
                                 }
                             }
                         }
-                        if (change > 0){continue;}
+                        if (change > 0){log.push("Swordfish");continue;}
                     }
 
-                    //Auto Correct
-                    if (autoCorrect){
-                        let tempList = [];
-                        for (let cell of cells){
-                            let rowNum = [], colNum = [];
-                            for (let i=1; i<=9; i++){
-                                if (`${i}${cell[1]}` != cell){
-                                    rowNum.push(document.getElementById(`${i}${cell[1]}`).innerHTML);
-                                }
-                                if (`${cell[0]}${i}` != cell){
-                                    colNum.push(document.getElementById(`${cell[0]}${i}`).innerHTML);
-                                }
-                            }
-                            let value = document.getElementById(cell).innerHTML;
-                            if (rowNum.includes(value) || colNum.includes(value)){
-                                tempList.push(cell);
-                            }
-                        }
-                        for (let i in tempList){
-                            console.log("Autocorrect", tempList[i])
-                            cellProfile[tempList[i]]=[1, 2, 3, 4, 5, 6, 7, 8, 9];
-                            for (let j=1; j<=9; j++){
-                                numberProfile[j] = [...numberProfile[j], tempList[i]].sort();
-                            }
-                            change++;
-                            corrections++;
-                            click(tempList[i]);
-                            set(0);
-                        }
-                        for (let i in cellProfile){//(Obvious Single, Last free cell, Last remaining cell, Last possible number) sets options for possible numbers by row, col, group (essentially autonotes)
-                            let cell = cellProfile[i];
-                            let group = Math.ceil(Number(i[1])/3)*3-3+Math.ceil(Number(i[0])/3);
-                            for (let a=1; a<=9; a++){
-                                let tempValue = boardLayout[`${i[0]}${a}`];
-                                if (cell.includes(tempValue)==true && tempValue!=""){
-                                    cell.splice(cell.indexOf(tempValue), 1);
-                                    numberProfile[tempValue].splice(numberProfile[tempValue].indexOf(i), 1);
-                                    change++;
-                                }
-                            }
-                            for (let a=1; a<=9; a++){
-                                let tempValue = boardLayout[`${a}${i[1]}`];
-                                if (cell.includes(tempValue)==true){
-                                    cell.splice(cell.indexOf(tempValue), 1);
-                                    numberProfile[tempValue].splice(numberProfile[tempValue].indexOf(i), 1);
-                                    change++;
-                                }
-                            }
-                            for (a in groups[group]){
-                                let tempValue = boardLayout[groups[group][a]];
-                                if (cell.includes(tempValue)==true){
-                                    cell.splice(cell.indexOf(tempValue), 1);
-                                    numberProfile[tempValue].splice(numberProfile[tempValue].indexOf(i), 1);
-                                    change++;
-                                }
-                            }
-                        }
-                        
-                        if (change > 0){break;}
-                    }
-                    /**/
                     if (change>0){continue;} else {break;}
                 }
                 if (true){
@@ -2073,15 +2015,1732 @@
                     if (state == "Eval"){
                         state = "Success";
                     }
-                    console.log(state, outputBoard);
+                    console.log(state, outputBoard, log, step);
                     document.getElementById("output").value=outputBoard;
                     let c = 0;
                     for (let i of outputBoard){
                         if (i!="0"){c++}
                     }
                     console.log(`${c}/81`)
-                    return state
+                    return [state, outputBoard, log, step]
                 }
+            }
+            
+            function solver(key){
+                const link = (primary, secondary, n)=>{//return array[row/col, group]; key: true (strong link), false (weak link), undefined (no link)
+                    if (primary == secondary){return undefined;}
+                    if (Object.values(numberProfile[n]).includes(primary)==false || Object.values(numberProfile[n]).includes(secondary)==false){
+                        return undefined;
+                    }
+                    let returnVal = [];
+                    if (primary[0] == secondary[0]){
+                        let strong = true;
+                        for (let t=1; t<=9; t++){
+                            let check = `${primary[0]}${t}`;
+                            if ([primary, secondary].includes(check) == false && Object.values(numberProfile[n]).includes(check)){
+                                strong = false;
+                            }
+                        }
+                        returnVal.push(strong)
+                    } else if (primary[1] == secondary[1]){
+                        let strong = true;
+                        for (let t=1; t<=9; t++){
+                            let check = `${t}${primary[1]}`;
+                            if ([primary, secondary].includes(check) == false && Object.values(numberProfile[n]).includes(check)){
+                                strong = false;
+                            }
+                        }
+                        returnVal.push(strong)
+                    }
+                    let gPrim = Math.ceil(Number(primary[1])/3)*3-3+Math.ceil(Number(primary[0])/3);
+                    let gSec = Math.ceil(Number(secondary[1])/3)*3-3+Math.ceil(Number(secondary[0])/3);
+                    if (gPrim == gSec){
+                        let strong = true;
+                        for (let t of groups[gPrim]){
+                            if ([primary, secondary].includes(check) == false && Object.values(numberProfile[n]).includes(check)){
+                                strong = false;
+                            }
+                        }
+                        returnVal.push(strong)
+                    }
+                    return returnVal
+                }
+                cellProfile = {}, numberProfile = {1:[],2:[],3:[],4:[],5:[],6:[],7:[],8:[],9:[]}, boardLayout = {}, snapShot = {};
+                for (let i in key.split("")){
+                    boardLayout[cells[i]] = Number(key.split("")[i]);
+                }
+                for (let i of Object.keys(boardLayout)){
+                    if (boardLayout[i]==0){
+                        cellProfile[i]=[1,2,3,4,5,6,7,8,9];
+                    }
+                }
+                for (let i in cellProfile){
+                    for (let j in cellProfile[i]){
+                        numberProfile[cellProfile[i][j]] = [numberProfile[cellProfile[i][j]],i].flat().filter((value) => {return value!=undefined});
+                    }
+                }
+                //console.log("Bot Start")
+                let change = 0;
+                let step = 0;
+                let log = [];
+                while(true && step<100){
+                    if (fill){
+                        if (change > 0){
+                            let cellOutput = {}
+                            for (let i in cellProfile){//sets tiles for only possible number
+                                if (cellProfile[i].length == 1){
+                                    boardLayout[i] = cellProfile[i][0];
+                                    cellOutput[i] = cellProfile[i][0];
+                                    numberProfile[cellProfile[i][0]].splice(numberProfile[cellProfile[i][0]].indexOf(i), 1);
+                                    cellProfile[i]=[];
+                                }
+                            }
+                            if (Object.keys(cellOutput).length > 0){
+                                log.push(cellOutput)
+                                //console.log("Cell Output:", cellOutput);
+                            }
+                        }
+                    }
+                    if (change > 0){change=0;}
+                    step++;
+                    //console.log("Step:", step)
+                    lastStep = step - 1
+                    for (let i=0; i<1; i++){//removes empty cells from cellProfile
+                        let tempObj = {...cellProfile};
+                        for (let j in cellProfile){
+                            if (cellProfile[j]==[]){
+                                delete tempObj[j]
+                            }
+                        }
+                        cellProfile = {...tempObj}
+                    }
+                    for (let i of Object.keys(cellProfile)){//Obvious single
+                        let localChange = 0;
+                        let values = cellProfile[i];
+                        let group = Math.ceil(Number(i[1])/3)*3-3+Math.ceil(Number(i[0])/3);
+                        for (let j=1; j<=9; j++){//row
+                            let tempValue = boardLayout[`${i[0]}${j}`];
+                            if (tempValue!=0){
+                                if (cellProfile[i].includes(tempValue)){
+                                    cellProfile[i].splice(cellProfile[i].indexOf(tempValue), 1);
+                                    numberProfile[tempValue].splice(numberProfile[tempValue].indexOf(i), 1);
+                                    change++;
+                                    localChange++;
+                                }
+                            }
+                        }
+                        for (let j=1; j<=9; j++){//col
+                            let tempValue = boardLayout[`${j}${i[1]}`];
+                            if (tempValue!=0){
+                                if (cellProfile[i].includes(tempValue)){
+                                    cellProfile[i].splice(cellProfile[i].indexOf(tempValue), 1);
+                                    numberProfile[tempValue].splice(numberProfile[tempValue].indexOf(i), 1);
+                                    change++;
+                                    localChange++;
+                                }
+                            }
+                        }
+                        for (let j of groups[group].filter((val)=>{return val!=i})){//group
+                            let tempValue = boardLayout[j];
+                            if (tempValue!=0){
+                                if (cellProfile[i].includes(tempValue)){
+                                    cellProfile[i].splice(cellProfile[i].indexOf(tempValue), 1);
+                                    numberProfile[tempValue].splice(numberProfile[tempValue].indexOf(i), 1);
+                                    change++;
+                                    localChange++;
+                                }
+                            }
+                        }
+                        if (localChange>0){}//console.log("Obvious Single");}
+                    }
+                    if (change > 0){log.push("ObvSingle");continue;}
+                    
+                    //Obvious Pairs
+                    if (obviousPair){
+                        for (let i=1; i<=9; i++){//eliminate options if there are twins in a group
+                            let numList = [...groups[i]];
+                            for (let j in numList){
+                                let cell = numList[j];
+                                if (Object.keys(cellProfile).includes(cell)==true && cellProfile[cell].length == 2){
+                                    for (let k in numList){
+                                        let neighbor = numList[k];
+                                        if (Object.keys(cellProfile).includes(neighbor)==true && cellProfile[neighbor].length == 2 && Number(cell)<Number(neighbor)){
+                                            if (String(cellProfile[cell])==String(cellProfile[neighbor])){
+                                                let twins = [cell, neighbor];
+                                                let elim = cellProfile[twins[0]];
+                                                for (let l in elim){
+                                                    for (let m in numList){
+                                                        let target = numList[m];
+                                                        if (twins.includes(target)==false && String(cellProfile[target]).includes(elim[l])){
+                                                            //console.log(("Obvious Pair Group");
+                                                            change++;
+                                                            cellProfile[target].splice(cellProfile[target].indexOf(elim[l]),1);
+                                                            numberProfile[elim[l]].splice(numberProfile[elim[l]].indexOf(target),1);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        for (let i=1; i<=9; i++){//eliminate options if there are twins in a col
+                            for (let j=1; j<=9; j++){
+                                let cell = `${i}${j}`;
+                                if (Object.keys(cellProfile).includes(cell)==true && cellProfile[cell].length == 2){
+                                    for (let k=1; k<=9; k++){
+                                        let neighbor = `${i}${k}`;
+                                        if (Object.keys(cellProfile).includes(neighbor)==true && cellProfile[neighbor].length == 2 && Number(cell)<Number(neighbor)){
+                                            if (String(cellProfile[cell])==String(cellProfile[neighbor])){
+                                                let twins = [cell, neighbor];
+                                                let elim = cellProfile[twins[0]];
+                                                for (let l in elim){
+                                                    for (let m=1; m<=9; m++){
+                                                        let target = `${i}${m}`;
+                                                        if (twins.includes(target)==false && String(cellProfile[target]).includes(elim[l])){
+                                                            //console.log(("Obvious Pair Col");
+                                                            change++;
+                                                            cellProfile[target].splice(cellProfile[target].indexOf(elim[l]),1);
+                                                            numberProfile[elim[l]].splice(numberProfile[elim[l]].indexOf(target),1);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        for (let i=1; i<=9; i++){//eliminate options if there are twins in a row
+                            for (let j=1; j<=9; j++){
+                                let cell = `${j}${i}`;
+                                if (Object.keys(cellProfile).includes(cell)==true && cellProfile[cell].length == 2){
+                                    for (let k=1; k<=9; k++){
+                                        let neighbor = `${k}${i}`;
+                                        if (Object.keys(cellProfile).includes(neighbor)==true && cellProfile[neighbor].length == 2 && Number(cell)<Number(neighbor)){
+                                            if (String(cellProfile[cell])==String(cellProfile[neighbor])){
+                                                let twins = [cell, neighbor];
+                                                let elim = cellProfile[twins[0]];
+                                                for (let l in elim){
+                                                    for (let m=1; m<=9; m++){
+                                                        let target = `${m}${i}`;
+                                                        if (twins.includes(target)==false && String(cellProfile[target]).includes(elim[l])){
+                                                            //console.log(("Obvious Pair Row");
+                                                            change++;
+                                                            cellProfile[target].splice(cellProfile[target].indexOf(elim[l]),1);
+                                                            numberProfile[elim[l]].splice(numberProfile[elim[l]].indexOf(target),1);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (change > 0){log.push("ObvPair");continue;}
+                    }
+                    
+                    //Obvious Triple
+                    if (obviousTriple){
+                        for (let i=1; i<=9; i++){//eliminate options if there are triples in a group
+                            let placeholder = Object.entries(cellProfile).filter(([key,value]) => groups[i].includes(key) && value.length <= 3 && value.length > 1);
+                            let candidates = {};
+                            for (let j in placeholder){
+                                candidates[placeholder[j][0]] = placeholder[j][1];
+                            }
+                            for (let j=0; j<Object.keys(candidates).length; j++){
+                                for (let k=j+1; k<Object.keys(candidates).length; k++){
+                                    for (let l=k+1; l<Object.keys(candidates).length; l++){
+                                        let n1 = Object.keys(candidates)[j];
+                                        let n2 = Object.keys(candidates)[k];
+                                        let n3 = Object.keys(candidates)[l];
+                                        let temp = [];
+                                        let temp2 = [candidates[n1],candidates[n2],candidates[n3]].flat().sort();
+                                        temp2.forEach((value)=>{if (temp.includes(value)==false){temp.push(value)}});
+                                        if (temp.length == 3){
+                                            let c1 = temp2.lastIndexOf(temp[0]) - temp2.indexOf(temp[0]) + 1;
+                                            let c2 = temp2.lastIndexOf(temp[1]) - temp2.indexOf(temp[1]) + 1;
+                                            let c3 = temp2.lastIndexOf(temp[2]) - temp2.indexOf(temp[2]) + 1;
+                                            if (c1>=2 && c2>=2 && c3>=2){
+                                                for (let m of Object.keys(cellProfile).filter((key) => groups[i].includes(key))){
+                                                    if ([n1, n2, n3].includes(m)==false){
+                                                        for (let n of Object.values(cellProfile[m])){
+                                                            if (temp.includes(n)==true){
+                                                                //console.log(("Obvious Triple Group");
+                                                                change++;
+                                                                cellProfile[m].splice(cellProfile[m].indexOf(n),1);
+                                                                numberProfile[n].splice(numberProfile[n].indexOf(m),1);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        for (let i=1; i<=9; i++){//eliminate options if there are triples in a col
+                            let placeholder = Object.entries(cellProfile).filter(([key,value]) => key[0] == i && value.length <= 3 && value.length > 1);
+                            let candidates = {};
+                            for (let j in placeholder){
+                                candidates[placeholder[j][0]] = placeholder[j][1];
+                            }
+                            for (let j=0; j<Object.keys(candidates).length; j++){
+                                for (let k=j+1; k<Object.keys(candidates).length; k++){
+                                    for (let l=k+1; l<Object.keys(candidates).length; l++){
+                                        let n1 = Object.keys(candidates)[j];
+                                        let n2 = Object.keys(candidates)[k];
+                                        let n3 = Object.keys(candidates)[l];
+                                        let temp = [];
+                                        let temp2 = [candidates[n1],candidates[n2],candidates[n3]].flat().sort();
+                                        temp2.forEach((value)=>{if (temp.includes(value)==false){temp.push(value)}});
+                                        if (temp.length == 3){
+                                            let c1 = temp2.lastIndexOf(temp[0]) - temp2.indexOf(temp[0]) + 1;
+                                            let c2 = temp2.lastIndexOf(temp[1]) - temp2.indexOf(temp[1]) + 1;
+                                            let c3 = temp2.lastIndexOf(temp[2]) - temp2.indexOf(temp[2]) + 1;
+                                            if (c1>=2 && c2>=2 && c3>=2){
+                                                for (let m of Object.keys(cellProfile).filter((key) => key[0] == i)){
+                                                    if ([n1, n2, n3].includes(m)==false){
+                                                        for (let n of Object.values(cellProfile[m])){
+                                                            if (temp.includes(n)==true){
+                                                                //console.log(("Obvious Triple Col");
+                                                                change++;
+                                                                cellProfile[m].splice(cellProfile[m].indexOf(n),1);
+                                                                numberProfile[n].splice(numberProfile[n].indexOf(m),1);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        for (let i=1; i<=9; i++){//eliminate options if there are triples in a row
+                            let placeholder = Object.entries(cellProfile).filter(([key,value]) => key[1] == i && value.length <= 3 && value.length > 1);
+                            let candidates = {};
+                            for (let j in placeholder){
+                                candidates[placeholder[j][0]] = placeholder[j][1];
+                            }
+                            for (let j=0; j<Object.keys(candidates).length; j++){
+                                for (let k=j+1; k<Object.keys(candidates).length; k++){
+                                    for (let l=k+1; l<Object.keys(candidates).length; l++){
+                                        let n1 = Object.keys(candidates)[j];
+                                        let n2 = Object.keys(candidates)[k];
+                                        let n3 = Object.keys(candidates)[l];
+                                        let temp = [];
+                                        let temp2 = [candidates[n1],candidates[n2],candidates[n3]].flat().sort();
+                                        temp2.forEach((value)=>{if (temp.includes(value)==false){temp.push(value)}});
+                                        if (temp.length == 3){
+                                            let c1 = temp2.lastIndexOf(temp[0]) - temp2.indexOf(temp[0]) + 1;
+                                            let c2 = temp2.lastIndexOf(temp[1]) - temp2.indexOf(temp[1]) + 1;
+                                            let c3 = temp2.lastIndexOf(temp[2]) - temp2.indexOf(temp[2]) + 1;
+                                            if (c1>=2 && c2>=2 && c3>=2){
+                                                for (let m of Object.keys(cellProfile).filter((key) => key[1] == i)){
+                                                    if ([n1, n2, n3].includes(m)==false){
+                                                        for (let n of Object.values(cellProfile[m])){
+                                                            if (temp.includes(n)==true){
+                                                                //console.log(("Obvious Triple Row");
+                                                                change++;
+                                                                cellProfile[m].splice(cellProfile[m].indexOf(n),1);
+                                                                numberProfile[n].splice(numberProfile[n].indexOf(m),1);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (change > 0){log.push("ObvTriple");continue;}
+                    }
+                    
+                    //Obvious Quad
+                    if (obviousQuad){
+                        for (let i=1; i<=9; i++){//eliminate options if there are quadruples in a group
+                            let placeholder = Object.entries(cellProfile).filter(([key,value]) => groups[i].includes(key) && value.length <= 4 && value.length > 1);
+                            let candidates = {};
+                            for (let j in placeholder){
+                                candidates[placeholder[j][0]] = placeholder[j][1];
+                            }
+                            for (let j=0; j<Object.keys(candidates).length; j++){
+                                for (let k=j+1; k<Object.keys(candidates).length; k++){
+                                    for (let l=k+1; l<Object.keys(candidates).length; l++){
+                                        for (let m=l+1; m<Object.keys(candidates).length; m++){
+                                            let n1 = Object.keys(candidates)[j];
+                                            let n2 = Object.keys(candidates)[k];
+                                            let n3 = Object.keys(candidates)[l];
+                                            let n4 = Object.keys(candidates)[m];
+                                            let temp = [];
+                                            let temp2 = [candidates[n1],candidates[n2],candidates[n3],candidates[n4]].flat().sort();
+                                            temp2.forEach((value)=>{if (temp.includes(value)==false){temp.push(value)}});
+                                            if (temp.length == 4){
+                                                let c1 = temp2.lastIndexOf(temp[0]) - temp2.indexOf(temp[0]) + 1;
+                                                let c2 = temp2.lastIndexOf(temp[1]) - temp2.indexOf(temp[1]) + 1;
+                                                let c3 = temp2.lastIndexOf(temp[2]) - temp2.indexOf(temp[2]) + 1;
+                                                let c4 = temp2.lastIndexOf(temp[3]) - temp2.indexOf(temp[3]) + 1;
+                                                if (c1>=2 && c2>=2 && c3>=2 && c4>=2){
+                                                    for (let n of Object.keys(cellProfile).filter((key) => groups[i].includes(key))){
+                                                        if ([n1, n2, n3, n4].includes(n)==false){
+                                                            for (let o of Object.values(cellProfile[n])){
+                                                                if (temp.includes(o)==true){
+                                                                    //console.log(("Obvious Quad Group");
+                                                                    change++;
+                                                                    cellProfile[n].splice(cellProfile[n].indexOf(o),1);
+                                                                    numberProfile[o].splice(numberProfile[o].indexOf(n),1);
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        for (let i=1; i<=9; i++){//eliminate options if there are quadruples in a col
+                            let placeholder = Object.entries(cellProfile).filter(([key,value]) => key[0] == i && value.length <= 4 && value.length > 1);
+                            let candidates = {};
+                            for (let j in placeholder){
+                                candidates[placeholder[j][0]] = placeholder[j][1];
+                            }
+                            for (let j=0; j<Object.keys(candidates).length; j++){
+                                for (let k=j+1; k<Object.keys(candidates).length; k++){
+                                    for (let l=k+1; l<Object.keys(candidates).length; l++){
+                                        for (let m=l+1; m<Object.keys(candidates).length; m++){
+                                            let n1 = Object.keys(candidates)[j];
+                                            let n2 = Object.keys(candidates)[k];
+                                            let n3 = Object.keys(candidates)[l];
+                                            let n4 = Object.keys(candidates)[m];
+                                            let temp = [];
+                                            let temp2 = [candidates[n1],candidates[n2],candidates[n3],candidates[n4]].flat().sort();
+                                            temp2.forEach((value)=>{if (temp.includes(value)==false){temp.push(value)}});
+                                            if (temp.length == 4){
+                                                let c1 = temp2.lastIndexOf(temp[0]) - temp2.indexOf(temp[0]) + 1;
+                                                let c2 = temp2.lastIndexOf(temp[1]) - temp2.indexOf(temp[1]) + 1;
+                                                let c3 = temp2.lastIndexOf(temp[2]) - temp2.indexOf(temp[2]) + 1;
+                                                let c4 = temp2.lastIndexOf(temp[3]) - temp2.indexOf(temp[3]) + 1;
+                                                if (c1>=2 && c2>=2 && c3>=2 && c4>=2){
+                                                    for (let n of Object.keys(cellProfile).filter((key) => key[0] == i)){
+                                                        if ([n1, n2, n3, n4].includes(n)==false){
+                                                            for (let o of Object.values(cellProfile[n])){
+                                                                if (temp.includes(o)==true){
+                                                                    //console.log(("Obvious Quad Col");
+                                                                    change++;
+                                                                    cellProfile[n].splice(cellProfile[n].indexOf(o),1);
+                                                                    numberProfile[o].splice(numberProfile[o].indexOf(n),1);
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        for (let i=1; i<=9; i++){//eliminate options if there are quadruples in a row
+                            let placeholder = Object.entries(cellProfile).filter(([key,value]) => key[1] == i && value.length <= 4 && value.length > 1);
+                            let candidates = {};
+                            for (let j in placeholder){
+                                candidates[placeholder[j][0]] = placeholder[j][1];
+                            }
+                            for (let j=0; j<Object.keys(candidates).length; j++){
+                                for (let k=j+1; k<Object.keys(candidates).length; k++){
+                                    for (let l=k+1; l<Object.keys(candidates).length; l++){
+                                        for (let m=l+1; m<Object.keys(candidates).length; m++){
+                                            let n1 = Object.keys(candidates)[j];
+                                            let n2 = Object.keys(candidates)[k];
+                                            let n3 = Object.keys(candidates)[l];
+                                            let n4 = Object.keys(candidates)[m];
+                                            let temp = [];
+                                            let temp2 = [candidates[n1],candidates[n2],candidates[n3],candidates[n4]].flat().sort();
+                                            temp2.forEach((value)=>{if (temp.includes(value)==false){temp.push(value)}});
+                                            if (temp.length == 4){
+                                                let c1 = temp2.lastIndexOf(temp[0]) - temp2.indexOf(temp[0]) + 1;
+                                                let c2 = temp2.lastIndexOf(temp[1]) - temp2.indexOf(temp[1]) + 1;
+                                                let c3 = temp2.lastIndexOf(temp[2]) - temp2.indexOf(temp[2]) + 1;
+                                                let c4 = temp2.lastIndexOf(temp[3]) - temp2.indexOf(temp[3]) + 1;
+                                                if (c1>=2 && c2>=2 && c3>=2 && c4>=2){
+                                                    for (let n of Object.keys(cellProfile).filter((key) => key[1] == i)){
+                                                        if ([n1, n2, n3, n4].includes(n)==false){
+                                                            for (let o of Object.values(cellProfile[n])){
+                                                                if (temp.includes(o)==true){
+                                                                    //console.log(("Obvious Quad Row");
+                                                                    change++;
+                                                                    cellProfile[n].splice(cellProfile[n].indexOf(o),1);
+                                                                    numberProfile[o].splice(numberProfile[o].indexOf(n),1);
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (change > 0){log.push("ObvQuad");continue;}
+                    }
+                    
+                    //Hidden Single
+                    if (hiddenSingle){
+                        for (let i=1; i<=9; i++){//set for tile with the only number possibilty in group
+                            let group = [...groups[i]];
+                            let unfilled = group.filter((val)=>{return Object.keys(cellProfile).includes(val)});
+                            for (let j of unfilled){
+                                let temp = [];
+                                for (let k of group.filter((val)=>{return val!=j})){
+                                    if (Object.keys(cellProfile).includes(k)){
+                                        temp.push(...cellProfile[k]);
+                                    } else {
+                                        temp.push(boardLayout[k]);
+                                    }
+                                }
+                                let temp2 = [];
+                                for (let k of temp.sort()){
+                                    if (temp2.includes(k)==false){
+                                        temp2.push(k)
+                                    }
+                                }
+                                for (let k of Object.values(cellProfile[j])){
+                                    if (temp2.includes(k)==false){
+                                        //console.log(("Hidden Single Group", j, k, cellProfile[j], temp2);
+                                        for (let l of Object.values(cellProfile[j]).filter((val)=>{return val!=k})){
+                                            numberProfile[l].splice(numberProfile[l].indexOf(j),1);
+                                        }
+                                        cellProfile[j] = [k];
+                                        change++;
+                                    }
+                                }
+                            }
+                        }
+                        for (let i=1; i<=9; i++){//set for tile with the only number possibilty in col
+                            let col = [];
+                            for (let j=1; j<=9; j++){
+                                col.push(`${i}${j}`);
+                            }
+                            let unfilled = col.filter((val)=>{return Object.keys(cellProfile).includes(val)});
+                            for (let j of unfilled){
+                                let temp = [];
+                                for (let k of col.filter((val)=>{return val!=j})){
+                                    if (Object.keys(cellProfile).includes(k)){
+                                        temp.push(...cellProfile[k]);
+                                    } else {
+                                        temp.push(boardLayout[k]);
+                                    }
+                                }
+                                let temp2 = [];
+                                for (let k of temp.sort()){
+                                    if (temp2.includes(k)==false){
+                                        temp2.push(k)
+                                    }
+                                }
+                                for (let k of Object.values(cellProfile[j])){
+                                    if (temp2.includes(k)==false){
+                                        //console.log(("Hidden Single Col", j, k, cellProfile[j], temp2);
+                                        for (let l of Object.values(cellProfile[j]).filter((val)=>{return val!=k})){
+                                            numberProfile[l].splice(numberProfile[l].indexOf(j),1);
+                                        }
+                                        cellProfile[j] = [k];
+                                        change++;
+                                    }
+                                }
+                            }
+                        }
+                        for (let i=1; i<=9; i++){//set for tile with the only number possibilty in row
+                            let row = [];
+                            for (let j=1; j<=9; j++){
+                                row.push(`${j}${i}`);
+                            }
+                            let unfilled = row.filter((val)=>{return Object.keys(cellProfile).includes(val)});
+                            for (let j of unfilled){
+                                let temp = [];
+                                for (let k of row.filter((val)=>{return val!=j})){
+                                    if (Object.keys(cellProfile).includes(k)){
+                                        temp.push(...cellProfile[k]);
+                                    } else {
+                                        temp.push(boardLayout[k]);
+                                    }
+                                }
+                                let temp2 = [];
+                                for (let k of temp.sort()){
+                                    if (temp2.includes(k)==false){
+                                        temp2.push(k)
+                                    }
+                                }
+                                for (let k of Object.values(cellProfile[j])){
+                                    if (temp2.includes(k)==false){
+                                        //console.log(("Hidden Single Row", j, k, cellProfile[j], temp2);
+                                        for (let l of Object.values(cellProfile[j]).filter((val)=>{return val!=k})){
+                                            numberProfile[l].splice(numberProfile[l].indexOf(j),1);
+                                        }
+                                        cellProfile[j] = [k];
+                                        change++;
+                                    }
+                                }
+                            }
+                        }
+                        if (change > 0){log.push("HiddenSingle");continue;}
+                    }
+
+                    //Hidden Pairs
+                    if (hiddenPair){
+                        for (let i=1; i<=9; i++){//group
+                            let possibleNum = [];
+                            for (let j in groups[i]){
+                                if (Object.keys(cellProfile).includes(groups[i][j])==true){
+                                    possibleNum.push(cellProfile[groups[i][j]]);
+                                }
+                            }
+                            possibleNum = possibleNum.flat().sort();
+                            for (let j=1; j<=9; j++){
+                                for (let k=1; k<=9; k++){
+                                    if (j<k){
+                                        let amount1 = 0, amount2 = 0;
+                                        if (possibleNum.lastIndexOf(j)!=-1 && possibleNum.indexOf(j)!=-1){
+                                            amount1 = possibleNum.lastIndexOf(j) - possibleNum.indexOf(j) + 1;
+                                        }
+                                        if (possibleNum.lastIndexOf(k)!=-1 && possibleNum.indexOf(k)!=-1){
+                                            amount2 = possibleNum.lastIndexOf(k) - possibleNum.indexOf(k) + 1;
+                                        }
+                                        if (amount1 == 2 && amount2 == 2){
+                                            for (let l in groups[i]){
+                                                for (let m in groups[i]){
+                                                    let cell1 = groups[i][l], cell2 = groups[i][m];
+                                                    let empty = Object.keys(cellProfile).includes(cell1) && Object.keys(cellProfile).includes(cell2);
+                                                    if(l<m && empty){
+                                                        let has1 = Object.values(cellProfile[cell1]).includes(j) && Object.values(cellProfile[cell1]).includes(k);
+                                                        let has2 = Object.values(cellProfile[cell2]).includes(j) && Object.values(cellProfile[cell2]).includes(k);
+                                                        if(has1 && has2){
+                                                            if (String(Object.values(cellProfile[cell1]))!=([j, k]) || String(Object.values(cellProfile[cell2]))!=([j, k])){
+                                                                //console.log(("Hidden Pair Group")
+                                                                change++;
+                                                                cellProfile[cell1] = [j, k];
+                                                                cellProfile[cell2] = [j, k];
+                                                                for (let m in numberProfile){
+                                                                    m = Number(m);
+                                                                    if (Object.values(numberProfile[m]).includes(cell1)==true && m!=j && m!=k){
+                                                                        numberProfile[m].splice(numberProfile[m].indexOf(cell1),1);
+                                                                    }
+                                                                    if (Object.values(numberProfile[m]).includes(cell2)==true && m!=j && m!=k){
+                                                                        numberProfile[m].splice(numberProfile[m].indexOf(cell2),1);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        for (let i=1; i<=9; i++){//col
+                            let possibleNum = [];
+                            for (let j=1; j<=9; j++){
+                                let cell = `${i}${j}`;
+                                if (Object.keys(cellProfile).includes(cell)==true){
+                                    possibleNum.push(cellProfile[cell]);
+                                }
+                            }
+                            possibleNum = possibleNum.flat().sort();
+                            for (let j=1; j<=9; j++){
+                                for (let k=1; k<=9; k++){
+                                    if (j<k){
+                                        let amount1 = 0, amount2 = 0;
+                                        if (possibleNum.lastIndexOf(j)!=-1 && possibleNum.indexOf(j)!=-1){
+                                            amount1 = possibleNum.lastIndexOf(j) - possibleNum.indexOf(j) + 1;
+                                        }
+                                        if (possibleNum.lastIndexOf(k)!=-1 && possibleNum.indexOf(k)!=-1){
+                                            amount2 = possibleNum.lastIndexOf(k) - possibleNum.indexOf(k) + 1;
+                                        }
+                                        if (amount1 == 2 && amount2 == 2){
+                                            for (let l=1; l<=9; l++){
+                                                for (let m=1; m<=9; m++){
+                                                    let cell1 = `${i}${l}`, cell2 = `${i}${m}`;
+                                                    let empty = Object.keys(cellProfile).includes(cell1) && Object.keys(cellProfile).includes(cell2);
+                                                    if(l<m && empty){
+                                                        let has1 = Object.values(cellProfile[cell1]).includes(j) && Object.values(cellProfile[cell1]).includes(k);
+                                                        let has2 = Object.values(cellProfile[cell2]).includes(j) && Object.values(cellProfile[cell2]).includes(k);
+                                                        if(has1 && has2){
+                                                            if (String(Object.values(cellProfile[cell1]))!=([j, k]) || String(Object.values(cellProfile[cell2]))!=([j, k])){
+                                                                //console.log(("Hidden Pair Row")
+                                                                change++;
+                                                                cellProfile[cell1] = [j, k];
+                                                                cellProfile[cell2] = [j, k];
+                                                                for (let m in numberProfile){
+                                                                    m = Number(m);
+                                                                    if (Object.values(numberProfile[m]).includes(cell1)==true && m!=j && m!=k){
+                                                                        numberProfile[m].splice(numberProfile[m].indexOf(cell1),1);
+                                                                    }
+                                                                    if (Object.values(numberProfile[m]).includes(cell2)==true && m!=j && m!=k){
+                                                                        numberProfile[m].splice(numberProfile[m].indexOf(cell2),1);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        for (let i=1; i<=9; i++){//row
+                            let possibleNum = [];
+                            for (let j=1; j<=9; j++){
+                                let cell = `${j}${i}`;
+                                if (Object.keys(cellProfile).includes(cell)==true){
+                                    possibleNum.push(cellProfile[cell]);
+                                }
+                            }
+                            possibleNum = possibleNum.flat().sort();
+                            for (let j=1; j<=9; j++){
+                                for (let k=1; k<=9; k++){
+                                    if (j<k){
+                                        let amount1 = 0, amount2 = 0;
+                                        if (possibleNum.lastIndexOf(j)!=-1 && possibleNum.indexOf(j)!=-1){
+                                            amount1 = possibleNum.lastIndexOf(j) - possibleNum.indexOf(j) + 1;
+                                        }
+                                        if (possibleNum.lastIndexOf(k)!=-1 && possibleNum.indexOf(k)!=-1){
+                                            amount2 = possibleNum.lastIndexOf(k) - possibleNum.indexOf(k) + 1;
+                                        }
+                                        if (amount1 == 2 && amount2 == 2){
+                                            for (let l=1; l<=9; l++){
+                                                for (let m=1; m<=9; m++){
+                                                    let cell1 = `${l}${i}`, cell2 = `${m}${i}`;
+                                                    let empty = Object.keys(cellProfile).includes(cell1) && Object.keys(cellProfile).includes(cell2);
+                                                    if(l<m && empty){
+                                                        let has1 = Object.values(cellProfile[cell1]).includes(j) && Object.values(cellProfile[cell1]).includes(k);
+                                                        let has2 = Object.values(cellProfile[cell2]).includes(j) && Object.values(cellProfile[cell2]).includes(k);
+                                                        if(has1 && has2){
+                                                            if (String(Object.values(cellProfile[cell1]))!=([j, k]) || String(Object.values(cellProfile[cell2]))!=([j, k])){
+                                                                //console.log(("Hidden Pair Col")
+                                                                change++;
+                                                                cellProfile[cell1] = [j, k];
+                                                                cellProfile[cell2] = [j, k];
+                                                                for (let m in numberProfile){
+                                                                    m = Number(m);
+                                                                    if (Object.values(numberProfile[m]).includes(cell1)==true && m!=j && m!=k){
+                                                                        numberProfile[m].splice(numberProfile[m].indexOf(cell1),1);
+                                                                    }
+                                                                    if (Object.values(numberProfile[m]).includes(cell2)==true && m!=j && m!=k){
+                                                                        numberProfile[m].splice(numberProfile[m].indexOf(cell2),1);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (change > 0){log.push("HiddenPair");continue;}
+                    }
+                    
+                    //Hidden Triple
+                    if (hiddenTriple){
+                        for (let i=1; i<=9; i++){//group
+                            let placeholder = Object.entries(cellProfile).filter(([key,value]) => Object.values(groups[i]).includes(key));
+                            let candidates = {};
+                            for (let j in placeholder){
+                                candidates[placeholder[j][0]] = placeholder[j][1];
+                            }
+                            let temp = [];
+                            let temp2 = [];
+                            for (let cell in candidates){
+                                temp2.push(cellProfile[cell])
+                            }
+                            temp2 = temp2.flat().sort()
+                            temp2.forEach((value)=>{if (temp.includes(value)==false){temp.push(value)}});
+                            for (let j=0; j<temp.length; j++){
+                                for (let k=j+1; k<temp.length; k++){
+                                    for (let l=k+1; l<temp.length; l++){
+                                        let cj = temp2.lastIndexOf(temp[j]) - temp2.indexOf(temp[j]) + 1;
+                                        let ck = temp2.lastIndexOf(temp[k]) - temp2.indexOf(temp[k]) + 1;
+                                        let cl = temp2.lastIndexOf(temp[l]) - temp2.indexOf(temp[l]) + 1;
+                                        if (cj>=2 && cj<=3 && ck>=2 && ck<=3 && cl>=2 && cl<=3){
+                                            let potential = [];
+                                            Object.keys(candidates).forEach((value) => {
+                                                if(Object.values(cellProfile[value]).includes(temp[j])){
+                                                    if (potential.includes(value)==false){potential.push(value);}
+                                                }
+                                                if(Object.values(cellProfile[value]).includes(temp[k])){
+                                                    if (potential.includes(value)==false){potential.push(value);}
+                                                }
+                                                if(Object.values(cellProfile[value]).includes(temp[l])){
+                                                    if (potential.includes(value)==false){potential.push(value);}
+                                                }
+                                            });
+                                            if (potential.length == 3){
+                                                for (let cell of potential){
+                                                    if ((Object.values(cellProfile[cell]).includes(temp[j]) && Object.values(cellProfile[cell]).includes(temp[k])) || (Object.values(cellProfile[cell]).includes(temp[j]) && Object.values(cellProfile[cell]).includes(temp[l])) || (Object.values(cellProfile[cell]).includes(temp[k]) && Object.values(cellProfile[cell]).includes(temp[l]))){
+                                                        for (let m of Object.values(cellProfile[cell])){
+                                                            if ([temp[j],temp[k],temp[l]].includes(m)==false){
+                                                                //console.log(("Hidden Triple Group");
+                                                                change++;
+                                                                cellProfile[cell].splice(cellProfile[cell].indexOf(m),1);
+                                                                numberProfile[m].splice(numberProfile[m].indexOf(cell),1);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        for (let i=1; i<=9; i++){//col
+                            let placeholder = Object.entries(cellProfile).filter(([key,value]) => key[0]==i);
+                            let candidates = {};
+                            for (let j in placeholder){
+                                candidates[placeholder[j][0]] = placeholder[j][1];
+                            }
+                            let temp = [];
+                            let temp2 = [];
+                            for (let cell in candidates){
+                                temp2.push(cellProfile[cell])
+                            }
+                            temp2 = temp2.flat().sort()
+                            temp2.forEach((value)=>{if (temp.includes(value)==false){temp.push(value)}});
+                            for (let j=0; j<temp.length; j++){
+                                for (let k=j+1; k<temp.length; k++){
+                                    for (let l=k+1; l<temp.length; l++){
+                                        let cj = temp2.lastIndexOf(temp[j]) - temp2.indexOf(temp[j]) + 1;
+                                        let ck = temp2.lastIndexOf(temp[k]) - temp2.indexOf(temp[k]) + 1;
+                                        let cl = temp2.lastIndexOf(temp[l]) - temp2.indexOf(temp[l]) + 1;
+                                        if (cj>=2 && cj<=3 && ck>=2 && ck<=3 && cl>=2 && cl<=3){
+                                            let potential = [];
+                                            Object.keys(candidates).forEach((value) => {
+                                                if(Object.values(cellProfile[value]).includes(temp[j])){
+                                                    if (potential.includes(value)==false){potential.push(value);}
+                                                }
+                                                if(Object.values(cellProfile[value]).includes(temp[k])){
+                                                    if (potential.includes(value)==false){potential.push(value);}
+                                                }
+                                                if(Object.values(cellProfile[value]).includes(temp[l])){
+                                                    if (potential.includes(value)==false){potential.push(value);}
+                                                }
+                                            });
+                                            if (potential.length == 3){
+                                                for (let cell of potential){
+                                                    if ((Object.values(cellProfile[cell]).includes(temp[j]) && Object.values(cellProfile[cell]).includes(temp[k])) || (Object.values(cellProfile[cell]).includes(temp[j]) && Object.values(cellProfile[cell]).includes(temp[l])) || (Object.values(cellProfile[cell]).includes(temp[k]) && Object.values(cellProfile[cell]).includes(temp[l]))){
+                                                        for (let m of Object.values(cellProfile[cell])){
+                                                            if ([temp[j],temp[k],temp[l]].includes(m)==false){
+                                                                //console.log(("Hidden Triple Col");
+                                                                change++;
+                                                                cellProfile[cell].splice(cellProfile[cell].indexOf(m),1);
+                                                                numberProfile[m].splice(numberProfile[m].indexOf(cell),1);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        for (let i=1; i<=9; i++){//row
+                            let placeholder = Object.entries(cellProfile).filter(([key,value]) => key[1]==i);
+                            let candidates = {};
+                            for (let j in placeholder){
+                                candidates[placeholder[j][0]] = placeholder[j][1];
+                            }
+                            let temp = [];
+                            let temp2 = [];
+                            for (let cell in candidates){
+                                temp2.push(cellProfile[cell])
+                            }
+                            temp2 = temp2.flat().sort()
+                            temp2.forEach((value)=>{if (temp.includes(value)==false){temp.push(value)}});
+                            for (let j=0; j<temp.length; j++){
+                                for (let k=j+1; k<temp.length; k++){
+                                    for (let l=k+1; l<temp.length; l++){
+                                        let cj = temp2.lastIndexOf(temp[j]) - temp2.indexOf(temp[j]) + 1;
+                                        let ck = temp2.lastIndexOf(temp[k]) - temp2.indexOf(temp[k]) + 1;
+                                        let cl = temp2.lastIndexOf(temp[l]) - temp2.indexOf(temp[l]) + 1;
+                                        if (cj>=2 && cj<=3 && ck>=2 && ck<=3 && cl>=2 && cl<=3){
+                                            let potential = [];
+                                            Object.keys(candidates).forEach((value) => {
+                                                if(Object.values(cellProfile[value]).includes(temp[j])){
+                                                    if (potential.includes(value)==false){potential.push(value);}
+                                                }
+                                                if(Object.values(cellProfile[value]).includes(temp[k])){
+                                                    if (potential.includes(value)==false){potential.push(value);}
+                                                }
+                                                if(Object.values(cellProfile[value]).includes(temp[l])){
+                                                    if (potential.includes(value)==false){potential.push(value);}
+                                                }
+                                            });
+                                            if (potential.length == 3){
+                                                for (let cell of potential){
+                                                    if ((Object.values(cellProfile[cell]).includes(temp[j]) && Object.values(cellProfile[cell]).includes(temp[k])) || (Object.values(cellProfile[cell]).includes(temp[j]) && Object.values(cellProfile[cell]).includes(temp[l])) || (Object.values(cellProfile[cell]).includes(temp[k]) && Object.values(cellProfile[cell]).includes(temp[l]))){
+                                                        for (let m of Object.values(cellProfile[cell])){
+                                                            if ([temp[j],temp[k],temp[l]].includes(m)==false){
+                                                                //console.log(("Hidden Triple Row", cell, m, [temp[j],temp[k],temp[l]]);
+                                                                change++;
+                                                                cellProfile[cell].splice(cellProfile[cell].indexOf(m),1);
+                                                                numberProfile[m].splice(numberProfile[m].indexOf(cell),1);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (change > 0){log.push("HiddenTriple");continue;}
+                    }
+                    
+                    //Hidden Quads
+                    if (hiddenQuad){
+                        for (let i=1; i<=9; i++){//group
+                            let placeholder = Object.entries(cellProfile).filter(([key,value]) => Object.values(groups[i]).includes(key));
+                            let candidates = {};
+                            for (let j in placeholder){
+                                candidates[placeholder[j][0]] = placeholder[j][1];
+                            }
+                            let temp = [];
+                            let temp2 = [];
+                            for (let cell in candidates){
+                                temp2.push(cellProfile[cell])
+                            }
+                            temp2 = temp2.flat().sort()
+                            temp2.forEach((value)=>{if (temp.includes(value)==false){temp.push(value)}});
+                            for (let j=0; j<temp.length; j++){
+                                for (let k=j+1; k<temp.length; k++){
+                                    for (let l=k+1; l<temp.length; l++){
+                                        for (let m=l+1; m<temp.length; m++){
+                                            let cj = temp2.lastIndexOf(temp[j]) - temp2.indexOf(temp[j]) + 1;
+                                            let ck = temp2.lastIndexOf(temp[k]) - temp2.indexOf(temp[k]) + 1;
+                                            let cl = temp2.lastIndexOf(temp[l]) - temp2.indexOf(temp[l]) + 1;
+                                            let cm = temp2.lastIndexOf(temp[m]) - temp2.indexOf(temp[m]) + 1;
+                                            if (cj>=2 && cj<=4 && ck>=2 && ck<=4 && cl>=2 && cl<=4 && cm>=2 && cm<=4){
+                                                let potential = [];
+                                                Object.keys(candidates).forEach((value) => {
+                                                    if(Object.values(cellProfile[value]).includes(temp[j])){
+                                                        if (potential.includes(value)==false){potential.push(value);}
+                                                    }
+                                                    if(Object.values(cellProfile[value]).includes(temp[k])){
+                                                        if (potential.includes(value)==false){potential.push(value);}
+                                                    }
+                                                    if(Object.values(cellProfile[value]).includes(temp[l])){
+                                                        if (potential.includes(value)==false){potential.push(value);}
+                                                    }
+                                                    if(Object.values(cellProfile[value]).includes(temp[m])){
+                                                        if (potential.includes(value)==false){potential.push(value);}
+                                                    }
+                                                });
+                                                if (potential.length == 4){
+                                                    for (let cell of potential){
+                                                        let conj = Object.values(cellProfile[cell]).includes(temp[j]);
+                                                        let conk = Object.values(cellProfile[cell]).includes(temp[k]);
+                                                        let conl = Object.values(cellProfile[cell]).includes(temp[l]);
+                                                        let conm = Object.values(cellProfile[cell]).includes(temp[m]);
+                                                        if ((conj&&conk)||(conj&&conl)||(conj&&conm)||(conk&&conl)||(conk&&conm)||(conl&&conm)){
+                                                            for (let n of Object.values(cellProfile[cell])){
+                                                                if ([temp[j],temp[k],temp[l],temp[m]].includes(n)==false){
+                                                                    //console.log(("Hidden Quad Group");
+                                                                    change++;
+                                                                    cellProfile[cell].splice(cellProfile[cell].indexOf(n),1);
+                                                                    numberProfile[n].splice(numberProfile[n].indexOf(cell),1);
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        for (let i=1; i<=9; i++){//col
+                            let placeholder = Object.entries(cellProfile).filter(([key,value]) => key[0]==i);
+                            let candidates = {};
+                            for (let j in placeholder){
+                                candidates[placeholder[j][0]] = placeholder[j][1];
+                            }
+                            let temp = [];
+                            let temp2 = [];
+                            for (let cell in candidates){
+                                temp2.push(cellProfile[cell])
+                            }
+                            temp2 = temp2.flat().sort()
+                            temp2.forEach((value)=>{if (temp.includes(value)==false){temp.push(value)}});
+                            for (let j=0; j<temp.length; j++){
+                                for (let k=j+1; k<temp.length; k++){
+                                    for (let l=k+1; l<temp.length; l++){
+                                        for (let m=l+1; m<temp.length; m++){
+                                            let cj = temp2.lastIndexOf(temp[j]) - temp2.indexOf(temp[j]) + 1;
+                                            let ck = temp2.lastIndexOf(temp[k]) - temp2.indexOf(temp[k]) + 1;
+                                            let cl = temp2.lastIndexOf(temp[l]) - temp2.indexOf(temp[l]) + 1;
+                                            let cm = temp2.lastIndexOf(temp[m]) - temp2.indexOf(temp[m]) + 1;
+                                            if (cj>=2 && cj<=4 && ck>=2 && ck<=4 && cl>=2 && cl<=4 && cm>=2 && cm<=4){
+                                                let potential = [];
+                                                Object.keys(candidates).forEach((value) => {
+                                                    if(Object.values(cellProfile[value]).includes(temp[j])){
+                                                        if (potential.includes(value)==false){potential.push(value);}
+                                                    }
+                                                    if(Object.values(cellProfile[value]).includes(temp[k])){
+                                                        if (potential.includes(value)==false){potential.push(value);}
+                                                    }
+                                                    if(Object.values(cellProfile[value]).includes(temp[l])){
+                                                        if (potential.includes(value)==false){potential.push(value);}
+                                                    }
+                                                    if(Object.values(cellProfile[value]).includes(temp[m])){
+                                                        if (potential.includes(value)==false){potential.push(value);}
+                                                    }
+                                                });
+                                                if (potential.length == 4){
+                                                    for (let cell of potential){
+                                                        let conj = Object.values(cellProfile[cell]).includes(temp[j]);
+                                                        let conk = Object.values(cellProfile[cell]).includes(temp[k]);
+                                                        let conl = Object.values(cellProfile[cell]).includes(temp[l]);
+                                                        let conm = Object.values(cellProfile[cell]).includes(temp[m]);
+                                                        if ((conj&&conk)||(conj&&conl)||(conj&&conm)||(conk&&conl)||(conk&&conm)||(conl&&conm)){
+                                                            for (let n of Object.values(cellProfile[cell])){
+                                                                if ([temp[j],temp[k],temp[l],temp[m]].includes(n)==false){
+                                                                    //console.log(("Hidden Quad Col");
+                                                                    change++;
+                                                                    cellProfile[cell].splice(cellProfile[cell].indexOf(n),1);
+                                                                    numberProfile[n].splice(numberProfile[n].indexOf(cell),1);
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        for (let i=1; i<=9; i++){//row
+                            let placeholder = Object.entries(cellProfile).filter(([key,value]) => key[1]==i);
+                            let candidates = {};
+                            for (let j in placeholder){
+                                candidates[placeholder[j][0]] = placeholder[j][1];
+                            }
+                            let temp = [];
+                            let temp2 = [];
+                            for (let cell in candidates){
+                                temp2.push(cellProfile[cell])
+                            }
+                            temp2 = temp2.flat().sort()
+                            temp2.forEach((value)=>{if (temp.includes(value)==false){temp.push(value)}});
+                            for (let j=0; j<temp.length; j++){
+                                for (let k=j+1; k<temp.length; k++){
+                                    for (let l=k+1; l<temp.length; l++){
+                                        for (let m=l+1; m<temp.length; m++){
+                                            let cj = temp2.lastIndexOf(temp[j]) - temp2.indexOf(temp[j]) + 1;
+                                            let ck = temp2.lastIndexOf(temp[k]) - temp2.indexOf(temp[k]) + 1;
+                                            let cl = temp2.lastIndexOf(temp[l]) - temp2.indexOf(temp[l]) + 1;
+                                            let cm = temp2.lastIndexOf(temp[m]) - temp2.indexOf(temp[m]) + 1;
+                                            if (cj>=2 && cj<=4 && ck>=2 && ck<=4 && cl>=2 && cl<=4 && cm>=2 && cm<=4){
+                                                let potential = [];
+                                                Object.keys(candidates).forEach((value) => {
+                                                    if(Object.values(cellProfile[value]).includes(temp[j])){
+                                                        if (potential.includes(value)==false){potential.push(value);}
+                                                    }
+                                                    if(Object.values(cellProfile[value]).includes(temp[k])){
+                                                        if (potential.includes(value)==false){potential.push(value);}
+                                                    }
+                                                    if(Object.values(cellProfile[value]).includes(temp[l])){
+                                                        if (potential.includes(value)==false){potential.push(value);}
+                                                    }
+                                                    if(Object.values(cellProfile[value]).includes(temp[m])){
+                                                        if (potential.includes(value)==false){potential.push(value);}
+                                                    }
+                                                });
+                                                if (potential.length == 4){
+                                                    for (let cell of potential){
+                                                        let conj = Object.values(cellProfile[cell]).includes(temp[j]);
+                                                        let conk = Object.values(cellProfile[cell]).includes(temp[k]);
+                                                        let conl = Object.values(cellProfile[cell]).includes(temp[l]);
+                                                        let conm = Object.values(cellProfile[cell]).includes(temp[m]);
+                                                        if ((conj&&conk)||(conj&&conl)||(conj&&conm)||(conk&&conl)||(conk&&conm)||(conl&&conm)){
+                                                            for (let n of Object.values(cellProfile[cell])){
+                                                                if ([temp[j],temp[k],temp[l],temp[m]].includes(n)==false){
+                                                                    //console.log(("Hidden Quad Col");
+                                                                    change++;
+                                                                    cellProfile[cell].splice(cellProfile[cell].indexOf(n),1);
+                                                                    numberProfile[n].splice(numberProfile[n].indexOf(cell),1);
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (change > 0){log.push("HiddenQuad");continue;}
+                    }
+                    
+                    //Pointing Pairs & Pointing Triple
+                    if (pointingPairTriple){
+                        for (let i in groups){
+                            let possibleNum = [];
+                            let temp = groups[i].filter((val)=>{return Object.keys(cellProfile).includes(val)})
+                            for (let j of temp){
+                                possibleNum.push(Object.values(cellProfile[j]))
+                            }
+                            possibleNum = possibleNum.flat().sort();
+                            let temp2 = [];
+                            for (let j of possibleNum){
+                                if (temp2.includes(j)==false){
+                                    temp2.push(j)
+                                }
+                            }
+                            for (let j of temp2){
+                                let amount = 0;
+                                if (possibleNum.lastIndexOf(j)!=-1 && possibleNum.indexOf(j)!=-1){
+                                    amount = possibleNum.lastIndexOf(j) - possibleNum.indexOf(j) + 1;
+                                }
+                                if (amount == 2){
+                                    let neighbors = temp.filter((val)=>{return Object.values(cellProfile[val]).includes(j)})
+                                    if (neighbors[0][0] == neighbors[1][0]){
+                                        for (let k=1; k<=9; k++){
+                                            let cell = `${neighbors[0][0]}${k}`;
+                                            if (Object.keys(cellProfile).includes(cell)==true && neighbors.includes(cell)==false && cellProfile[cell].length!=1 && cellProfile[cell].includes(j)==true){
+                                                //console.log(("Pointing Pair Row");
+                                                change++;
+                                                cellProfile[cell].splice(cellProfile[cell].indexOf(j),1);
+                                                numberProfile[j].splice(numberProfile[j].indexOf(cell),1);
+                                            }
+                                        }
+                                    } else if (neighbors[0][1] == neighbors[1][1]){
+                                        for (let k=1; k<=9; k++){
+                                            let cell = `${k}${neighbors[0][1]}`;
+                                            if (Object.keys(cellProfile).includes(cell)==true && neighbors.includes(cell)==false && cellProfile[cell].length!=1 && cellProfile[cell].includes(j)==true){
+                                                //console.log(("Pointing Pair Col");
+                                                change++;
+                                                cellProfile[cell].splice(cellProfile[cell].indexOf(j),1);
+                                                numberProfile[j].splice(numberProfile[j].indexOf(cell),1);
+                                            }
+                                        }
+                                    }
+                                } else if (amount == 3){
+                                    let neighbors = temp.filter((val)=>{return Object.values(cellProfile[val]).includes(j)})
+                                    if (neighbors[0][0] == neighbors[1][0] && neighbors[1][0] == neighbors[2][0]){
+                                        for (let k=1; k<=9; k++){
+                                            let cell = `${neighbors[0][0]}${k}`;
+                                            if (Object.keys(cellProfile).includes(cell)==true && neighbors.includes(cell)==false && cellProfile[cell].length!=1 && cellProfile[cell].includes(j)==true){
+                                                //console.log(("Pointing Triple Row");
+                                                change++;
+                                                cellProfile[cell].splice(cellProfile[cell].indexOf(j),1);
+                                                numberProfile[j].splice(numberProfile[j].indexOf(cell),1);
+                                            }
+                                        }
+                                    } else if (neighbors[0][1] == neighbors[1][1] && neighbors[1][1] == neighbors[2][1]){
+                                        for (let k=1; k<=9; k++){
+                                            let cell = `${k}${neighbors[0][1]}`;
+                                            if (Object.keys(cellProfile).includes(cell)==true && neighbors.includes(cell)==false && cellProfile[cell].length!=1 && cellProfile[cell].includes(j)==true){
+                                                //console.log(("Pointing Triple Col");
+                                                change++;
+                                                cellProfile[cell].splice(cellProfile[cell].indexOf(j),1);
+                                                numberProfile[j].splice(numberProfile[j].indexOf(cell),1);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (change > 0){log.push("PointingPairTriple");continue;}
+                    }
+                    
+                    //Box Line Reduction
+                    if (boxLineReduc){
+                        //iter through rows per group
+                        //for each number, save group & row
+                        //for each row, if num of groups == 1: remove other rows in that group
+                        for (let i=1; i<9; i+=3){
+                            let g1 = i, g2 = i+1, g3 = i+2;
+                            for (let j of Object.keys(numberProfile)){
+                                let c = [[0,0,0],[0,0,0],[0,0,0]];
+                                for (let k of numberProfile[j]){
+                                    if (groups[g1].includes(k) || groups[g2].includes(k) || groups[g3].includes(k)){
+                                        let group = Math.ceil(Number(k[0])/3)-1;
+                                        let row = Number(k[1]%3)!=0 ? Number(k[1]%3)-1 : 2;
+                                        c[row][group]+=1
+                                    }
+                                }
+                                for (let row in c){
+                                    let total = c[row].reduce((total, value)=>{return total+value})
+                                    let max = c[row].reduce((total, value)=>{return total>value ? total : value})
+                                    if (total == max && max > 0){
+                                        for (let k of numberProfile[j]){
+                                            let group = Math.ceil(Number(k[1])/3)*3-3+Math.ceil(Number(k[0])/3);
+                                            let tRow = Number(k[1]);
+                                            if ([g1,g2,g3][c[row].indexOf(total)]==group){
+                                                if (tRow == Number(row)+g1){
+                                                    continue
+                                                }
+                                                //console.log(("Box Line Reduction Horizontal", k)
+                                                change++;
+                                                cellProfile[k].splice(cellProfile[k].indexOf(j),1);
+                                                numberProfile[j].splice(numberProfile[j].indexOf(k),1);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        //iter through cols per group
+                        for (let i=1; i<=3; i++){
+                            let g1 = i, g2 = i+3, g3 = i+6;
+                            for (let j of Object.keys(numberProfile)){
+                                let c = [[0,0,0],[0,0,0],[0,0,0]];
+                                for (let k of numberProfile[j]){
+                                    if (groups[g1].includes(k) || groups[g2].includes(k) || groups[g3].includes(k)){
+                                        let group = Math.ceil(Number(k[1])/3)-1;
+                                        let col = Number(k[0]%3)!=0 ? Number(k[0]%3)-1 : 2;
+                                        c[col][group]+=1
+                                    }
+                                }
+                                for (let col in c){
+                                    let total = c[col].reduce((total, value)=>{return total+value})
+                                    let max = c[col].reduce((total, value)=>{return total>value ? total : value})
+                                    if (total == max && max > 0){
+                                        for (let k of numberProfile[j]){
+                                            let group = Math.ceil(Number(k[1])/3)*3-3+Math.ceil(Number(k[0])/3);
+                                            let tCol = Number(k[0]);
+                                            if ([g1,g2,g3][c[col].indexOf(total)]==group){
+                                                if (tCol == g1*3-2+Number(col)){
+                                                    continue
+                                                }
+                                                //console.log(("Box Line Reduction Vertical", k)
+                                                change++;
+                                                cellProfile[k].splice(cellProfile[k].indexOf(j),1);
+                                                numberProfile[j].splice(numberProfile[j].indexOf(k),1);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (change > 0){log.push("Box Line Reduction");continue;}
+                    }
+                    
+                    //Rectangle Elimination
+                    if (rectElim){
+                        for (let i of Object.keys(numberProfile)){
+                            for (let hinge of numberProfile[i]){
+                                let hGroup = Math.ceil(Number(hinge[1])/3)*3-3+Math.ceil(Number(hinge[0])/3);
+                                let colN = numberProfile[i].filter((value)=>{return value[0] == hinge[0] && value != hinge && groups[hGroup].includes(value)==false});
+                                let rowN = numberProfile[i].filter((value)=>{return value[1] == hinge[1] && value != hinge && groups[hGroup].includes(value)==false});
+                                for (let k=0; k<colN.length; k++){
+                                    for (let l=0; l<rowN.length; l++){
+                                        let tGroup = Math.ceil(Number(colN[k][1])/3)*3-3+Math.ceil(Number(rowN[l][0])/3);
+                                        let checkL = numberProfile[i].filter((value)=>{return groups[tGroup].includes(value)});
+                                        let cond = checkL.length > 0;
+                                        for (let m of checkL){
+                                            if (m[0]!=rowN[l][0] && m[1]!=colN[k][1]){
+                                                cond = false;
+                                            }
+                                        }
+                                        if (cond){
+                                            let rStr = link(hinge, rowN[l], i)[0];
+                                            let cStr = link(hinge, colN[k], i)[0];
+                                            if (rStr == true){
+                                                //console.log(("Rectangle Elimination", colN[k], hinge, rowN[l]);
+                                                cellProfile[colN[k]].splice(cellProfile[colN[k]].indexOf(i),1);
+                                                numberProfile[i].splice(numberProfile[i].indexOf(colN[k]),1);
+                                                change++;
+                                            }
+                                            if (cStr == true){
+                                                //console.log(("Rectangle Elimination", rowN[l], hinge, colN[k]);
+                                                cellProfile[rowN[l]].splice(cellProfile[rowN[l]].indexOf(i),1);
+                                                numberProfile[i].splice(numberProfile[i].indexOf(rowN[l]),1);
+                                                change++;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (change > 0){log.push("Rectangle Elimination");continue;}
+                    }
+                    
+                    //X-wing
+                    if (xWing){
+                        for (let cell1 of Object.keys(cellProfile)){
+                            for (let j=1; j<=9; j++){
+                                if (Number(j)<=Number(cell1[0])){continue;}
+                                for (let k=1; k<=9; k++){
+                                    if (Number(k)<=Number(cell1[1])){continue;}
+                                    let cell2 = `${j}${cell1[1]}`;
+                                    if (Object.keys(cellProfile).includes(cell2)==false){continue}
+                                    let cell3 = `${cell1[0]}${k}`;
+                                    if (Object.keys(cellProfile).includes(cell3)==false){continue}
+                                    let cell4 = `${j}${k}`;
+                                    if (Object.keys(cellProfile).includes(cell4)==false){continue}
+                                    let possibility = []
+                                    for (let l=1; l<=9; l++){
+                                        if (Object.values(cellProfile[cell1]).includes(l) && Object.values(cellProfile[cell2]).includes(l) && Object.values(cellProfile[cell3]).includes(l) && Object.values(cellProfile[cell4]).includes(l)){
+                                            possibility.push(l)
+                                        }
+                                    }
+                                    if (possibility.length == 1){
+                                        let conditionRow = true, conditionCol = true;
+                                        let n = possibility[0]
+                                        for (let l=1; l<=9; l++){
+                                            let target = `${l}${cell1[1]}`;
+                                            if ([cell1, cell2].includes(target)==false && Object.keys(cellProfile).includes(target)){
+                                                if (Object.values(cellProfile[target]).includes(n)){
+                                                    conditionRow = false;
+                                                }
+                                            }
+                                            target = `${l}${cell3[1]}`;
+                                            if ([cell3, cell4].includes(target)==false && Object.keys(cellProfile).includes(target)){
+                                                if (Object.values(cellProfile[target]).includes(n)){
+                                                    conditionRow = false;
+                                                }
+                                            }
+                                            target = `${cell1[0]}${l}`;
+                                            if ([cell1, cell3].includes(target)==false && Object.keys(cellProfile).includes(target)){
+                                                if (Object.values(cellProfile[target]).includes(n)){
+                                                    conditionCol = false;
+                                                }
+                                            }
+                                            target = `${cell2[0]}${l}`;
+                                            if ([cell2, cell4].includes(target)==false && Object.keys(cellProfile).includes(target)){
+                                                if (Object.values(cellProfile[target]).includes(n)){
+                                                    conditionCol = false;
+                                                }
+                                            }
+                                        }
+                                        if (conditionRow!=conditionCol){
+                                            if (conditionRow){
+                                                for (let l=1; l<=9; l++){
+                                                    let target = `${cell1[0]}${l}`;
+                                                    if ([cell1, cell3].includes(target)==false && Object.keys(cellProfile).includes(target)){
+                                                        if (Object.values(cellProfile[target]).includes(n)){
+                                                            //console.log(("X-Wing", target, n)
+                                                            change++;
+                                                            cellProfile[target].splice(cellProfile[target].indexOf(n), 1);
+                                                            numberProfile[n].splice(numberProfile[n].indexOf(target),1);
+                                                        }
+                                                    }
+                                                    target = `${cell2[0]}${l}`;
+                                                    if ([cell2, cell4].includes(target)==false && Object.keys(cellProfile).includes(target)){
+                                                        if (Object.values(cellProfile[target]).includes(n)){
+                                                            //console.log(("X-Wing", target, n)
+                                                            change++;
+                                                            cellProfile[target].splice(cellProfile[target].indexOf(n), 1);
+                                                            numberProfile[n].splice(numberProfile[n].indexOf(target),1);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            if (conditionCol){
+                                                for (let l=1; l<=9; l++){
+                                                    let target = `${l}${cell1[1]}`;
+                                                    if ([cell1, cell2].includes(target)==false && Object.keys(cellProfile).includes(target)){
+                                                        if (Object.values(cellProfile[target]).includes(n)){
+                                                            //console.log(("X-Wing", target, n)
+                                                            change++;
+                                                            cellProfile[target].splice(cellProfile[target].indexOf(n), 1);
+                                                            numberProfile[n].splice(numberProfile[n].indexOf(target),1);
+                                                        }
+                                                    }
+                                                    target = `${l}${cell3[1]}`;
+                                                    if ([cell3, cell4].includes(target)==false && Object.keys(cellProfile).includes(target)){
+                                                        if (Object.values(cellProfile[target]).includes(n)){
+                                                            //console.log(("X-Wing", target, n)
+                                                            change++;
+                                                            cellProfile[target].splice(cellProfile[target].indexOf(n), 1);
+                                                            numberProfile[n].splice(numberProfile[n].indexOf(target),1);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (change > 0){log.push("X-Wing");continue;}
+                    }
+
+                    //Y-wing
+                    if (yWing){
+                        for (let cell1 of Object.keys(cellProfile)){
+                            if (Object.values(cellProfile[cell1]).length!=2){continue;}
+                            let group1 = Math.ceil(Number(cell1[1])/3)*3-3+Math.ceil(Number(cell1[0])/3);
+                            let checkRow = [...groups[group1]].filter((val)=>{return Object.keys(cellProfile).includes(val)});
+                            let checkCol = [...groups[group1]].filter((val)=>{return Object.keys(cellProfile).includes(val)});
+                            for (let j=1; j<=9; j++){
+                                let cell2 = `${j}${cell1[1]}`;
+                                if (Object.keys(cellProfile).includes(cell2) && checkRow.includes(cell2)==false){
+                                    checkRow.push(cell2);
+                                }
+                                let cell3 = `${cell1[0]}${j}`;
+                                if (Object.keys(cellProfile).includes(cell3) && checkCol.includes(cell3)==false){
+                                    checkCol.push(cell3);
+                                }
+                            }
+                            checkRow = checkRow.filter((val)=>{return val!=cell1 && Object.values(cellProfile[val]).length==2 && (Object.values(cellProfile[val])[0]!=Object.values(cellProfile[cell1])[0]||Object.values(cellProfile[val])[1]!=Object.values(cellProfile[cell1])[1])})
+                            checkCol = checkCol.filter((val)=>{return val!=cell1 && Object.values(cellProfile[val]).length==2 && (Object.values(cellProfile[val])[0]!=Object.values(cellProfile[cell1])[0]||Object.values(cellProfile[val])[1]!=Object.values(cellProfile[cell1])[1])})
+                            for (let cell2 of checkRow){
+                                for (let cell3 of checkCol){
+                                    if (cell2[0]==cell3[0] || cell2[1]==cell3[1]){continue;}
+                                    if (cellProfile[cell2][0]==cellProfile[cell3][0] && cellProfile[cell2][1]==cellProfile[cell3][1]){continue;}
+                                    let temp = [...cellProfile[cell1], ...cellProfile[cell2], ...cellProfile[cell3]];
+                                    let temp2 = []
+                                    temp.forEach((val)=>{if(temp2.includes(val)==false){temp2.push(val)}})
+                                    temp2.sort()
+                                    if (temp2.length!=3){continue;}
+                                    let group2 = Math.ceil(Number(cell2[1])/3)*3-3+Math.ceil(Number(cell2[0])/3);
+                                    let group3 = Math.ceil(Number(cell3[1])/3)*3-3+Math.ceil(Number(cell3[0])/3);
+                                    if (group2!=group3){
+                                        let set2 = [...groups[group2]];
+                                        let set3 = [...groups[group3]];
+                                        for (let i=1; i<=9; i++){
+                                            if (set2.includes(`${cell2[0]}${i}`)==false){set2.push(`${cell2[0]}${i}`)}
+                                            if (set2.includes(`${i}${cell2[1]}`)==false){set2.push(`${i}${cell2[1]}`)}
+                                            if (set3.includes(`${cell3[0]}${i}`)==false){set3.push(`${cell3[0]}${i}`)}
+                                            if (set3.includes(`${i}${cell3[1]}`)==false){set3.push(`${i}${cell3[1]}`)}
+                                        }
+                                        set2 = set2.filter((val)=>{return Object.keys(cellProfile).includes(val)})
+                                        set3 = set3.filter((val)=>{return Object.keys(cellProfile).includes(val)})
+                                        let numCheck = temp2.filter((val)=>{return Object.values(cellProfile[cell1]).includes(val)==false})[0]
+                                        let setCheck = set2.filter((val)=>{return set3.includes(val) && Object.values(cellProfile[val]).includes(numCheck)})
+                                        for (let i of setCheck){
+                                            //console.log(("Y-Wing", i, cellProfile[i], numCheck, [cell1, cell2, cell3], cellProfile[cell1], cellProfile[cell2], cellProfile[cell3]);
+                                            cellProfile[i].splice(cellProfile[i].indexOf(numCheck),1);
+                                            numberProfile[numCheck].splice(numberProfile[numCheck].indexOf(i),1);
+                                            change++;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (change > 0){log.push("Y-Wing");continue;}
+                    }
+
+                    //Swordfish
+                    if (swordfish){
+                        for (let i of Object.keys(numberProfile)){
+                            let conG = []
+                            for (let j=1; j<=9; j++){
+                                let temp = false;
+                                for (let k of groups[j].filter((val)=>{return Object.keys(cellProfile).includes(val)})){
+                                    if (Object.values(cellProfile[k]).includes(i)){
+                                        temp = true;
+                                    }
+                                }
+                                conG.push(temp)
+                            }
+                            if (conG.reduce((prev, cur)=>{return prev&&cur})){continue}
+                            if (numberProfile[i].length>=6){
+                                for (let j=1; j<=9; j++){
+                                    if (numberProfile[i].filter((val)=>{return val[1] == String(j)}).length<2){continue}
+                                    for (let k=j+1; k<=9; k++){
+                                        if (numberProfile[i].filter((val)=>{return val[1] == String(k)}).length<2){continue}
+                                        for (let l=k+1; l<=9; l++){
+                                            if (numberProfile[i].filter((val)=>{return val[1] == String(l)}).length<2){continue}
+                                            for (let m=1; m<=9; m++){
+                                                if (numberProfile[i].filter((val)=>{return val[0] == String(m)}).length<2){continue}
+                                                for (let n=m+1; n<=9; n++){
+                                                    if (numberProfile[i].filter((val)=>{return val[0] == String(n)}).length<2){continue}
+                                                    for (let o=n+1; o<=9; o++){
+                                                        if (numberProfile[i].filter((val)=>{return val[0] == String(o)}).length<2){continue}
+                                                        let temp = [[`${m}${j}`, `${n}${j}`, `${o}${j}`], [`${m}${k}`, `${n}${k}`, `${o}${k}`], [`${m}${l}`, `${n}${l}`, `${o}${l}`], [`${m}${j}`, `${m}${k}`, `${m}${l}`], [`${n}${j}`, `${n}${k}`, `${n}${l}`], [`${o}${j}`, `${o}${k}`, `${o}${l}`]];
+                                                        let check = []
+                                                        let terminator = false;
+                                                        for (let p of temp.flat().filter((val)=>{return Object.keys(cellProfile).includes(val)})){
+                                                            if (cellProfile[p].includes(i)){
+                                                                check.push(p)
+                                                            } else {
+                                                                terminator = false;
+                                                            }
+                                                        }
+                                                        if (terminator){continue;}
+                                                        if (check.length >=6){
+                                                            let conCol = true, conRow = true;
+                                                            for (let p=1; p<=9; p++){
+                                                                if (Object.keys(cellProfile).includes(`${p}${j}`) && numberProfile[i].includes(`${p}${j}`) && check.includes(`${p}${j}`)==false){
+                                                                    conRow = false;
+                                                                }
+                                                                if (Object.keys(cellProfile).includes(`${p}${k}`) && numberProfile[i].includes(`${p}${k}`) && check.includes(`${p}${k}`)==false){
+                                                                    conRow = false;
+                                                                }
+                                                                if (Object.keys(cellProfile).includes(`${p}${l}`) && numberProfile[i].includes(`${p}${l}`) && check.includes(`${p}${l}`)==false){
+                                                                    conRow = false;
+                                                                }
+                                                                if (Object.keys(cellProfile).includes(`${m}${p}`) && numberProfile[i].includes(`${m}${p}`) && check.includes(`${m}${p}`)==false){
+                                                                    conCol = false;
+                                                                }
+                                                                if (Object.keys(cellProfile).includes(`${n}${p}`) && numberProfile[i].includes(`${n}${p}`) && check.includes(`${n}${p}`)==false){
+                                                                    conCol = false;
+                                                                }
+                                                                if (Object.keys(cellProfile).includes(`${o}${p}`) && numberProfile[i].includes(`${o}${p}`) && check.includes(`${o}${p}`)==false){
+                                                                    conCol = false;
+                                                                }
+                                                                if (conCol==false && conRow==false){break;}
+                                                            }
+                                                            if (conCol != conRow){
+                                                                if (conRow){
+                                                                    for (let p=1; p<=9; p++){
+                                                                        if (Object.keys(cellProfile).includes(`${m}${p}`) && numberProfile[i].includes(`${m}${p}`) && check.includes(`${m}${p}`)==false){
+                                                                            let target = `${m}${p}`
+                                                                            //console.log(("Swordfish Row => Col", target, i)
+                                                                            change++;
+                                                                            cellProfile[target].splice(cellProfile[target].indexOf(i), 1);
+                                                                            numberProfile[i].splice(numberProfile[i].indexOf(target),1);
+                                                                        }
+                                                                        if (Object.keys(cellProfile).includes(`${n}${p}`) && numberProfile[i].includes(`${n}${p}`) && check.includes(`${n}${p}`)==false){
+                                                                            let target = `${n}${p}`
+                                                                            //console.log(("Swordfish Row => Col", target, i)
+                                                                            change++;
+                                                                            cellProfile[target].splice(cellProfile[target].indexOf(i), 1);
+                                                                            numberProfile[i].splice(numberProfile[i].indexOf(target),1);
+                                                                        }
+                                                                        if (Object.keys(cellProfile).includes(`${o}${p}`) && numberProfile[i].includes(`${o}${p}`) && check.includes(`${o}${p}`)==false){
+                                                                            let target = `${o}${p}`
+                                                                            //console.log(("Swordfish Row => Col", target, i)
+                                                                            change++;
+                                                                            cellProfile[target].splice(cellProfile[target].indexOf(i), 1);
+                                                                            numberProfile[i].splice(numberProfile[i].indexOf(target),1);
+                                                                        }
+                                                                    }
+                                                                }
+                                                                if (conCol){
+                                                                    for (let p=1; p<=9; p++){
+                                                                        if (Object.keys(cellProfile).includes(`${p}${j}`) && numberProfile[i].includes(`${p}${j}`) && check.includes(`${p}${j}`)==false){
+                                                                            let target = `${p}${j}`
+                                                                            //console.log(("Swordfish Col => Row", target, i)
+                                                                            change++;
+                                                                            cellProfile[target].splice(cellProfile[target].indexOf(i), 1);
+                                                                            numberProfile[i].splice(numberProfile[i].indexOf(target),1);
+                                                                        }
+                                                                        if (Object.keys(cellProfile).includes(`${p}${k}`) && numberProfile[i].includes(`${p}${k}`) && check.includes(`${p}${k}`)==false){
+                                                                            let target = `${p}${k}`
+                                                                            //console.log(("Swordfish Col => Row", target, i)
+                                                                            change++;
+                                                                            cellProfile[target].splice(cellProfile[target].indexOf(i), 1);
+                                                                            numberProfile[i].splice(numberProfile[i].indexOf(target),1);
+                                                                        }
+                                                                        if (Object.keys(cellProfile).includes(`${p}${l}`) && numberProfile[i].includes(`${p}${l}`) && check.includes(`${p}${l}`)==false){
+                                                                            let target = `${p}${l}`
+                                                                            //console.log(("Swordfish Col => Row", target, i)
+                                                                            change++;
+                                                                            cellProfile[target].splice(cellProfile[target].indexOf(i), 1);
+                                                                            numberProfile[i].splice(numberProfile[i].indexOf(target),1);  
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (change > 0){log.push("Swordfish");continue;}
+                    }
+
+                    if (change>0){continue;} else {break;}
+                }
+                if (true){
+                    let state = "Eval";
+                    let outputBoard = "";
+                    for (let i in cells){
+                        outputBoard+=boardLayout[cells[i]];
+                    }
+                    let groupProfile = new Map();
+                    for (let i=1; i<=9; i++){
+                        for (let j=0;j<groups[i].length;j++){
+                            if (Object.keys(cellProfile).includes(groups[i][j])==true && cellProfile[groups[i][j]].length!=0){
+                                groupProfile.set(groups[i][j],cellProfile[groups[i][j]]);
+                            }
+                        }
+                    }
+                    for (let i in cells){
+                        if(boardLayout[cells[i]]==0){
+                            state = "Incomplete"
+                        }
+                    }
+                    if (state == "Incomplete"){
+                        for (let i in cells){
+                            if (boardLayout[cells[i]]==0){
+                                state = "Incorrect";
+                                //console.log(("Incorrect Empty Cell:", cells[i])
+                            }
+                        }
+                    } else {
+                        for (let i in cells){
+                            if (boardLayout[cells[i]]==0){
+                                state = "Incorrect";
+                                //console.log(("Incorrect Empty Cell:", cells[i])
+                            }
+                        }
+                        for (let i=1; i<=9; i++){
+                            let rowNumbers = [], colNumbers = [];
+                            for (let j=1; j<=9; j++){
+                                let number = boardLayout[`${j}${i}`];
+                                if (rowNumbers.includes(number)==false){
+                                    rowNumbers.push(number);
+                                } else {
+                                    state = "Incorrect";
+                                    //console.log(("Incorrect Row:", `${j}${i}`, number);
+                                }
+                                number = boardLayout[`${i}${j}`];
+                                if (colNumbers.includes(number)==false){
+                                    colNumbers.push(number);
+                                } else {
+                                    state = "Incorrect";
+                                    //console.log(("Incorrect Col:", `${i}${j}`, number);
+                                }
+                            }
+                        }
+                    }
+                    if (state == "Eval"){
+                        state = "Success";
+                    }
+                    //console.log(state, outputBoard);
+                    let c = 0;
+                    for (let i of outputBoard){
+                        if (i!="0"){c++}
+                    }
+                    //console.log(`${c}/81`)
+                    //if (state=="Success"){console.log(log)}
+                    return [state, outputBoard, log, step]
+                }
+            }
+
+            function randoGenerate(){
+                const shuffle = (arr) => {
+                    for (let i=0; i<arr.length*5; i++){
+                        if (Math.round(Math.random())==1){
+                            let temp = arr[i%arr.length];
+                            arr[i%arr.length] = arr[(i+1)%arr.length];
+                            arr[(i+1)%arr.length] = temp;
+                        }
+                    }
+                    return arr;
+                }
+                let b = [shuffle([1,2,3,4,5,6,7,8,9]),[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]];
+                for (let l=1; l<8; l++){
+                    let c = shuffle([1,2,3,4,5,6,7,8,9])
+                    while (true){
+                        c = shuffle([1,2,3,4,5,6,7,8,9])
+                        let term = true
+                        for (let i=0; i<9; i++){
+                            for (let j=0; j<l; j++){
+                                if (c[i] == b[j][i]){
+                                    term = false
+                                }
+                            }
+                            for (let j=Math.floor(l/3)*3; j<l; j++){
+                                if ([b[j][i-i%3+0], b[j][i-i%3+1], b[j][i-i%3+2]].includes(c[i])){
+                                    term = false
+                                }
+                            }
+                        }
+                        if (term){break}
+                    }
+                    b[l] = c
+                }
+                let c = []
+                for (let i=0; i<9; i++){
+                    let possible = [1,2,3,4,5,6,7,8,9]
+                    for (let j=0; j<8; j++){
+                        possible.splice(possible.indexOf(b[j][i]),1)
+                    }
+                    c.push(possible[0])
+                }
+                b[8] = c
+                b = b.flat()
+                let s = "Incorrect", output = "", key = "";
+                while (s!="Success"){
+                    ans=""
+                    for (let i of b){
+                        ans+=i
+                    }
+                    let term = 0;
+                    let i = 0;
+                    let limit = 100;
+                    while (true){
+                        i++
+                        if (i>60){s="Success"; break}
+                        term++
+                        let rand1 = Math.floor(Math.random()*81)%81;
+                        while (b[rand1]==0){
+                            rand1 = Math.floor(Math.random()*81)%81;
+                        }
+                        let rand2 = Math.floor(Math.random()*81)%81;
+                        while (b[rand1]==0 && rand1==rand2){
+                            rand2 = Math.floor(Math.random()*81)%81;
+                        }
+                        let hold1 = b[rand1];
+                        let hold2 = b[rand2];
+                        b[rand1] = 0
+                        b[rand2] = 0
+                        key = ""
+                        for (let j of b){
+                            key+=j
+                        }
+                        let r = solver(key)
+                        s = r[0], output = r[1], log = r[2]
+                        console.log(i, term, s)
+                        if (s=="Success"){
+                            limit+=2;
+                            console.log(limit)
+                        }
+                        if (s!="Success"){
+                            b[rand1] = hold1;
+                            b[rand2] = hold2;
+                            if (term > limit){
+                                key = "";
+                                for (let j of b){
+                                    key+=j;
+                                }
+                                let r = solver(key)
+                                s = r[0], output = r[1], log = r[2]
+                                break;
+                            }
+                            i--
+                        }
+                    }
+                    let zero = 0;
+                    for (let i of key){
+                        if (i==0){
+                            zero++
+                        }
+                    }
+                    console.log(term, key, zero)
+                }
+                //console.log(b, copy)
+                console.log(key, output)
+                return [key, output]
             }
 
             function compare(){
@@ -2150,7 +3809,7 @@
         </script>
     </head>
     <body onload="pageLoad()" onkeydown="keyInput(event)">
-        <label>Code: </label><input id="code" value="070000030062704008500000700910500007250007000007042000001070006005906870706050000">
+        <label>Code: </label><input id="code" value="000064700001070003090000800050000000002090008000301040010057029000000000207900086">
         <br>
         <button onclick="setup()">Load</button>
         <button onclick="bot()">Bot</button>
