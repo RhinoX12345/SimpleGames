@@ -111,9 +111,11 @@
                 //debugStep=true;
                 //debugStepped=true;
                 setup();
+                await sleep(20)
+                //loadRandom()
                 test();
                 await sleep(20)
-                bot();
+                //bot();
             }
 
             function setup(){
@@ -294,6 +296,9 @@
                             document.getElementById(selectedCell).attributes["content"]["value"] = num;
                             document.getElementById(selectedCell).style.color = "blue";
                             document.getElementById(selectedCell).style.fontSize="25px";
+                            if(true){
+                                compare()
+                            }
                         } else {
                             let notes = document.getElementById(selectedCell).attributes["notes"]["value"];
                             notes = notes.trim(",").split(",").sort()
@@ -400,10 +405,16 @@
                     }
                     return returnVal
                 }
-                let delay = 0;
+                let delay = 10;
                 cellProfile = {}, numberProfile = {1:[],2:[],3:[],4:[],5:[],6:[],7:[],8:[],9:[]}, boardLayout = {}, snapShot = {};
                 for (let i in cells){
                     boardLayout[cells[i]] = board[i];
+                    if (board[i]==0){
+                        let temp = document.getElementById(cells[i]).innerHTML;
+                        if (temp.length==1){
+                            boardLayout[cells[i]] = Number(temp);
+                        }
+                    }
                 }
                 for (let i of Object.keys(boardLayout)){
                     if (boardLayout[i]==0){
@@ -539,7 +550,7 @@
                         }
                         if (localChange>0){console.log("Obvious Single");}
                     }
-                    if (change > 0){log.push("ObvSingle");continue;}
+                    if (change > 0){log.push(["ObvSingle", change]);continue;}
                     
                     //Obvious Pairs
                     if (obviousPair){
@@ -625,7 +636,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("ObvPair");continue;}
+                        if (change > 0){log.push(["ObvPair", change]);continue;}
                     }
                     
                     //Obvious Triple
@@ -744,7 +755,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("ObvTriple");continue;}
+                        if (change > 0){log.push(["ObvTriple", change]);continue;}
                     }
                     
                     //Obvious Quad
@@ -875,7 +886,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("ObvQuad");continue;}
+                        if (change > 0){log.push(["ObvQuad", change]);continue;}
                     }
                     
                     //Hidden Single
@@ -976,7 +987,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("HiddenSingle");continue;}
+                        if (change > 0){log.push(["HiddenSingle", change]);continue;}
                     }
 
                     //Hidden Pairs
@@ -1136,7 +1147,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("HiddenPair");continue;}
+                        if (change > 0){log.push(["HiddenPair", change]);continue;}
                     }
                     
                     //Hidden Triple
@@ -1294,7 +1305,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("HiddenTriple");continue;}
+                        if (change > 0){log.push(["HiddenTriple", change]);continue;}
                     }
                     
                     //Hidden Quads
@@ -1482,7 +1493,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("HiddenQuad");continue;}
+                        if (change > 0){log.push(["HiddenQuad", change]);continue;}
                     }
                     
                     //Pointing Pairs & Pointing Triple
@@ -1554,7 +1565,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("PointingPairTriple");continue;}
+                        if (change > 0){log.push(["PointingPairTriple", change]);continue;}
                     }
                     
                     //Box Line Reduction
@@ -1564,7 +1575,7 @@
                         //for each row, if num of groups == 1: remove other rows in that group
                         for (let i=1; i<9; i+=3){
                             let g1 = i, g2 = i+1, g3 = i+2;
-                            for (let j of Object.keys(numberProfile)){
+                            for (let j=1; j<=9; j++){
                                 let c = [[0,0,0],[0,0,0],[0,0,0]];
                                 for (let k of numberProfile[j]){
                                     if (groups[g1].includes(k) || groups[g2].includes(k) || groups[g3].includes(k)){
@@ -1598,7 +1609,7 @@
                         //iter through cols per group
                         for (let i=1; i<=3; i++){
                             let g1 = i, g2 = i+3, g3 = i+6;
-                            for (let j of Object.keys(numberProfile)){
+                            for (let j=1; j<=9; j++){
                                 let c = [[0,0,0],[0,0,0],[0,0,0]];
                                 for (let k of numberProfile[j]){
                                     if (groups[g1].includes(k) || groups[g2].includes(k) || groups[g3].includes(k)){
@@ -1628,12 +1639,12 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("Box Line Reduction");continue;}
+                        if (change > 0){log.push(["Box Line Reduction", change]);continue;}
                     }
                     
                     //Rectangle Elimination
                     if (rectElim){
-                        for (let i of Object.keys(numberProfile)){
+                        for (let i=1; i<=9; i++){
                             for (let hinge of numberProfile[i]){
                                 let hGroup = Math.ceil(Number(hinge[1])/3)*3-3+Math.ceil(Number(hinge[0])/3);
                                 let colN = numberProfile[i].filter((value)=>{return value[0] == hinge[0] && value != hinge && groups[hGroup].includes(value)==false});
@@ -1668,7 +1679,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("Rectangle Elimination");continue;}
+                        if (change > 0){log.push(["Rectangle Elimination", change]);continue;}
                     }
                     
                     //X-wing
@@ -1769,7 +1780,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("X-Wing");continue;}
+                        if (change > 0){log.push(["X-Wing", change]);continue;}
                     }
 
                     //Y-wing
@@ -1825,7 +1836,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("Y-Wing");continue;}
+                        if (change > 0){log.push(["Y-Wing", change]);continue;}
                     }
 
                     //Swordfish
@@ -1950,7 +1961,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("Swordfish");continue;}
+                        if (change > 0){log.push(["Swordfish", change]);continue;}
                     }
 
                     if (change>0){continue;} else {break;}
@@ -2028,9 +2039,9 @@
             
             function solver(key){
                 const link = (primary, secondary, n)=>{//return array[row/col, group]; key: true (strong link), false (weak link), undefined (no link)
-                    if (primary == secondary){return undefined;}
+                    if (primary == secondary){return [undefined];}
                     if (Object.values(numberProfile[n]).includes(primary)==false || Object.values(numberProfile[n]).includes(secondary)==false){
-                        return undefined;
+                        return [undefined];
                     }
                     let returnVal = [];
                     if (primary[0] == secondary[0]){
@@ -2065,6 +2076,39 @@
                     }
                     return returnVal
                 }
+                const check = () => {
+                    for (let i=1; i<=9; i++){
+                        for (let j=1; j<=9; j++){
+                            if (boardLayout[`${j}${i}`]==0 && Object.keys(cellProfile).includes(`${j}${i}`)==false && false){
+                                return "Incorrect", 1;
+                            }
+                        }
+                    }
+                    for (let i=1; i<=9; i++){
+                        let rowNumbers = [], colNumbers = [];
+                        for (let j=1; j<=9; j++){
+                            let number = boardLayout[`${j}${i}`];
+                            if (number != 0){
+                                if (rowNumbers.includes(number)==false){
+                                    rowNumbers.push(number);
+                                } else {
+                                    return "Incorrect";
+                                }
+                            }
+                            number = boardLayout[`${i}${j}`];
+                            if (number != 0){
+                                if (colNumbers.includes(number)==false){
+                                    colNumbers.push(number);
+                                } else {
+                                    return "Incorrect";
+                                }
+                            }
+                        }
+                    }
+                    return "Success"
+                    let c = 0;
+                }
+                
                 cellProfile = {}, numberProfile = {1:[],2:[],3:[],4:[],5:[],6:[],7:[],8:[],9:[]}, boardLayout = {}, snapShot = {};
                 for (let i in key.split("")){
                     boardLayout[cells[i]] = Number(key.split("")[i]);
@@ -2086,22 +2130,32 @@
                 while(true && step<100){
                     if (fill){
                         if (change > 0){
+                            let term = false
                             let cellOutput = {}
                             for (let i in cellProfile){//sets tiles for only possible number
                                 if (cellProfile[i].length == 1){
+                                    //console.log(i, cellProfile[i][0])
                                     boardLayout[i] = cellProfile[i][0];
                                     cellOutput[i] = cellProfile[i][0];
+                                    if (numberProfile[cellProfile[i][0]].includes(i)==false){
+                                        term = true
+                                        break
+                                    }
                                     numberProfile[cellProfile[i][0]].splice(numberProfile[cellProfile[i][0]].indexOf(i), 1);
                                     cellProfile[i]=[];
                                 }
                             }
+                            if (term){break}
                             if (Object.keys(cellOutput).length > 0){
                                 log.push(cellOutput)
                                 //console.log("Cell Output:", cellOutput);
                             }
                         }
                     }
-                    if (change > 0){change=0;}
+                    if (change > 0){
+                        //console.log(numberProfile); 
+                        change=0;
+                    }
                     step++;
                     //console.log("Step:", step)
                     lastStep = step - 1
@@ -2114,6 +2168,12 @@
                         }
                         cellProfile = {...tempObj}
                     }
+                    
+                    if (true) {
+                        let temp = check()
+                        if (temp == "Incorrect"){return ["Incorrect", "", log, step]}
+                    }
+                    
                     for (let i of Object.keys(cellProfile)){//Obvious single
                         let localChange = 0;
                         let values = cellProfile[i];
@@ -2153,8 +2213,9 @@
                         }
                         if (localChange>0){}//console.log("Obvious Single");}
                     }
-                    if (change > 0){log.push("ObvSingle");continue;}
+                    if (change > 0){log.push(["ObvSingle", change]);continue;}
                     
+
                     //Obvious Pairs
                     if (obviousPair){
                         for (let i=1; i<=9; i++){//eliminate options if there are twins in a group
@@ -2239,7 +2300,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("ObvPair");continue;}
+                        if (change > 0){log.push(["ObvPair", change]);continue;}
                     }
                     
                     //Obvious Triple
@@ -2358,7 +2419,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("ObvTriple");continue;}
+                        if (change > 0){log.push(["ObvTriple", change]);continue;}
                     }
                     
                     //Obvious Quad
@@ -2369,6 +2430,7 @@
                             for (let j in placeholder){
                                 candidates[placeholder[j][0]] = placeholder[j][1];
                             }
+                            //console.log(placeholder, candidates)
                             for (let j=0; j<Object.keys(candidates).length; j++){
                                 for (let k=j+1; k<Object.keys(candidates).length; k++){
                                     for (let l=k+1; l<Object.keys(candidates).length; l++){
@@ -2489,7 +2551,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("ObvQuad");continue;}
+                        if (change > 0){log.push(["ObvQuad", change]);continue;}
                     }
                     
                     //Hidden Single
@@ -2590,7 +2652,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("HiddenSingle");continue;}
+                        if (change > 0){log.push(["HiddenSingle", change]);continue;}
                     }
 
                     //Hidden Pairs
@@ -2750,7 +2812,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("HiddenPair");continue;}
+                        if (change > 0){log.push(["HiddenPair", change]);continue;}
                     }
                     
                     //Hidden Triple
@@ -2908,7 +2970,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("HiddenTriple");continue;}
+                        if (change > 0){log.push(["HiddenTriple", change]);continue;}
                     }
                     
                     //Hidden Quads
@@ -3096,7 +3158,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("HiddenQuad");continue;}
+                        if (change > 0){log.push(["HiddenQuad", change]);continue;}
                     }
                     
                     //Pointing Pairs & Pointing Triple
@@ -3168,7 +3230,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("PointingPairTriple");continue;}
+                        if (change > 0){log.push(["PointingPairTriple", change]);continue;}
                     }
                     
                     //Box Line Reduction
@@ -3178,7 +3240,7 @@
                         //for each row, if num of groups == 1: remove other rows in that group
                         for (let i=1; i<9; i+=3){
                             let g1 = i, g2 = i+1, g3 = i+2;
-                            for (let j of Object.keys(numberProfile)){
+                            for (let j=1; j<=9; j++){
                                 let c = [[0,0,0],[0,0,0],[0,0,0]];
                                 for (let k of numberProfile[j]){
                                     if (groups[g1].includes(k) || groups[g2].includes(k) || groups[g3].includes(k)){
@@ -3191,14 +3253,14 @@
                                     let total = c[row].reduce((total, value)=>{return total+value})
                                     let max = c[row].reduce((total, value)=>{return total>value ? total : value})
                                     if (total == max && max > 0){
-                                        for (let k of numberProfile[j]){
+                                        for (let k of Object.values(numberProfile[j])){
                                             let group = Math.ceil(Number(k[1])/3)*3-3+Math.ceil(Number(k[0])/3);
                                             let tRow = Number(k[1]);
                                             if ([g1,g2,g3][c[row].indexOf(total)]==group){
                                                 if (tRow == Number(row)+g1){
                                                     continue
                                                 }
-                                                //console.log(("Box Line Reduction Horizontal", k)
+                                                //console.log("Box Line Reduction Horizontal", k)
                                                 change++;
                                                 cellProfile[k].splice(cellProfile[k].indexOf(j),1);
                                                 numberProfile[j].splice(numberProfile[j].indexOf(k),1);
@@ -3208,11 +3270,10 @@
                                 }
                             }
                         }
-
                         //iter through cols per group
                         for (let i=1; i<=3; i++){
                             let g1 = i, g2 = i+3, g3 = i+6;
-                            for (let j of Object.keys(numberProfile)){
+                            for (let j=1; j<=9; j++){
                                 let c = [[0,0,0],[0,0,0],[0,0,0]];
                                 for (let k of numberProfile[j]){
                                     if (groups[g1].includes(k) || groups[g2].includes(k) || groups[g3].includes(k)){
@@ -3225,7 +3286,7 @@
                                     let total = c[col].reduce((total, value)=>{return total+value})
                                     let max = c[col].reduce((total, value)=>{return total>value ? total : value})
                                     if (total == max && max > 0){
-                                        for (let k of numberProfile[j]){
+                                        for (let k of Object.values(numberProfile[j])){
                                             let group = Math.ceil(Number(k[1])/3)*3-3+Math.ceil(Number(k[0])/3);
                                             let tCol = Number(k[0]);
                                             if ([g1,g2,g3][c[col].indexOf(total)]==group){
@@ -3242,12 +3303,12 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("Box Line Reduction");continue;}
+                        if (change > 0){log.push(["Box Line Reduction", change]);continue;}
                     }
                     
                     //Rectangle Elimination
                     if (rectElim){
-                        for (let i of Object.keys(numberProfile)){
+                        for (let i=1; i<=9; i++){
                             for (let hinge of numberProfile[i]){
                                 let hGroup = Math.ceil(Number(hinge[1])/3)*3-3+Math.ceil(Number(hinge[0])/3);
                                 let colN = numberProfile[i].filter((value)=>{return value[0] == hinge[0] && value != hinge && groups[hGroup].includes(value)==false});
@@ -3266,13 +3327,13 @@
                                             let rStr = link(hinge, rowN[l], i)[0];
                                             let cStr = link(hinge, colN[k], i)[0];
                                             if (rStr == true){
-                                                //console.log(("Rectangle Elimination", colN[k], hinge, rowN[l]);
+                                                //console.log("Rectangle Elimination", colN[k], hinge, rowN[l]);
                                                 cellProfile[colN[k]].splice(cellProfile[colN[k]].indexOf(i),1);
                                                 numberProfile[i].splice(numberProfile[i].indexOf(colN[k]),1);
                                                 change++;
                                             }
                                             if (cStr == true){
-                                                //console.log(("Rectangle Elimination", rowN[l], hinge, colN[k]);
+                                                //console.log("Rectangle Elimination", rowN[l], hinge, colN[k]);
                                                 cellProfile[rowN[l]].splice(cellProfile[rowN[l]].indexOf(i),1);
                                                 numberProfile[i].splice(numberProfile[i].indexOf(rowN[l]),1);
                                                 change++;
@@ -3282,7 +3343,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("Rectangle Elimination");continue;}
+                        if (change > 0){log.push(["Rectangle Elimination", change]);continue;}
                     }
                     
                     //X-wing
@@ -3383,7 +3444,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("X-Wing");continue;}
+                        if (change > 0){log.push(["X-Wing", change]);continue;}
                     }
 
                     //Y-wing
@@ -3439,7 +3500,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("Y-Wing");continue;}
+                        if (change > 0){log.push(["Y-Wing", change]);continue;}
                     }
 
                     //Swordfish
@@ -3564,7 +3625,7 @@
                                 }
                             }
                         }
-                        if (change > 0){log.push("Swordfish");continue;}
+                        if (change > 0){log.push(["Swordfish", change]);continue;}
                     }
 
                     if (change>0){continue;} else {break;}
@@ -3637,22 +3698,72 @@
             }
 
             function randoGenerate(){
-                const shuffle = (arr) => {
-                    for (let i=0; i<arr.length*5; i++){
-                        if (Math.round(Math.random())==1){
-                            let temp = arr[i%arr.length];
-                            arr[i%arr.length] = arr[(i+1)%arr.length];
-                            arr[(i+1)%arr.length] = temp;
+                const shuffle = (arr, ref) => {
+                    const randShuffle = (arr) => {
+                        for (let i=0; i<arr.length*5; i++){
+                            if (Math.round(Math.random())==1){
+                                let temp = arr[i%arr.length];
+                                arr[i%arr.length] = arr[(i+1)%arr.length];
+                                arr[(i+1)%arr.length] = temp;
+                            }
+                        }
+                        return arr;
+                    }
+                    const create = (possible) => {
+                        for (let i of possible[0]){
+                            for (let j of possible[1]){
+                                if ([i].includes(j)){continue}
+                                for (let k of possible[2]){
+                                    if ([i,j].includes(k)){continue}
+                                    for (let l of possible[3]){
+                                        if ([i,j,k].includes(l)){continue}
+                                        for (let m of possible[4]){
+                                            if ([i,j,k,l].includes(m)){continue}
+                                            for (let n of possible[5]){
+                                                if ([i,j,k,l,m].includes(n)){continue}
+                                                for (let o of possible[6]){
+                                                    if ([i,j,k,l,m,n].includes(o)){continue}
+                                                    for (let p of possible[7]){
+                                                        if ([i,j,k,l,m,n,o].includes(p)){continue}
+                                                        for (let q of possible[8]){
+                                                            if ([i,j,k,l,m,n,o,p].includes(q)){continue}
+                                                            return [i,j,k,l,m,n,o,p,q]
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-                    return arr;
+
+                    let possible = []
+                    for (let i=0; i<9; i++){
+                        let temp = [1,2,3,4,5,6,7,8,9]
+                        for (let j=0; j<9; j++){
+                            if (ref[j][i]!=0 && temp.includes(ref[j][i])){
+                                temp.splice(temp.indexOf(ref[j][i]), 1)
+                            } else {
+                                break
+                            }
+                        }
+                        possible.push(temp)
+                    }
+                    for (let i=0; i<9; i++){
+                        possible[i] = randShuffle(possible[i])
+                    }
+                    c = create(possible)
+                    return c
                 }
-                let b = [shuffle([1,2,3,4,5,6,7,8,9]),[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]];
-                for (let l=1; l<8; l++){
-                    let c = shuffle([1,2,3,4,5,6,7,8,9])
+
+                let start = new Date()
+                let b = [[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]]
+                for (let l=0; l<9; l++){
                     while (true){
-                        c = shuffle([1,2,3,4,5,6,7,8,9])
-                        let term = true
+                        c = shuffle([1,2,3,4,5,6,7,8,9], b)
+                        term = true;
                         for (let i=0; i<9; i++){
                             for (let j=0; j<l; j++){
                                 if (c[i] == b[j][i]){
@@ -3669,18 +3780,114 @@
                     }
                     b[l] = c
                 }
-                let c = []
-                for (let i=0; i<9; i++){
-                    let possible = [1,2,3,4,5,6,7,8,9]
-                    for (let j=0; j<8; j++){
-                        possible.splice(possible.indexOf(b[j][i]),1)
-                    }
-                    c.push(possible[0])
-                }
-                b[8] = c
+
                 b = b.flat()
-                let s = "Incorrect", output = "", key = "";
-                while (s!="Success"){
+                
+                console.log((new Date() - start)/1000)
+
+                let mapping = {};
+                let count = 0;
+                for (let i=1; i<=9; i++){
+                    for (let j=1; j<=9; j++){
+                        mapping[`${j}${i}`] = count;
+                        count++;
+                    }
+                }
+                
+                let ans = ""
+                for (let i of b){
+                    ans+=i
+                }
+
+                let s = "Incorrect", output = "", key = "", log = {}, unique = true;
+                count = 0;
+                start = new Date(), timeLimit = 5;
+                override4 = true, override2 = false, override1 = false;
+                while (count < 20){//Fancy method
+                    break
+                    count++
+                    if ((new Date() - start)/1000 > timeLimit && override4){console.log((new Date() - start)/1000); override4=false; override2=true}
+                    if ((new Date() - start)/1000 > timeLimit*2 && override2){console.log((new Date() - start)/1000); override2=false;override1=true}
+                    if ((new Date() - start)/1000 > timeLimit*3 && override1){console.log((new Date() - start)/1000); break}
+                    console.log(override4, override2, override1, count)
+                    let term = 0
+                    if (true){
+                        let r1 = Math.floor(Math.random()*9)%9+1;
+                        let c1 = Math.floor(Math.random()*9)%9+1;
+                        let r2 = 0
+                        if (Math.round(Math.random()) && r1!=9 || r1==1){
+                            r2 = r1+Math.ceil(Math.random()*(9-r1))%9;
+                        } else {
+                            r2 = Math.ceil(Math.random()*(r1-1))%9;
+                        }
+                        let c2 = 0
+                        if (Math.round(Math.random()) && c1+Math.abs(r1-r2)<=9 || ((c1+Math.abs(r1-r2)<=9)==true && (c1-Math.abs(r1-r2)>=1)==false)){
+                            c2 = c1+Math.abs(r1-r2)
+                        } else if (c1-Math.abs(r1-r2)>=1){
+                            c2 = c1-Math.abs(r1-r2)
+                        }
+                        let cell1 = `${c1}${r1}`;
+                        let cell4 = `${c2}${r2}`
+                        if (cell1!=cell4){
+                            if (override4){
+                                let cell2 = `${c1}${r2}`
+                                let cell3 = `${c2}${r1}`
+                                if (b[mapping[cell1]]==0 || b[mapping[cell2]]==0 || b[mapping[cell3]]==0 || b[mapping[cell4]]==0){count--;continue}
+                                let hold = [b[mapping[cell1]], b[mapping[cell2]], b[mapping[cell3]], b[mapping[cell4]]]
+                                b[mapping[cell1]] = 0;
+                                b[mapping[cell2]] = 0;
+                                b[mapping[cell3]] = 0;
+                                b[mapping[cell4]] = 0;
+                                key = ""
+                                for (let j of b){
+                                    key+=j
+                                }
+                                let r = solver(key)
+                                s = r[0], output = r[1], log = r[2]
+                                if (s!="Success" || output!=ans){
+                                    b[mapping[cell1]] = hold[0];
+                                    b[mapping[cell2]] = hold[1];
+                                    b[mapping[cell3]] = hold[2];
+                                    b[mapping[cell4]] = hold[3];
+                                    count--
+                                }
+                            }
+                            if (override2){
+                                if (b[mapping[cell1]]==0 || b[mapping[cell4]]==0){count--;continue}
+                                let hold = [b[mapping[cell1]], b[mapping[cell4]]]
+                                b[mapping[cell1]] = 0;
+                                b[mapping[cell4]] = 0;
+                                key = ""
+                                for (let j of b){
+                                    key+=j
+                                }
+                                let r = solver(key)
+                                s = r[0], output = r[1], log = r[2]
+                                if (s!="Success" || output!=ans){
+                                    b[mapping[cell1]] = hold[0];
+                                    b[mapping[cell4]] = hold[1];
+                                    count--
+                                }
+                            }
+                        } 
+                        if (override1){
+                            if (b[mapping[cell1]]==0){count--;continue}
+                            let hold = b[mapping[cell1]]
+                            b[mapping[cell1]] = 0;
+                            key = ""
+                            for (let j of b){
+                                key+=j
+                            }
+                            let r = solver(key)
+                            s = r[0], output = r[1], log = r[2]
+                            if (s!="Success" || output!=ans){
+                                b[mapping[cell1]] = hold;
+                                count--;
+                            }
+                        }
+                    }
+                }
+                while (s!="Success"){//Basic method
                     ans=""
                     for (let i of b){
                         ans+=i
@@ -3688,6 +3895,7 @@
                     let term = 0;
                     let i = 0;
                     let limit = 100;
+                    let t = new Date()
                     while (true){
                         i++
                         if (i>60){s="Success"; break}
@@ -3697,13 +3905,27 @@
                             rand1 = Math.floor(Math.random()*81)%81;
                         }
                         let rand2 = Math.floor(Math.random()*81)%81;
-                        while (b[rand1]==0 && rand1==rand2){
+                        while (rand2==rand1){
                             rand2 = Math.floor(Math.random()*81)%81;
+                        }
+                        let rand3 = Math.floor(Math.random()*81)%81;
+                        while (rand3==rand1 || rand3==rand2){
+                            rand3 = Math.floor(Math.random()*81)%81;
+                        }
+                        let rand4 = Math.floor(Math.random()*81)%81;
+                        while (rand4==rand1 || rand4==rand2 || rand4==rand3){
+                            rand4 = Math.floor(Math.random()*81)%81;
                         }
                         let hold1 = b[rand1];
                         let hold2 = b[rand2];
+                        let hold3 = b[rand3];
+                        let hold4 = b[rand4];
                         b[rand1] = 0
                         b[rand2] = 0
+                        if (Math.round(Math.random()*0)){
+                            b[rand3] = 0
+                            b[rand4] = 0
+                        }
                         key = ""
                         for (let j of b){
                             key+=j
@@ -3711,14 +3933,13 @@
                         let r = solver(key)
                         s = r[0], output = r[1], log = r[2]
                         console.log(i, term, s)
-                        if (s=="Success"){
-                            limit+=2;
-                            console.log(limit)
-                        }
                         if (s!="Success"){
                             b[rand1] = hold1;
                             b[rand2] = hold2;
-                            if (term > limit){
+                            b[rand3] = hold3;
+                            b[rand4] = hold4;
+                            //if (term > limit){
+                            if ((new Date() - t)/1000 > 5){
                                 key = "";
                                 for (let j of b){
                                     key+=j;
@@ -3728,6 +3949,8 @@
                                 break;
                             }
                             i--
+                        } else {
+                            t = new Date()
                         }
                     }
                     let zero = 0;
@@ -3738,8 +3961,164 @@
                     }
                     console.log(term, key, zero)
                 }
-                //console.log(b, copy)
-                console.log(key, output)
+                return [key, output, log, checkUnique(key)]
+            }
+
+            function checkUnique(key){
+                const solver1 = (key) =>{
+                    let b = [];
+                    for (let i of key){
+                        b.push(Number(i))
+                    }
+                    let check = true;
+                    for (let i=0; i<9; i++){
+                        let test1 = [1,2,3,4,5,6,7,8,9];
+                        let test2 = [1,2,3,4,5,6,7,8,9];
+                        for (let j=0; j<9; j++){
+                            if (b[i*9+j]==0){continue}
+                            if (test1.includes(b[i*9+j])){
+                                test1.splice(test1.indexOf(b[i*9+j]),1)
+                            } else {
+                                check = false
+                            }
+                        }
+                        for (let j=0; j<9; j++){
+                            if (b[j*9+i]==0){continue}
+                            if (test2.includes(b[j*9+i])){
+                                test2.splice(test2.indexOf(b[j*9+i]),1)
+                            } else {
+                                check = false
+                            }
+                        }
+                        let g = Math.floor(i/3)*27+i%3*3
+                        let test3 = [1,2,3,4,5,6,7,8,9]
+                        for (let j=0; j<3; j++){
+                            for (let k=0; k<3; k++){
+                                if (b[g+j*9+k]==0){continue}
+                                if (test3.includes(b[g+j*9+k])){
+                                    test3.splice(test3.indexOf(b[g+j*9+k]),1)
+                                } else {
+                                    check = false
+                                }
+                            }
+                        }
+                    }
+                    if (check){
+                        return ["Success"]
+                    } else {
+                        return ["Incorrect"]
+                    }
+                }
+                const recurse = (mt, bt, key) =>{
+                    while (true){
+                        let count = 0
+                        for (let i of mt){
+                            let iter = [1,2,3,4,5,6,7,8,9]
+                            let g = Math.floor(i/27)*27+Math.floor((i%9)/3)*3
+                            for (let j=0; j<3; j++){
+                                for (let k=0; k<3; k++){
+                                    if (g+j+k*9!=i && iter.includes(bt[g+j+k*9])){
+                                        iter.splice(iter.indexOf(bt[g+j+k*9]), 1)
+                                    }
+                                }
+                            }
+                            for (let j=0; j<9; j++){
+                                if (i-i%9+j!=i && iter.includes(bt[i-i%9+j])){
+                                    iter.splice(iter.indexOf(bt[i-i%9+j]),1)
+                                }
+                                if (i%9+9*j!=i && iter.includes(bt[i%9+9*j])){
+                                    iter.splice(iter.indexOf(bt[i%9+9*j]),1)
+                                }
+                            }
+                            if (iter.length==1){
+                                bt[i] = iter[0]
+                                mt.splice(mt.indexOf(i),1)
+                                count++
+                            }
+                            if (iter.length==0){
+                                return false
+                            }
+                        }
+                        if (count==0){break}
+                    }
+                    if (mt.length>0){
+                        let iter = [1,2,3,4,5,6,7,8,9]
+                        let g = Math.floor(mt[0]/27)*27+Math.floor((mt[0]%9)/3)*3
+                        for (let j=0; j<3; j++){
+                            for (let k=0; k<3; k++){
+                                if (g+j+k*9!=mt[0] && iter.includes(bt[g+j+k*9])){
+                                    iter.splice(iter.indexOf(bt[g+j+k*9]), 1)
+                                }
+                            }
+                        }
+                        for (let j=0; j<9; j++){
+                            if (mt[0]-mt[0]%9+j!=mt[0] && iter.includes(bt[mt[0]-mt[0]%9+j])){
+                                iter.splice(iter.indexOf(bt[mt[0]-mt[0]%9+j]),1)
+                            }
+                            if (mt[0]%9+9*j!=mt[0] && iter.includes(bt[mt[0]%9+9*j])){
+                                iter.splice(iter.indexOf(bt[mt[0]%9+9*j]),1)
+                            }
+                        }
+                        for (let j of iter){
+                            let copy = [...bt];
+                            copy[mt[0]] = j;
+                            check = "";
+                            for (let k of copy){
+                                check+=k
+                            }
+                            r = solver1(check)
+                            s = r[0]
+                            if (s=="Success"){
+                                mt2 = [...mt]
+                                mt2.splice(0,1)
+                                a = recurse(mt2, copy, key)
+                            }
+                        }
+                    } else {
+                        for (let i=0; i<9; i++){
+                            let test1 = [1,2,3,4,5,6,7,8,9];
+                            let test2 = [1,2,3,4,5,6,7,8,9];
+                            for (let j=0; j<9; j++){
+                                if (test1.includes(bt[i*9+j])){
+                                    test1.splice(test1.indexOf(bt[i*9+j]),1)
+                                }
+                                if (test2.includes(bt[j*9+i])){
+                                    test2.splice(test2.indexOf(bt[j*9+i]),1)
+                                }
+                            }
+                        }
+                        t = ""
+                        for (let i of bt){
+                            t+=i
+                        }
+                        solutions.push(t)
+                    }
+                }
+                let b = []
+                let map = []
+                for (let i in key){
+                    b.push(Number(key[i]))
+                    if (key[i]=="0") {
+                        map.push(Number(i))
+                    }
+                }
+                let solutions = []
+                recurse(map, b, key)
+                return solutions.length==1
+            }
+
+            function loadRandom(){
+                let key="", ans="", log={}, unique=false;
+                while (unique==false){
+                    temp = randoGenerate();
+                    key = temp[0];
+                    ans = temp[1];
+                    log = temp[2];
+                    unique = temp[3];
+                }
+                document.getElementById("code").value = key;
+                setup()
+                document.getElementById("answer").value = ans;
                 return [key, output]
             }
 
@@ -3750,7 +4129,6 @@
                     for (let i in cells){
                         let fill = document.getElementById(cells[i]).attributes["content"]["value"];
                         let ans = answer[i];
-                        //console.log(fill, ans, fill == ans)
                         if (fill == ""){
                             if (returnVal=="Correct"){returnVal="Correct, Not Complete"}
                             continue
@@ -3758,14 +4136,14 @@
                         }
                         if (fill != ans){
                             document.getElementById(cells[i]).style.color = "red";
-                            document.getElementById(cells[i]).innerHTML += `/${ans}`
+                            //document.getElementById(cells[i]).innerHTML += `/${ans}`
                             returnVal = "Wrong";
                         }
                     }
-                    console.log(returnVal);
+                    //console.log(returnVal);
                     return returnVal;
                 } else {
-                    console.log("No key / Invalid Key")
+                    //console.log("No key / Invalid Key")
                     return "No key / Invalid Key";
                 }
             }
@@ -3809,11 +4187,12 @@
         </script>
     </head>
     <body onload="pageLoad()" onkeydown="keyInput(event)">
-        <label>Code: </label><input id="code" value="000064700001070003090000800050000000002090008000301040010057029000000000207900086">
+        <label for="code">Code: </label><input id="code" value="">
         <br>
         <button onclick="setup()">Load</button>
+        <button onclick="loadRandom()">Random</button>
         <button onclick="bot()">Bot</button>
-        <button onclick="debugStepped=true;">DebugStepped</button>
+        <!--<button onclick="debugStepped=true;">DebugStepped</button>-->
         <br>
         <table id="board"></table>
         <table id="number">
@@ -3839,9 +4218,11 @@
                 <td id="note" onclick="toggleNote(id)" onmouseenter="hoverNote(id, true)" onmouseleave="hoverNote(id, false)" colspan="3">Note</td>
             </tr>
         </table>
-        <label>Output: </label><input id="output" readonly>
+        <label for="output">Output: </label><input id="output" readonly>
         <br>
-        <input id="answer" value="479685132162734598538219764913568427254197683687342915891473256345926871726851349">
-        <button onclick="compare()">Compare</button>
+        <div hidden>
+            <input id="answer" value="">
+            <button onclick="compare()">Compare</button>
+        </div>
     </body>
 </html>
