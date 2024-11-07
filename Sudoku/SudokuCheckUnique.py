@@ -168,7 +168,7 @@ def checkUnique(key, n=0):
         else:
             return ["Incorrect"]
     def recurse(mt, bt, key, n):
-        #print("|"*n)
+        print("|"*n)
         while True:
             count = 0
             for i in mt:
@@ -252,7 +252,7 @@ def checkUnique(key, n=0):
         return len(solutions)==1
     
 #puzzle = randoGenerate()
-puzzle = "000008700000050000803006090400000007710020000900407682000000000070004203004500910"
+puzzle = "800000000003600000070090200050007000000045700000100030001000068008500010090000400"
 print(puzzle)
 print(checkUnique(puzzle))
 #print(checkUnique("500000000000860000000751020008007093002093500000180070007216000000000830000000000"))

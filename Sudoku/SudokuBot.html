@@ -156,6 +156,9 @@
                     document.getElementById(cells[i]).addEventListener("click", e=>click(cells[i]));
                 }
                 snapShot = {}
+                let ans = checkUnique(code)[1];
+                document.getElementById("answer").value = ans;
+                answer = ans
                 return "Done"
             }
 
@@ -1993,14 +1996,14 @@
                         for (let i in cells){
                             if (boardLayout[cells[i]]==0){
                                 state = "Incorrect";
-                                console.log("Incorrect Empty Cell:", cells[i])
+                                //console.log("Incorrect Empty Cell:", cells[i])
                             }
                         }
                     } else {
                         for (let i in cells){
                             if (boardLayout[cells[i]]==0){
                                 state = "Incorrect";
-                                console.log("Incorrect Empty Cell:", cells[i])
+                                //console.log("Incorrect Empty Cell:", cells[i])
                             }
                         }
                         for (let i=1; i<=9; i++){
@@ -2011,14 +2014,14 @@
                                     rowNumbers.push(number);
                                 } else {
                                     state = "Incorrect";
-                                    console.log("Incorrect Row:", `${j}${i}`, number);
+                                    //console.log("Incorrect Row:", `${j}${i}`, number);
                                 }
                                 number = boardLayout[`${i}${j}`];
                                 if (colNumbers.includes(number)==false){
                                     colNumbers.push(number);
                                 } else {
                                     state = "Incorrect";
-                                    console.log("Incorrect Col:", `${i}${j}`, number);
+                                    //console.log("Incorrect Col:", `${i}${j}`, number);
                                 }
                             }
                         }
@@ -3762,6 +3765,7 @@
                 let b = [[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]]
                 for (let l=0; l<9; l++){
                     while (true){
+                        if ((new Date() - start)/1000 > 1){return randoGenerate()}
                         c = shuffle([1,2,3,4,5,6,7,8,9], b)
                         term = true;
                         for (let i=0; i<9; i++){
@@ -3888,10 +3892,6 @@
                     }
                 }
                 while (s!="Success"){//Basic method
-                    ans=""
-                    for (let i of b){
-                        ans+=i
-                    }
                     let term = 0;
                     let i = 0;
                     let limit = 100;
@@ -3908,24 +3908,10 @@
                         while (rand2==rand1){
                             rand2 = Math.floor(Math.random()*81)%81;
                         }
-                        let rand3 = Math.floor(Math.random()*81)%81;
-                        while (rand3==rand1 || rand3==rand2){
-                            rand3 = Math.floor(Math.random()*81)%81;
-                        }
-                        let rand4 = Math.floor(Math.random()*81)%81;
-                        while (rand4==rand1 || rand4==rand2 || rand4==rand3){
-                            rand4 = Math.floor(Math.random()*81)%81;
-                        }
                         let hold1 = b[rand1];
                         let hold2 = b[rand2];
-                        let hold3 = b[rand3];
-                        let hold4 = b[rand4];
                         b[rand1] = 0
                         b[rand2] = 0
-                        if (Math.round(Math.random()*0)){
-                            b[rand3] = 0
-                            b[rand4] = 0
-                        }
                         key = ""
                         for (let j of b){
                             key+=j
@@ -3936,8 +3922,6 @@
                         if (s!="Success"){
                             b[rand1] = hold1;
                             b[rand2] = hold2;
-                            b[rand3] = hold3;
-                            b[rand4] = hold4;
                             //if (term > limit){
                             if ((new Date() - t)/1000 > 5){
                                 key = "";
@@ -3953,6 +3937,27 @@
                             t = new Date()
                         }
                     }
+                    t=new Date()
+                    for (let k in b){
+                        if (b[k]==0){continue;}
+                        let hold = b[k];
+                        b[k] = 0;
+                        temp = ""
+                        for (let j of b){
+                            temp+=j
+                        }
+                        if (checkUnique(temp)[0]){
+                            if (solver(temp)[0]=="Success"){
+                                console.log(k)
+                                key = temp;
+                            } else {
+                                b[k] = hold;
+                            }
+                        } else {
+                            b[k] = hold;
+                        }
+                    }
+                    console.log((new Date() - t)/1000)
                     let zero = 0;
                     for (let i of key){
                         if (i==0){
@@ -3961,7 +3966,10 @@
                     }
                     console.log(term, key, zero)
                 }
-                return [key, output, log, checkUnique(key)]
+                while (s!="Success"){//Less Basic Method
+                    break
+                }
+                return [key, output, log, checkUnique(key)[0]]
             }
 
             function checkUnique(key){
@@ -4010,6 +4018,7 @@
                     }
                 }
                 const recurse = (mt, bt, key) =>{
+                    if(solutions.length>1){return}
                     while (true){
                         let count = 0
                         for (let i of mt){
@@ -4104,10 +4113,11 @@
                 }
                 let solutions = []
                 recurse(map, b, key)
-                return solutions.length==1
+                return [solutions.length==1, solutions[0]]
             }
 
             function loadRandom(){
+                console.log("LOAD")
                 let key="", ans="", log={}, unique=false;
                 while (unique==false){
                     temp = randoGenerate();
@@ -4187,7 +4197,7 @@
         </script>
     </head>
     <body onload="pageLoad()" onkeydown="keyInput(event)">
-        <label for="code">Code: </label><input id="code" value="">
+        <label for="code">Code: </label><input id="code" value="800000000003600000070090200050007000000045700000100030001000068008500010090000400">
         <br>
         <button onclick="setup()">Load</button>
         <button onclick="loadRandom()">Random</button>
