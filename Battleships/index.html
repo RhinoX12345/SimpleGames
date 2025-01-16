@@ -287,9 +287,15 @@
                     if (pass == true){
                         if (boatDir == "horizontal"){
                             document.getElementById(defPos[0]).innerHTML = "<img src=\"boatLeft.png\">";
+                            for (let i=1; i<defPos.length-1; i++){
+                                document.getElementById(defPos[i]).innerHTML = "<img src=\"middleX.png\">";
+                            }
                             document.getElementById(defPos[defPos.length-1]).innerHTML = "<img src=\"boatRight.png\">";
                         } else if (boatDir == "vertical"){
                             document.getElementById(defPos[0]).innerHTML = "<img src=\"boatUp.png\">";
+                            for (let i=1; i<defPos.length-1; i++){
+                                document.getElementById(defPos[i]).innerHTML = "<img src=\"middleY.png\">";
+                            }
                             document.getElementById(defPos[defPos.length-1]).innerHTML = "<img src=\"boatDown.png\">";
                         }
                         return true
