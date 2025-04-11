@@ -68,10 +68,16 @@
 
             #playField tbody tr td {
                 width: 50px;
+                padding: 0px;
             }
 
             td:hover {
                 background-color: #fff;;
+            }
+
+            .sun {
+                width:40px;
+                height:40px;
             }
 
             #testSquare {
@@ -124,11 +130,17 @@
             function setup(){
                 fieldType = "lawn";
                 mowers = [];
+                sun=50;
+                sunInstances = [];
+                mousePosition = {"x":0, "y":0, "target":""};
+                clickMode = "";
             }
 
-            function pageLoad(){
+            async function pageLoad(){
                 setup()
                 fieldSetup()
+                await sleep(1)
+                mouseManager()
             }
 
             async function fieldSetup(){
@@ -137,32 +149,33 @@
                     document.getElementById(i["id"]).remove();
                 }
                 switch (fieldType){
-                    default:
-                        break;
                     case "lawn":
                         document.getElementById("document").style.backgroundColor = "rgb(172, 207, 241)";
                         for (let i=1; i<=5; i++){
                             document.getElementById("playField").innerHTML += `<tr id="${i}"></tr>`;
                             for (let j=0; j<=9; j++){
-                                document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}" onmouseenter="changeHover(id, style, event)" onmouseleave="changeHover(id, style, event)"></td>`;
                                 let a = (i-1)*9 + j;
                                 let g1 = "rgb(26, 132, 20)";
                                 let g2 = "rgb(40, 162, 24)";
                                 let g3 = "rgb(54, 206, 41)";
                                 let side = "rgb(252, 239, 208)";
                                 if (j==0){
+                                    document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}"></td>`;
                                     document.getElementById(`${i}${j}`).style.backgroundColor = side;
-                                } else if (i%2==1){
-                                    if (a%2==0){
-                                        document.getElementById(`${i}${j}`).style.backgroundColor = g1;
-                                    } else {
-                                        document.getElementById(`${i}${j}`).style.backgroundColor = g2;
-                                    }
                                 } else {
-                                    if (a%2==0){
-                                        document.getElementById(`${i}${j}`).style.backgroundColor = g3;
+                                    document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}" onmouseenter="changeHover(id, style, event)" onmouseleave="changeHover(id, style, event)"></td>`;
+                                    if (i%2==1){
+                                        if (a%2==0){
+                                            document.getElementById(`${i}${j}`).style.backgroundColor = g1;
+                                        } else {
+                                            document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                        }
                                     } else {
-                                        document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                        if (a%2==0){
+                                            document.getElementById(`${i}${j}`).style.backgroundColor = g3;
+                                        } else {
+                                            document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                        }
                                     }
                                 }
                             }
@@ -179,25 +192,28 @@
                         for (let i=1; i<=5; i++){
                             document.getElementById("playField").innerHTML += `<tr id="${i}"></tr>`;
                             for (let j=0; j<=9; j++){
-                                document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}" onmouseenter="changeHover(id, style, event)" onmouseleave="changeHover(id, style, event)"></td>`;
                                 let a = (i-1)*9 + j;
                                 let g1 = "rgb(12, 50, 55)";
                                 let g2 = "rgb(21, 70, 65)";
                                 let g3 = "rgb(40, 80, 70)";
                                 let side = "rgb(140, 150, 165)";
                                 if (j==0){
+                                    document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}"></td>`;
                                     document.getElementById(`${i}${j}`).style.backgroundColor = side;
-                                } else if (i%2==1){
-                                    if (a%2==0){
-                                        document.getElementById(`${i}${j}`).style.backgroundColor = g1;
-                                    } else {
-                                        document.getElementById(`${i}${j}`).style.backgroundColor = g2;
-                                    }
                                 } else {
-                                    if (a%2==0){
-                                        document.getElementById(`${i}${j}`).style.backgroundColor = g3;
+                                    document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}" onmouseenter="changeHover(id, style, event)" onmouseleave="changeHover(id, style, event)"></td>`;
+                                    if (i%2==1){
+                                        if (a%2==0){
+                                            document.getElementById(`${i}${j}`).style.backgroundColor = g1;
+                                        } else {
+                                            document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                        }
                                     } else {
-                                        document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                        if (a%2==0){
+                                            document.getElementById(`${i}${j}`).style.backgroundColor = g3;
+                                        } else {
+                                            document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                        }
                                     }
                                 }
                             }
@@ -214,28 +230,31 @@
                         for (let i=1; i<=6; i++){
                             document.getElementById("playField").innerHTML += `<tr id="${i}"></tr>`;
                             for (let j=0; j<=9; j++){
-                                document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}" onmouseenter="changeHover(id, style, event)" onmouseleave="changeHover(id, style, event)"></td>`;
                                 let a = (i-1)*9 + j;
                                 let g1 = "rgb(40, 162, 24)";
                                 let g2 = "rgb(19, 224, 28)";
                                 let water = "rgb(26, 199, 254)";
                                 let side = "rgb(252, 239, 208)";
                                 if (j==0) {
+                                    document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}"></td>`;
                                     document.getElementById(`${i}${j}`).style.backgroundColor = side;
-                                } else if (i==1 || i==6){
-                                    if (a%2==0){
-                                        document.getElementById(`${i}${j}`).style.backgroundColor = g1;
-                                    } else {
-                                        document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                } else {
+                                    document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}" onmouseenter="changeHover(id, style, event)" onmouseleave="changeHover(id, style, event)"></td>`;
+                                    if (i==1 || i==6){
+                                        if (a%2==0){
+                                            document.getElementById(`${i}${j}`).style.backgroundColor = g1;
+                                        } else {
+                                            document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                        }
+                                    } else if (i==2 || i==5){
+                                        if (a%2==0){
+                                            document.getElementById(`${i}${j}`).style.backgroundColor = g1;
+                                        } else {
+                                            document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                        }
+                                    } else if (i==3 || i==4){
+                                        document.getElementById(`${i}${j}`).style.backgroundColor = water;
                                     }
-                                } else if (i==2 || i==5){
-                                    if (a%2==0){
-                                        document.getElementById(`${i}${j}`).style.backgroundColor = g1;
-                                    } else {
-                                        document.getElementById(`${i}${j}`).style.backgroundColor = g2;
-                                    }
-                                } else if (i==3 || i==4){
-                                    document.getElementById(`${i}${j}`).style.backgroundColor = water;
                                 }
                             }
                         }
@@ -252,28 +271,31 @@
                         for (let i=1; i<=6; i++){
                             document.getElementById("playField").innerHTML += `<tr id="${i}"></tr>`;
                             for (let j=0; j<=9; j++){
-                                document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}" onmouseenter="changeHover(id, style, event)" onmouseleave="changeHover(id, style, event)"></td>`;
                                 let a = (i-1)*9 + j;
                                 let g1 = "rgb(17, 51, 63)";
                                 let g2 = "rgb(16, 73, 58)";
                                 let water = "rgb(20, 85, 206)";
                                 let side = "rgb(140, 150, 165)";
                                 if (j==0) {
+                                    document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}"></td>`;
                                     document.getElementById(`${i}${j}`).style.backgroundColor = side;
-                                } else if (i==1 || i==6){
-                                    if (a%2==0){
+                                } else {
+                                    document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}" onmouseenter="changeHover(id, style, event)" onmouseleave="changeHover(id, style, event)"></td>`;
+                                    if (i==1 || i==6){
+                                        if (a%2==0){
+                                            document.getElementById(`${i}${j}`).style.backgroundColor = g1;
+                                        } else {
+                                            document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                        }
+                                    } else if (i==2 || i==5){
+                                        if (a%2==0){
                                         document.getElementById(`${i}${j}`).style.backgroundColor = g1;
-                                    } else {
-                                        document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                        } else {
+                                            document.getElementById(`${i}${j}`).style.backgroundColor = g2;
+                                        }
+                                    } else if (i==3 || i==4){
+                                        document.getElementById(`${i}${j}`).style.backgroundColor = water;
                                     }
-                                } else if (i==2 || i==5){
-                                    if (a%2==0){
-                                        document.getElementById(`${i}${j}`).style.backgroundColor = g1;
-                                    } else {
-                                        document.getElementById(`${i}${j}`).style.backgroundColor = g2;
-                                    }
-                                } else if (i==3 || i==4){
-                                    document.getElementById(`${i}${j}`).style.backgroundColor = water;
                                 }
                             }
                         }
@@ -290,15 +312,17 @@
                         for (let i=1; i<=5; i++){
                             document.getElementById("playField").innerHTML += `<tr id="${i}"></tr>`;
                             for (let j=0; j<=9; j++){
-                                document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}" onmouseenter="changeHover(id, style, event)" onmouseleave="changeHover(id, style, event)"></td>`;
                                 let a = (i-1)*9 + j;
                                 let roof = "rgb(224, 86, 58)";
                                 let side = "rgb(252, 239, 208)";
                                 if (j==0){
+                                    document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}"></td>`;
                                     document.getElementById(`${i}${j}`).style.backgroundColor = side;
                                 } else {
+                                    document.getElementById(`${i}`).innerHTML += `<td id="${i}${j}" onmouseenter="changeHover(id, style, event)" onmouseleave="changeHover(id, style, event)"></td>`;
                                     document.getElementById(`${i}${j}`).style.backgroundColor = roof;
                                 }
+                                document.getElementById(`${i}${j}`).style.border = "0.5px solid rgb(0,0,0)"
                             }
                         }
                         mower1 = new Lawnmower("mower1", 1, 0, "roof");
@@ -308,30 +332,92 @@
                         mower5 = new Lawnmower("mower5", 5, 0, "roof");
                         mowers = [mower1, mower2, mower3, mower4, mower5];
                         break;
+                    default:
+                    break;
                 }
             }
 
             function changeHover(id, style, event){
+                /*
+                let g1 = "rgb(26, 132, 20)"; -- "rgb(95, 169, 91)"--"rgb(143, 195, 141)"
+                let g2 = "rgb(40, 162, 24)";-- "rgb(105, 190, 94)"--"rgb(150, 210, 143)"
+                let g3 = "rgb(54, 206, 41)";-- "rgb(115, 221, 106)"--"rgb(157, 231, 151)"
+                
+                g1 = "rgb(40, 162, 24)";-- "rgb(105, 190, 94)"-"rgb(150, 210, 143)"
+                g2 = "rgb(19, 224, 28)";-- "rgb(90, 233, 97)"--"rgb(140, 240, 145)"
+                water = "rgb(26, 199, 254)"; -- "rgb(95, 216, 254)"--"rgb(143, 228, 254)"
+                
+                g1 = "rgb(12, 50, 55)";-- "rgb(85, 112, 115)"--"rgb(136, 155, 157)"
+                g2 = "rgb(21, 70, 65)";-- "rgb(92, 126, 122)"--"rgb(141, 165, 162)"
+                g3 = "rgb(40, 80, 70)";-- "rgb(105, 133, 126)"--"rgb(150, 170, 165)"
+                
+                g1 = "rgb(17, 51, 63)";-- "rgb(89, 113, 121)"--"rgb(139, 156, 161)"
+                g2 = "rgb(16, 73, 58)";-- "rgb(88, 128, 117)"--"rgb(138, 166, 159)"
+                water = "rgb(20, 85, 206)";-- "rgb(91, 136, 221)"--"rgb(141, 172, 231)"
+                
+                roof = "rgb(224, 86, 58)";-- "rgb(233, 137, 117)"--"rgb(240, 173, 159)"
+                */
+                /*
+                "rgb(26, 132, 20)": "rgb(187, 218, 185)",
+                "rgb(40, 162, 24)": "rgb(202, 232, 198)",
+                "rgb(54, 206, 41)": "rgb(214, 245, 211)",
+
+                "rgb(26, 132, 20)": "rgb(130, 188, 127)",
+                "rgb(40, 162, 24)": "rgb(157, 213, 150)",
+                "rgb(54, 206, 41)": "rgb(164, 233, 158)",
+
+
+                "rgb(141, 194, 138)", "rgb(186, 218, 184)"
+                "rgb(148, 209, 140)", "rgb(190, 227, 185)"
+                "rgb(155, 231, 148)", "rgb(194, 240, 190)"
+                "rgb(137, 240, 142)", "rgb(184, 246, 186)"
+                "rgb(141, 227, 255)", "rgb(186, 238, 255)"
+
+                */
+
+                let mainHighlight = {
+                    "rgb(26, 132, 20)": "rgb(186, 218, 184)",
+                    "rgb(40, 162, 24)": "rgb(190, 227, 185)",
+                    "rgb(54, 206, 41)": "rgb(194, 240, 190)",
+                    "rgb(19, 224, 28)": "rgb(184, 246, 186)",
+                    "rgb(26, 199, 254)": "rgb(186, 238, 255)",
+                    "rgb(12, 50, 55)": "rgb(136, 155, 157)",
+                    "rgb(21, 70, 65)": "rgb(141, 165, 162)",
+                    "rgb(40, 80, 70)": "rgb(150, 170, 165)",
+                    "rgb(17, 51, 63)": "rgb(139, 156, 161)",
+                    "rgb(16, 73, 58)": "rgb(138, 166, 159)",
+                    "rgb(20, 85, 206)": "rgb(141, 172, 231)", 
+                    "rgb(224, 86, 58)": "rgb(240, 173, 159)"
+                }
+                let secondaryHighlight = {
+                    "rgb(26, 132, 20)": "rgb(141, 194, 138)",
+                    "rgb(40, 162, 24)": "rgb(148, 209, 140)",
+                    "rgb(54, 206, 41)": "rgb(125, 231, 116)",
+                    "rgb(19, 224, 28)": "rgb(155, 231, 148)",
+                    "rgb(26, 199, 254)": "rgb(141, 227, 255)",
+                    "rgb(12, 50, 55)": "rgb(85, 112, 115)",
+                    "rgb(21, 70, 65)": "rgb(92, 126, 122)",
+                    "rgb(40, 80, 70)": "rgb(105, 133, 126)",
+                    "rgb(17, 51, 63)": "rgb(89, 113, 121)",
+                    "rgb(16, 73, 58)": "rgb(88, 128, 117)",
+                    "rgb(20, 85, 206)": "rgb(91, 136, 221)",
+                    "rgb(224, 86, 58)": "rgb(233, 137, 117)"
+                }
+                let reverseMain = {}, reverseSecondary = {};
+                for (let i of Object.entries(mainHighlight)){reverseMain[i[1]] = i[0];}
+                for (let i of Object.entries(secondaryHighlight)){reverseSecondary[i[1]] = i[0];}
+
                 if (event["type"] == "mouseenter"){
-                    if (document.getElementById(id).style.backgroundColor == "rgb(26, 132, 20)"){
-                        document.getElementById(id).style.backgroundColor = "rgb(187, 218, 185)";
-                    } else if (document.getElementById(id).style.backgroundColor == "rgb(40, 162, 24)"){
-                        document.getElementById(id).style.backgroundColor = "rgb(202, 232, 198)";
-                    } else if (document.getElementById(id).style.backgroundColor == "rgb(54, 206, 41)"){
-                        document.getElementById(id).style.backgroundColor = "rgb(214, 245, 211)";
+                    let bgColor = document.getElementById(id).style.backgroundColor;
+                    if (Object.keys(mainHighlight).includes(bgColor)){
+                        document.getElementById(id).style.backgroundColor = mainHighlight[bgColor];
                     }
                     for (let i=1; i<=6; i++){
                         let newId = `${i}${id[1]}`;
                         if (newId == id){continue}
                         try {
                             let color = document.getElementById(newId).style.backgroundColor;
-                            if (color == "rgb(26, 132, 20)"){
-                                document.getElementById(newId).style.backgroundColor = "rgb(130, 188, 127)";
-                            } else if (color == "rgb(40, 162, 24)"){
-                                document.getElementById(newId).style.backgroundColor = "rgb(157, 213, 150)";
-                            } else if (color == "rgb(54, 206, 41)"){
-                                document.getElementById(newId).style.backgroundColor = "rgb(164, 233, 158)";
-                            }
+                            document.getElementById(newId).style.backgroundColor = secondaryHighlight[color];
                         } catch {
                             break;
                         }
@@ -341,37 +427,22 @@
                         if (newId == id){continue}
                         try {
                             let color = document.getElementById(newId).style.backgroundColor;
-                            if (color == "rgb(26, 132, 20)"){
-                                document.getElementById(newId).style.backgroundColor = "rgb(130, 188, 127)";
-                            } else if (color == "rgb(40, 162, 24)"){
-                                document.getElementById(newId).style.backgroundColor = "rgb(157, 213, 150)";
-                            } else if (color == "rgb(54, 206, 41)"){
-                                document.getElementById(newId).style.backgroundColor = "rgb(164, 233, 158)";
-                            }
+                            document.getElementById(newId).style.backgroundColor = secondaryHighlight[color];
                         } catch {
                             break;
                         }
                     }
-                } else {
-                    if (document.getElementById(id).style.backgroundColor == "rgb(187, 218, 185)"){
-                        document.getElementById(id).style.backgroundColor = "rgb(26, 132, 20)";
-                    } else if (document.getElementById(id).style.backgroundColor == "rgb(202, 232, 198)"){
-                        document.getElementById(id).style.backgroundColor = "rgb(40, 162, 24)";
-                    } else if (document.getElementById(id).style.backgroundColor == "rgb(214, 245, 211)"){
-                        document.getElementById(id).style.backgroundColor = "rgb(54, 206, 41)";
+                } else {                    
+                    let bgColor = document.getElementById(id).style.backgroundColor;
+                    if (Object.keys(reverseMain).includes(bgColor)){
+                        document.getElementById(id).style.backgroundColor = reverseMain[bgColor];
                     }
                     for (let i=1; i<=6; i++){
                         let newId = `${i}${id[1]}`;
                         if (newId == id){continue}
                         try {
                             let color = document.getElementById(newId).style.backgroundColor;
-                            if (color == "rgb(130, 188, 127)"){
-                                document.getElementById(newId).style.backgroundColor = "rgb(26, 132, 20)";
-                            } else if (color == "rgb(157, 213, 150)"){
-                                document.getElementById(newId).style.backgroundColor = "rgb(40, 162, 24)";
-                            } else if (color == "rgb(164, 233, 158)"){
-                                document.getElementById(newId).style.backgroundColor = "rgb(54, 206, 41)";
-                            }
+                            document.getElementById(newId).style.backgroundColor = reverseSecondary[color];
                         } catch {
                             break;
                         }
@@ -381,39 +452,81 @@
                         if (newId == id){continue}
                         try {
                             let color = document.getElementById(newId).style.backgroundColor;
-                            if (color == "rgb(130, 188, 127)"){
-                                document.getElementById(newId).style.backgroundColor = "rgb(26, 132, 20)";
-                            } else if (color == "rgb(157, 213, 150)"){
-                                document.getElementById(newId).style.backgroundColor = "rgb(40, 162, 24)";
-                            } else if (color == "rgb(164, 233, 158)"){
-                                document.getElementById(newId).style.backgroundColor = "rgb(54, 206, 41)";
-                            }
+                            document.getElementById(newId).style.backgroundColor = reverseSecondary[color];
                         } catch {
                             break;
+                        }
+                    }
+                }
+            }
+
+            async function mouseManager(){
+                mouseEvents = new Array();
+                let hold = "";
+                while (true){
+                    await sleep(1);
+                    if (mouseEvents.length>0){
+                        if (mouseEvents[0].type == "mousedown"){
+                            hold = "mousedown";
+                            let t = new Date();
+                            while (mouseEvents.length==1){
+                                await sleep(1);
+                                if (new Date() - t > 200){
+                                    break
+                                }
+                            }
+                            if (new Date() - t <= 200){
+                                console.log("click", new Date()-t)
+                                switch (clickMode){
+                                    default:
+                                    clickMode = "1"
+                                    case "1":
+                                    clickMode = "2"
+                                    break
+                                    case "2":
+                                    clickMode = "1"
+                                    break
+                                }
+                                console.log(mousePosition["target"])
+                                console.log(clickMode)
+                            } else {
+                                console.log("hold", new Date()-t)
+                                validTargets = ["testSquare"];
+                                console.log(mousePosition["target"])
+                                if (validTargets.includes(mousePosition["target"])==true){
+                                    let id = mousePosition["target"];
+                                    while (mouseEvents.length==1){
+                                        await sleep(1)
+                                        document.getElementById(id).style.left = `${mousePosition["x"]-getOffset(id).width/2}px`;
+                                        document.getElementById(id).style.top = `${mousePosition["y"]-getOffset(id).height/2}px`;
+                                    }
+                                } else {
+                                    while (mouseEvents.length!=2){
+                                        await sleep(1)
+                                    }
+                                    mouseEvents.splice(0,2)
+                                }
+                                console.log("end", new Date()-t)
+                            }
+                            if (mouseEvents.length>1){
+                                if (mouseEvents[1].type == "mouseup"){
+                                    hold = "";
+                                    mouseEvents.splice(0,2)
+                                }
+                            }
+                            continue
                         }
                     }
                 }
             }
 
             function updateMouse(event){
-                if (event.type == "click"){
-                    console.log(1)
-                }
-                if (event.type == "mousedown"){
-                    console.log(2)
-                }
-                if (event.type == "mouseup"){
-                    console.log(3)
-                }
-                if (event.type == "mousemove"){
-                    document.getElementById("mousePos").innerHTML = `X: ${event.pageX}, Y: ${event.pageY}`;
-                    validTargets = ["testSquare"]
-                    if (event.buttons > 0 && validTargets.includes(event.toElement.id)==true){
-                        let id = event.toElement.id;
-                        document.getElementById(id).style.left = `${event.pageX-getOffset(id).width/2}px`;
-                        document.getElementById(id).style.top = `${event.pageY-getOffset(id).height/2}px`;
-                    }
-                }
+                try {
+                    mousePosition["x"]=event.x;
+                    mousePosition["y"]=event.y;
+                    mousePosition["target"]=event.toElement.id;
+                    document.getElementById("mousePos").innerHTML = "X:"+event.x+", Y:"+event.y;
+                } catch {}
             }
 
             class Lawnmower{
@@ -453,12 +566,233 @@
                 
                 async mow(){
                     while (getOffset(this.id).left < getOffset("playField").right){
-                        document.getElementById(this.id).style.left = `${getOffset(this.id).left+2}px`;
+                        document.getElementById(this.id).style.left = `${getOffset(this.id).left+2.5}px`;
                         await sleep(10)
                     }
                     document.getElementById(this.id).hidden = true;
                 }
             }
+            
+            class Projectile{
+                projectiles = {
+                    "pea": {"damage": 1, "range":"99", "special":"none"},
+                    "snowpea": {"damage":1, "range":99, "special":"slow"},
+                    "firepea": {"damage":2, "range":99, "special":"splash0.7"},
+                    "sporepuff": {"damage":1, "range":3, "special":"none"},
+                    "sporefume": {"damage":1, "range":4, "special":"none"},
+                    "sporescared": {"damage":1, "range":99, "special":"none"},
+                    "sporesea": {"damage":1, "range":3, "special":"none"},
+                    "spike": {"damage":1, "range":99, "special":"popballoon"},
+                    "star": {"damage":1, "range":99, "special":"popballoon"},
+                    "cabbage": {"damage":2, "range":99, "special":"lob"},
+                    "kernel": {"damage":1, "range":99, "special":"lob"},
+                    "butter": {"damage":2, "range":99, "special":"lob,stun"},
+                    "melon": {"damage":4, "range":99, "special":"lob,splash1.5"},
+                    "sporegloom": {"damage":4, "range":1, "special":"area1"},
+                    "cattail": {"damage":4, "range":99, "special":"full"},
+                    "wintermelon": {"damage":4, "range":99, "special":"lob,splash1.5,slow"},
+                    "cobcannon": {"damage":90, "range":99, "special":"splash90,manual"}
+                }
+
+                constructor(id, row, col, costume){
+                    this.id = id;
+                    this.row = row;
+                    this.col = col;
+                    this.costume = costume;
+                    document.getElementById("ingame").innerHTML += `<div id=${this.id} class="projectile"></div>`;
+                    document.getElementById(this.id).style.width = "30px";
+                    document.getElementById(this.id).style.height = "30px";
+                    this.x = getOffset(`${row}${col}`).left+getOffset(`${row}${col}`).width/2-getOffset(this.id).width/2;
+                    this.y = getOffset(`${row}${col}`).bottom+getOffset(`${row}${col}`).height/2-getOffset(this.id).height/2;
+                    document.getElementById(this.id).style.position = "absolute";
+                    document.getElementById(this.id).style.bottom = `${this.y}px`;
+                    document.getElementById(this.id).style.left = `${this.x}px`;
+                    
+                }
+
+                async shot(){
+                    while (getOffset(this.id).left < getOffset("playField").right){
+                        document.getElementById(this.id).style.left = `${getOffset(this.id).left+2.5}px`;
+                        await sleep(10)
+                    }
+                    document.getElementById(this.id).hidden = true;
+                    return false;
+                }
+            }
+
+            class Plant{
+                plants = {
+                    "peashooter": {"health":6, "reload":1.5, "projectile":"pea", "special":"single"},//single shot
+                    "repeater": {"health":6, "reload":1.5, "projectile":"pea", "special":"double"},//double shot
+                    "threepeater": {"health":6, "reload":1.5, "projectile":"pea", "special":"triple"},//three lanes 1 shot each
+                    "splitpea": {"health":6, "reload":1.5, "projectile":"pea", "special":"bidirection"},//1 forward, 2 back shot
+                    "gatlingpea": {"health":6, "reload":1.5, "projectile":"pea", "special":"quad"},//4 shots forwards
+                    "snowpea": {"health":6, "reload":1.5, "projectile":"snowpea", "special":"single"},//single shot, slow
+                    "sunflower": {"health":6, "reload":24, "projectile":"none", "special":"sun"},//generates 1 sun (25 total)
+                    "twinsunflower": {"health":6, "reload":24, "projectile":"none", "special":"sun2"},//generates 2 suns (50 total)
+                    "cherrybomb": {"health":Infinity, "reload":1, "projectile":"none", "special":"bomb2"},//dmg 90 to normal, 120 to tall nut zombie
+                    "walnut": {"health":72, "reload":0, "projectile":"none", "special":"none"},//defensive boi
+                    "potatomine": {"health":6, "reload":15, "projectile":"none", "special":"bomb1"},//dmg 90 on ready
+                    "chomper": {"health":6, "reload":42, "projectile":"none", "special":"chomp"},//chompdmg 120 to normal, 2 to Gargantuar and GigaGargantuar
+                    "puffshroom": {"health":6, "reload":1.5, "projectile":"sporepuff", "special":"single"},//night only
+                    "fumeshroom": {"health":6, "reload":1.5, "projectile":"sporefume", "special":"single"},//night only
+                    "scaredyshroom": {"health":6, "reload":1.5, "projectile":"sporescared", "special":"single,shy"},//night only, hides when zombie in 3x3
+                    "sunshroom": {"health":6, "reload":24, "projectile":"none", "special":"sunshroom"},//night only, small sun (15) init, normal sun (25) after 2 min
+                    "gravebuster": {"health":6, "reload":4.5, "projectile":"none", "special":"grave"},//eats graves
+                    "hypnoshroom": {"health":1, "reload":0, "projectile":"none", "special":"hypno"},//6 health when asleep
+                    "iceshroom": {"health":Infinity, "reload":1, "projectile":"none", "special":"icebomb"},//6 health when asleep
+                    "doomshroom": {"health":Infinity, "reload":1, "projectile":"none", "special":"nuke"},//6 health when asleep
+                    "lilypad": {"health":6, "reload":0, "projectile":"none", "special":"lily"},//only placeable on water
+                    "squash": {"health":Infinity, "reload":0, "projectile":"none", "special":"squash"},//two direction 90 dmg
+                    "tanglekelp": {"health":Infinity, "reload":0, "projectile":"none", "special":"drown"},//120 dmg to atking zombie, water only
+                    "jalapeno": {"health":Infinity, "reload":0, "projectile":"none", "special":"jalapeno"},//90 dmg on row instant
+                    "spikeweed": {"health":1, "reload":0, "projectile":"none", "special":"spike1"},//constant dmg to zombies 1/0.7s, sacrifice to kill zombonie
+                    "spikerock": {"health":9, "reload":0, "projectile":"none", "special":"spike2"},//constant dmg to zombies 2/0.7s, sacrifice to kill zombonie
+                    "torchwood": {"health":9, "reload":0, "projectile":"none", "special":"fire"},//mods peas into fire peas
+                    "tallnut": {"health":144, "reload":0, "projectile":"none", "special":"none"},//big defensive boi
+                    "seashroom": {"health":6, "reload":1.5, "projectile":"sporesea", "special":"single"},//water only
+                    "plantern": {"health":6, "reload":0, "projectile":"none", "special":"clearfog"},//clear fog in 5x7
+                    "cactus": {"health":6, "reload":1.5, "projectile":"spike", "special":"single,pop"},//pops balloons
+                    "blover": {"health":Infinity, "reload":1, "projectile":"none", "special":"wind"},//disable fog 24s, blow away & kill balloons, single-use
+                    "starfruit": {"health":6, "reload":1.5, "projectile":"star", "special":"single,star"},//shoots 5 dir (180deg, 120deg, 30deg)
+                    "pumpkin": {"health":72, "reload":0, "projectile":"none", "special":"armor"},//protects plants within
+                    "magnetshroom": {"health":6, "reload":15, "projectile":"none", "special":"magnet"},//yoinks metal stuff, 5x7 range
+                    "cabbagepult": {"health":6, "reload":3, "projectile":"cabbage", "special":"single"},//yeet cabbage
+                    "pot": {"health":6, "reload":0, "projectile":"none", "special":"roofsoil"},//allows plants to be planted on it
+                    "kernelpult": {"health":6, "reload":3, "projectile":"kernel", "special":"single,butter"},//yeet kernel, 25% chance butter
+                    "coffeebean": {"health":Infinity, "reload":0, "projectile":"none", "special":"coffee"},//wakes up night only plants, single-use
+                    "garlic": {"health":21, "reload":0, "projectile":"none", "special":"garlic"},//forces zombie onto another lane
+                    "umbrellaleaf": {"health":6, "reload":0, "projectile":"none", "special":"umbrella"},//protects plants from sky zombie yoinks
+                    "marigold": {"health":6, "reload":24, "projectile":"none", "special":"coin"},//generates coins
+                    "melonpult": {"health":6, "reload":3, "projectile":"melon", "special":"single"},//yeets melon
+                    "wintermelon": {"health":6, "reload":3, "projectile":"wintermelon", "special":"single"},//yeets winter melon
+                    "gloomshroom": {"health":6, "reload":1.5, "projectile":"sporegloom", "special":"single"},//aoe spore
+                    "cattail": {"health":6, "reload":1.5, "projectile":"cattail", "special":"double,pop"},//prioritise balloon
+                    "goldmagnet": {"health":6, "reload":15, "projectile":"none", "special":"magnetmoney"},//autocollect money
+                    "cobcannon": {"health":6, "reload":36, "projectile":"cobcannon", "special":"manual"},//manually fired at a target position
+                    "imitater": {"health":6, "reload":0, "projectile":"none", "special":"copy"}//copies a plant, chosen pre-round
+                }
+
+                constructor(id, row, col, costume){
+                    this.id = id;
+                    this.row = row;
+                    this.col = col;
+                    this.costume = costume;
+                    switch (this.costume.toLowerCase()){
+                        case "peashooter":
+                        this.health = 6;
+                        break;
+                        default:
+                        this.health = 0;
+                    }
+                }
+            }
+
+            class Card{}
+
+            class Zombie{
+                zombies = {
+                    "zombie": {"health": 10, "special":"none"},//default zombie
+                    "flagzombie": {"health": 10, "special":"none"},//default zombie with a flag
+                    "conehead": {"health": 28, "special":"cone"},//zombie with a cone (cone:18, zombie:10)
+                    "polevaulting": {"health": 17, "special":"polevault"},//zombie with a polevault, runs until a plant, loses spd buff after polevaulting
+                    "buckethead": {"health": 65, "special":"bucket"},//zombie with a bucket (cone:55, zombie:10)
+                    "newspaper": {"health": 65, "special":"newspaper"},//zombie with a newspaper (cone:8, zombie:9), spd up after newspaper dead, lob and aoe go through newspaper
+                    "screen": {"health": 65, "special":"screen"},//zombie with a screen (cone:55, zombie:10), spores go through
+                    "football": {"health": 80, "special":"football"},//zombie with a football (cone:70, zombie:10), runs
+                    "dancing": {"health": 17, "special":"dancing"},//disco zombie, spawns backup dancers in 4 cardinal directions
+                    "backup": {"health": 10, "special":"backup"},//backup dancer
+                    "floatie": {"health": 10, "special":"floatie"},//wears a floatie, can be default, conehead, or buckethead zombie
+                    "snorkel": {"health": 10, "special":"snorkle"},//dives underwater, goes up for attacking
+                    "zomboni": {"health": 65, "special":"zomboni"},//slow, freezes water, ice prevents planting, one-hit by spike, spawns bobsled
+
+                }
+            }
+
+            class Sun{
+                constructor(row,col,size=25,plantSpawn=false){
+                    this.row = row;
+                    this.col = col;
+                    this.size = size;
+                    this.plantSpawn = plantSpawn;
+                    this.n = 1;
+                    this.suns = [];
+                    for (let i of sunInstances){
+                        this.suns.push(i.n)
+                    }
+                    while (this.suns.indexOf(this.n)>-1){
+                        this.n++;
+                    }
+                    this.spawnTime = new Date()-0;
+                    this.id=`sun${this.n}`;
+                    this.created = true;
+                    this.spawn();
+                }
+                
+                async spawn(){
+                    document.getElementById("ingame").innerHTML += `<img src="Sun.png" alt="Sun" id="${this.id}" class="sun" size=${this.size} onmouseover="addSun(id)">`
+                    document.getElementById(this.id).style.position = "absolute";
+                    this.x = getOffset(`${this.row}${this.col}`).left+Math.random()*getOffset(`${this.row}${this.col}`).width-getOffset(this.id).width/2;
+                    this.y = getOffset(`${this.row}${this.col}`).bottom+Math.random()*getOffset(`${this.row}${this.col}`).height-getOffset(this.id).height/2;
+                    if (this.plantSpawn==true){
+                        document.getElementById(this.id).style.bottom = `${this.y}px`;
+                        document.getElementById(this.id).style.left = `${this.x}px`;
+                        while (new Date()-this.spawnTime<20000){
+                            await sleep(1)
+                        }
+                        if (this.created==true){
+                            document.getElementById(this.id).remove();
+                            for (let i in sunInstances){
+                                if (sunInstances[i].id==this.id){
+                                    sunInstances[i].created = false;
+                                    sunInstances.splice(i,1);
+                                }
+                            }
+                        }
+                    } else {
+                        document.getElementById(this.id).style.left = `${this.x}px`;
+                        document.getElementById(this.id).style.bottom = `${getOffset("playField").bottom+getOffset("playField").height}px`;
+                        this.fall()
+                        while (new Date()-this.spawnTime<20000){
+                            await sleep(1)
+                        }
+                        if (this.created==true){
+                            document.getElementById(this.id).remove();
+                            for (let i in sunInstances){
+                                if (sunInstances[i].id==this.id){
+                                    sunInstances[i].created = false;
+                                    sunInstances.splice(i,1);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                async fall(){
+                    while (getOffset(this.id).bottom>this.y){
+                        if (this.created==false){break;}
+                        document.getElementById(this.id).style.bottom = `${getOffset(this.id).bottom-1}px`;
+                        await sleep(50);
+                    }
+                    this.spawnTime = new Date()
+                }
+            }
+
+            class Misc{}
+            
+
+            function addSun(id){
+                sun += Number(document.getElementById(id).attributes["size"]["value"]);
+                document.getElementById("sunCount").innerHTML = sun
+                document.getElementById(id).remove();
+                for (let i in sunInstances){
+                    if (sunInstances[i].id==id){
+                        sunInstances[i].created = false;
+                        sunInstances.splice(i,1);
+                    }
+                }
+            }
+
             
 
             //Debug
@@ -477,12 +811,24 @@
                 document.getElementById("debugMapSwitch").innerHTML = fieldType;
                 fieldSetup()
             }
+        
+            function spawnSun(plantSpawn){
+                let randR = 0, randC = Math.ceil(Math.random()*9);
+                if (fieldType == "lawn" || fieldType == "nightLawn" || fieldType == "roof"){
+                    randR = Math.ceil(Math.random()*5)
+                } else if (fieldType == "pool" || fieldType == "nightPool") {
+                    randR = Math.ceil(Math.random()*6)
+                }
+                let sunObj = new Sun(randR,randC,25,plantSpawn);
+                sunInstances.push(sunObj);
+                console.log(sunInstances);
+            }
         </script>
     </head>
-    <body onload="pageLoad()" id="document" onmouseup="updateMouse(event)" onmousedown="updateMouse(event)" onclick="updateMouse(event)" onmousemove="updateMouse(event)">
+    <body onload="pageLoad()" id="document" onmouseup="mouseEvents.push(event)" onmousedown="mouseEvents.push(event)" onmousemove="updateMouse(event)">
         <div id="filler"></div>
         <div id="ingame">
-            <div id="sunDisplay"><img src="Sun.png" width="40px" height="40px"><p id="sunCount">50</p></div>
+            <div id="sunDisplay"><img src="Sun.png" alt="sun" class="sun"><p id="sunCount">50</p></div>
             <div id="plantSelector">
                 <div><p>1</p></div>
                 <div><p>2</p></div>
